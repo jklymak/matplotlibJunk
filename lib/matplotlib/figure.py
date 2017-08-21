@@ -46,6 +46,7 @@ from matplotlib.projections import (get_projection_names,
 from matplotlib.text import Text, _process_text_args
 from matplotlib.transforms import (Affine2D, Bbox, BboxTransformTo,
                                    TransformedBbox)
+import matplotlib.layoutbox as layoutbox
 from matplotlib.backend_bases import NonGuiException
 
 docstring.interpd.update(projection_names=get_projection_names())
@@ -363,6 +364,9 @@ class Figure(Artist):
             subplotpars = SubplotParams()
 
         self.subplotpars = subplotpars
+        self.layoutbox = layoutbox.LayoutBox(parent=None, name='figlb')
+        self.layoutbox.set_geometry(0., 0. ,1., 1.)
+
         self.set_tight_layout(tight_layout)
 
         self._axstack = AxesStack()  # track all figure axes and current axes
@@ -1163,7 +1167,7 @@ class Figure(Artist):
         if gridspec_kw is None:
             gridspec_kw = {}
 
-        gs = GridSpec(nrows, ncols, **gridspec_kw)
+        gs = GridSpec(self, nrows, ncols, **gridspec_kw)
 
         # Create array to hold all axes.
         axarr = np.empty((nrows, ncols), dtype=object)
@@ -1280,7 +1284,8 @@ class Figure(Artist):
             renderer.open_group('figure')
             if self.get_tight_layout() and self.axes:
                 try:
-                    self.tight_layout(renderer, **self._tight_parameters)
+                    # self.tight_layout(renderer, **self._tight_parameters)
+                    self.constrained_layout(renderer)
                 except ValueError:
                     pass
                     # ValueError can occur when resizing a window.
@@ -1971,6 +1976,62 @@ class Figure(Artist):
                                       Affine2D().scale(1. / self.dpi))
 
         return bbox_inches
+
+    def constrained_layout(self, renderer=None, pad=0.03, h_pad=None,
+                     w_pad=None):
+        """
+        Use layoutbox to determine spine positions withing axes.
+
+        pad : float
+          padding between the figure edge and the edges of subplots,
+          as a fraction of the font-size.
+        h_pad, w_pad : float
+          padding (height/width) between edges of adjacent subplots.
+          Defaults to `pad_inches`.
+        """
+
+        # Prob should convert pad to inches or pixels or...
+
+        if h_pad is None:
+            h_pad = pad
+        if w_pad is None:
+            w_pad = pad
+
+        axes = self.axes
+        fig = self
+        if renderer is None:
+            renderer = fig.canvas.get_renderer()
+        invTransFig = fig.transFigure.inverted().transform_bbox
+
+#
+
+        # list of unique gridspecs that contain the child axes:
+        gss = set([])
+        for ax in axes:
+            print(ax)
+            gss.add(ax.get_subplotspec().get_gridspec())
+        print("Gridspecs to work on: ",gss)
+
+        # try to make spine sizes...
+        for ax in axes:
+            pos = ax.get_position()
+            bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
+            ax.spinelayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
+            ax.spinelayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
+            ax.spinelayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
+            ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
+
+        # now we need to match up margins, but only axes in the same gridspec.
+        for gs in gss:
+            spinelayouts = gs.layoutbox.find_child_spines()
+            layoutbox.match_margins(spinelayouts, levels=2)
+            # and update the layout for this gridspec.
+            gs.layoutbox.update_variables()
+        # Now set the position of the axes...
+        for ax in axes:
+            newpos = ax.spinelayoutbox.get_rect()
+            print(ax.spinelayoutbox)
+            ax.set_position(newpos)
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None,
                      w_pad=None, rect=None):

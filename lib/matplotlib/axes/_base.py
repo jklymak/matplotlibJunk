@@ -479,6 +479,7 @@ class _AxesBase(martist.Artist):
         """ % {'scale': ' | '.join(
             [repr(x) for x in mscale.get_scale_names()])}
         martist.Artist.__init__(self)
+        print(rect)
         if isinstance(rect, mtransforms.Bbox):
             self._position = rect
         else:
@@ -575,6 +576,7 @@ class _AxesBase(martist.Artist):
             left=rcParams['ytick.left'] and rcParams['ytick.major.left'],
             right=rcParams['ytick.right'] and rcParams['ytick.major.right'],
             which='major')
+
 
     def __getstate__(self):
         # The renderer should be re-created by the figure, and then cached at

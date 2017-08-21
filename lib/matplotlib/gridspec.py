@@ -25,6 +25,8 @@ rcParams = matplotlib.rcParams
 
 import matplotlib.transforms as mtransforms
 
+import matplotlib.layoutbox as layoutbox
+
 import numpy as np
 import warnings
 
@@ -195,7 +197,7 @@ class GridSpec(GridSpecBase):
     as the SubplotParams.
     """
 
-    def __init__(self, nrows, ncols,
+    def __init__(self, fig, nrows, ncols,
                  left=None, bottom=None, right=None, top=None,
                  wspace=None, hspace=None,
                  width_ratios=None, height_ratios=None):
@@ -211,10 +213,14 @@ class GridSpec(GridSpecBase):
         self.top=top
         self.wspace=wspace
         self.hspace=hspace
+        self.figure=fig
 
         GridSpecBase.__init__(self, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
+
+        self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
+            name='gridspec' + layoutbox.randid())
         #self.set_width_ratios(width_ratios)
         #self.set_height_ratios(height_ratios)
 
@@ -400,6 +406,10 @@ class SubplotSpec(object):
         self._gridspec = gridspec
         self.num1 = num1
         self.num2 = num2
+        # this is prob a bit klunky.  Made sense for otehr layout.
+
+        self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
+                name='ss'+layoutbox.randid())
 
     def get_gridspec(self):
         return self._gridspec
