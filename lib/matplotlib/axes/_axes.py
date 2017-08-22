@@ -656,7 +656,7 @@ or tuple of floats
     annotate.__doc__ = mtext.Annotation.__init__.__doc__
     #### Lines and spans
 
-    @docstring.dedent_interp
+    # @docstring.dedent_interp
     def axhline(self, y=0, xmin=0, xmax=1, **kwargs):
         """
         Add a horizontal line across the axis.

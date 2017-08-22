@@ -1172,70 +1172,104 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             ax.set_anchor(parent_anchor)
 
     cax = fig.add_axes(pbcb)
-    cax.set_aspect(aspect, anchor=anchor, adjustable='box')
+    #cax.set_aspect(aspect, anchor=anchor, adjustable='box')
 
     # OK, now make a layoutbox for the cb axis.  Later, we will use this
     # to make the colorbar fit nicely.
-    # TODO: DO horizontal as well!
 
-    ax = parents[0]
-    axlb = ax.layoutbox
-    axspine = ax.spinelayoutbox
-    axsslb = ax.get_subplotspec().layoutbox
-    lb = layoutbox.LayoutBox(parent=axsslb,
-                            name=axsslb.name + '.cbar')
+    if len(parents) == 1:
+        ax = parents[0]
+        axlb = ax.layoutbox
+        axspine = ax.spinelayoutbox
+        axsslb = ax.get_subplotspec().layoutbox
+        lb = layoutbox.LayoutBox(parent=axsslb,
+                                name=axsslb.name + '.cbar')
 
-    if location in ('left', 'right'):
-        print('LR')
-        lbspine = layoutbox.LayoutBox(parent=lb,
-                                name=lb.name + '.spine',
-                                tightwidth=False,
-                                spine=False)
+        if location in ('left', 'right'):
+            print('LR')
+            lbspine = layoutbox.LayoutBox(parent=lb,
+                                    name=lb.name + '.spine',
+                                    tightwidth=False,
+                                    spine=False)
 
-        if location == 'right':
-            # arrange to right of parent axis
-            layoutbox.hstack([axlb, lb], padding=0.01)
-        else:
-            layoutbox.hstack([lb, axlb], padding=0.01)
-        # constrain the height and center...
-        layoutbox.match_heights([axspine, lbspine], [1., shrink])
-        #lbspine.set_height(axspine.height * shrink)
-        layoutbox.align([axspine, lbspine], 'v_center')
-        # set the width of the spine box
-        lbspine.set_width(lbspine.height * (1./aspect), strength='strong')
-    elif location in ('bottom', 'top'):
-        print('TB')
-        lbspine = layoutbox.LayoutBox(parent=lb,
-                                name=lb.name + '.spine',
-                                tightheight=True,
-                                spine=False)
+            if location == 'right':
+                # arrange to right of parent axis
+                layoutbox.hstack([axlb, lb], padding=0.01)
+            else:
+                layoutbox.hstack([lb, axlb], padding=0.01)
+            # constrain the height and center...
+            layoutbox.match_heights([axspine, lbspine], [1., shrink])
+            #lbspine.set_height(axspine.height * shrink)
+            layoutbox.align([axspine, lbspine], 'v_center')
+            # set the width of the spine box
+            lbspine.set_width(axspine.height * (1./aspect), strength='strong')
+        elif location in ('bottom', 'top'):
+            print('TB')
+            lbspine = layoutbox.LayoutBox(parent=lb,
+                                    name=lb.name + '.spine',
+                                    tightheight=True,
+                                    spine=False)
 
-        if location == 'bottom':
-            print('Bottom!')
-            #layoutbox.vstack([axlb, lb], padding=0.01)
-            lb.solver.addConstraint(lb.top <= axlb.bottom - 0.01)
+            if location == 'bottom':
+                print('Bottom!')
+                layoutbox.vstack([axlb, lb], padding=0.01)
+                #lb.solver.addConstraint(lb.top <= axlb.bottom - 0.01)
+            else:
+                layoutbox.vstack([lb, axlb], padding=0.01)
+            # constrain the height and center...
+            layoutbox.match_widths([axspine, lbspine],
+                                    [1., shrink], strength='strong')
+            #lbspine.set_height(axspine.height * shrink)
+            layoutbox.align([axspine, lbspine], 'h_center')
+            # set the height of the spine box
+            lbspine.set_height(axspine.width * (aspect), strength='medium')
+            #lbspine.set_height(0.01, strength='strong')
 
-            lb.solver.dump()
-        else:
-            layoutbox.vstack([lb, axlb], padding=0.01)
-        # constrain the height and center...
-        lb.update_variables()
-        print(axspine.width.value())
-        lb.solver.addConstraint((axspine.width == lbspine.width) | 'strong')
-        lb.update_variables()
-        #layoutbox.match_widths([axspine, lbspine],
-        #                        [1., shrink], strength='weak')
-        #lbspine.set_height(axspine.height * shrink)
-        layoutbox.align([axspine, lbspine], 'h_center')
-        # set the height of the spine box
-        lb.update_variables()
-        print(aspect)
-        lbspine.set_height(axspine.width * (aspect), strength='medium')
-        #lbspine.set_height(0.01, strength='strong')
-        lb.update_variables()
-        print(axspine)
-        print(axspine.width.value())
-        
+    else:  # there is more than one parent, so lets use gridspec
+        gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
+        print("Parent gs:", gslb)
+        lb = layoutbox.LayoutBox(parent=gslb.parent,
+                                name=gslb.parent.name + '.cbar')
+
+        if location in ('left', 'right'):
+            print('LR')
+            lbspine = layoutbox.LayoutBox(parent=lb,
+                                    name=lb.name + '.spine',
+                                    tightwidth=False,
+                                    spine=False)
+
+            if location == 'right':
+                # arrange to right of parent axis
+                layoutbox.hstack([gslb, lb], padding=0.01)
+            else:
+                layoutbox.hstack([lb, gslb], padding=0.01)
+            # constrain the height and center...
+            layoutbox.match_heights([gslb, lbspine], [1., shrink])
+            #lbspine.set_height(axspine.height * shrink)
+            layoutbox.align([gslb, lbspine], 'v_center')
+            # set the width of the spine box
+            lbspine.set_width(lbspine.height * (1./aspect), strength='strong')
+        elif location in ('bottom', 'top'):
+            print('TB')
+            lbspine = layoutbox.LayoutBox(parent=lb,
+                                    name=lb.name + '.spine',
+                                    tightheight=True,
+                                    spine=False)
+
+            if location == 'bottom':
+                print('Bottom!')
+                layoutbox.vstack([gslb, lb], padding=0.01)
+            else:
+                layoutbox.vstack([lb, gslb], padding=0.01)
+            # lb.solver.addConstraint((axspine.width == lbspine.width) | 'strong')
+            layoutbox.match_widths([gslb, lbspine],
+                                    [1., shrink], strength='weak')
+            #lbspine.set_height(axspine.height * shrink)
+            layoutbox.align([gslb, lbspine], 'h_center')
+            # set the height of the spine box
+            lbspine.set_height(lbspine.width * (aspect), strength='medium')
+
+
     cax.set_layoutbox(lb)
     cax.set_layoutboxspine(lbspine)
 

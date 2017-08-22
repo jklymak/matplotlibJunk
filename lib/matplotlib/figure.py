@@ -2027,8 +2027,8 @@ class Figure(Artist):
         for gs in gss:
             spinelayouts = gs.layoutbox.find_child_spines()
             if len(spinelayouts) > 1:
-                pass
-                # layoutbox.match_margins(spinelayouts, levels=2)
+                # pass
+                layoutbox.match_margins(spinelayouts, levels=2)
             # and update the layout for this gridspec.
             gs.layoutbox.update_variables()
         fig.layoutbox.update_variables()

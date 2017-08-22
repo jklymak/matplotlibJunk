@@ -82,7 +82,7 @@ class SubplotBase(object):
             self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
         self.spinelayoutbox = layoutbox.LayoutBox(parent=
             self.layoutbox, name=self.layoutbox.name+'.spine',
-            spine=True, tight=False)
+            spine=True)
         if 1:
             self.layoutbox.update_variables()
             layoutbox.print_tree(self.spinelayoutbox)
