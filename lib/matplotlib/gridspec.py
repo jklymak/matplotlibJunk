@@ -353,21 +353,14 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         self._hspace=hspace
 
         self._subplot_spec = subplot_spec
-        parentgridspec = subplot_spec.get_gridspec()
-        parentlb = subplot_spec.layoutbox
         GridSpecBase.__init__(self, figure, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
         self.figure = figure
-        # TODO:  Not working yet
-        self.layoutbox = parentlb.layout_from_subplotspec(
-            self._subplot_spec,
-            name=parentlb.name + '.gridspec' + layoutbox.randid())
-        # this is a gridspec.  Its dims should be fixed to the dims of its
-        # parent subplotspc.
-        layoutbox.match_widths([self.layoutbox, parentlb], strength='medium')
-        layoutbox.match_heights([self.layoutbox, parentlb], strength='medium')
-
+        # do the layoutboxes
+        subspeclb = subplot_spec.layoutbox
+        self.layoutbox = layoutbox.LayoutBox(parent=subspeclb,
+                    name=subspeclb.name + 'gridspec' +  layoutbox.randid())
 
     def get_subplot_params(self, fig=None):
         """
@@ -428,7 +421,6 @@ class SubplotSpec(object):
         self.num1 = num1
         self.num2 = num2
         # this is prob a bit klunky.  Made sense for otehr layout.
-
         self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
                 name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
 

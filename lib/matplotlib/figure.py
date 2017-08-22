@@ -2003,15 +2003,11 @@ class Figure(Artist):
             renderer = fig.canvas.get_renderer()
         invTransFig = fig.transFigure.inverted().transform_bbox
 
-#
-
         # list of unique gridspecs that contain the child axes:
         gss = set([])
         for ax in axes:
-            print(ax)
             if hasattr(ax,'get_subplotspec'):
                 gss.add(ax.get_subplotspec().get_gridspec())
-        print("Gridspecs to work on: ",gss)
 
         # try to make spine sizes...
         for ax in axes:
@@ -2033,7 +2029,7 @@ class Figure(Artist):
             gs.layoutbox.update_variables()
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        layoutbox.print_tree(fig.layoutbox)
+        #layoutbox.print_tree(fig.layoutbox)
 
         for ax in axes:
             newpos = ax.spinelayoutbox.get_rect()

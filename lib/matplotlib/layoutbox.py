@@ -228,8 +228,6 @@ class LayoutBox(object):
         Find children of this layout box that are spines.  We want to line
         spines up, and this is an easy way to find them all.
         '''
-        print(self)
-        print("spine? ",self.spine)
         if self.spine:
             spines = [self]
         else:
@@ -245,6 +243,8 @@ class LayoutBox(object):
         and be a fraction of the parent width/height from the left/bottom
         of the parent.  Therefore the parent can move around and the
         layout for the subplot spec should move with it.
+
+        The parent is *usually* the gridspec that made the subplotspec.??
         '''
         lb = LayoutBox(parent=self, name=name, artist=artist, spine=spine)
         #print(subspec.get_geometry())
@@ -367,17 +367,11 @@ class LayoutBox(object):
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
 
             # set the width of the parent box.
-            print("Pos:", pos)
-            print("BBOX:", bbox)
-            # cblb.set_width(bbox.x1-bbox.x0)
-            print("Width:", bbox.x1-bbox.x0)
             c = (cbspinelb.width  == 0.05 * self.width)
             self.solver.addConstraint(c | 'strong')
             c = (cblb.width  == bbox.x1-bbox.x0)
             self.solver.addConstraint(c | 'medium')
             if 0:
-                print("margin  Left: ", -bbox.x0+pos.x0+leftpad)
-                print("margin Right: ", bbox.x1-pos.x1+rightpad)
                 cbspinelb.set_left_margin(-bbox.x0+pos.x0+leftpad)
                 cbspinelb.set_right_margin(bbox.x1-pos.x1+rightpad)
                 cbspinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
@@ -597,7 +591,6 @@ def constrained_layout(fig, parent=None, axs=None, leftpad=0, bottompad=0,
     match_margins(spinelbs)
     # run the solver
     parentlb.update_variables()
-    #print(parentlb)
 
     # OK, this should give us the new positions that will fit the axes...
 

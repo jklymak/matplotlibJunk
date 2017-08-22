@@ -1186,7 +1186,6 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                 name=axsslb.name + '.cbar')
 
         if location in ('left', 'right'):
-            print('LR')
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightwidth=False,
@@ -1204,16 +1203,13 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             # set the width of the spine box
             lbspine.set_width(axspine.height * (1./aspect), strength='strong')
         elif location in ('bottom', 'top'):
-            print('TB')
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightheight=True,
                                     spine=False)
 
             if location == 'bottom':
-                print('Bottom!')
                 layoutbox.vstack([axlb, lb], padding=0.01)
-                #lb.solver.addConstraint(lb.top <= axlb.bottom - 0.01)
             else:
                 layoutbox.vstack([lb, axlb], padding=0.01)
             # constrain the height and center...
@@ -1227,12 +1223,11 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     else:  # there is more than one parent, so lets use gridspec
         gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
-        print("Parent gs:", gslb)
+
         lb = layoutbox.LayoutBox(parent=gslb.parent,
                                 name=gslb.parent.name + '.cbar')
 
         if location in ('left', 'right'):
-            print('LR')
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightwidth=False,
@@ -1250,14 +1245,12 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             # set the width of the spine box
             lbspine.set_width(lbspine.height * (1./aspect), strength='strong')
         elif location in ('bottom', 'top'):
-            print('TB')
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightheight=True,
                                     spine=False)
 
             if location == 'bottom':
-                print('Bottom!')
                 layoutbox.vstack([gslb, lb], padding=0.01)
             else:
                 layoutbox.vstack([lb, gslb], padding=0.01)

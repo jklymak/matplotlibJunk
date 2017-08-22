@@ -73,8 +73,6 @@ class SubplotBase(object):
 
         # _axes_class is set in the subplot_class_factory
         self._axes_class.__init__(self, fig, self.figbox, **kwargs)
-        print(self._axes_class)
-        print(self)
         # add a layout box to this, for both the full axis, and the spines
         # of the axis.  We need both because the axes may become smaller
         # due to parasitic axes and hence no longer fill the subplotspec.
@@ -83,7 +81,7 @@ class SubplotBase(object):
         self.spinelayoutbox = layoutbox.LayoutBox(parent=
             self.layoutbox, name=self.layoutbox.name+'.spine',
             spine=True)
-        if 1:
+        if 0:
             self.layoutbox.update_variables()
             layoutbox.print_tree(self.spinelayoutbox)
 
@@ -128,7 +126,6 @@ class SubplotBase(object):
         self.figbox, self.rowNum, self.colNum, self.numRows, self.numCols = \
             self.get_subplotspec().get_position(self.figure,
                                                 return_all=True)
-        print(self.figbox)
 
     def is_first_col(self):
         return self.colNum == 0

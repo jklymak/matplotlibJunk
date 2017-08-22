@@ -479,7 +479,6 @@ class _AxesBase(martist.Artist):
         """ % {'scale': ' | '.join(
             [repr(x) for x in mscale.get_scale_names()])}
         martist.Artist.__init__(self)
-        print(rect)
         if isinstance(rect, mtransforms.Bbox):
             self._position = rect
         else:
