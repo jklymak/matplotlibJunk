@@ -79,10 +79,10 @@ class SubplotBase(object):
         # of the axis.  We need both because the axes may become smaller
         # due to parasitic axes and hence no longer fill the subplotspec.
         self.layoutbox = layoutbox.LayoutBox(parent=
-            self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'ax'+layoutbox.randid())
+            self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
         self.spinelayoutbox = layoutbox.LayoutBox(parent=
-            self.layoutbox, name=self.layoutbox.name+'spine',
-            spine=True)
+            self.layoutbox, name=self.layoutbox.name+'.spine',
+            spine=True, tight=False)
         if 1:
             self.layoutbox.update_variables()
             layoutbox.print_tree(self.spinelayoutbox)

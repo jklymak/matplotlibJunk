@@ -40,6 +40,7 @@ import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 import matplotlib.ticker as ticker
 import matplotlib.transforms as mtransforms
+import matplotlib.layoutbox as layoutbox
 
 from matplotlib import docstring
 
@@ -1172,6 +1173,76 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     cax = fig.add_axes(pbcb)
     cax.set_aspect(aspect, anchor=anchor, adjustable='box')
+
+    # OK, now make a layoutbox for the cb axis.  Later, we will use this
+    # to make the colorbar fit nicely.
+    # TODO: DO horizontal as well!
+
+    ax = parents[0]
+    axlb = ax.layoutbox
+    axspine = ax.spinelayoutbox
+    axsslb = ax.get_subplotspec().layoutbox
+    lb = layoutbox.LayoutBox(parent=axsslb,
+                            name=axsslb.name + '.cbar')
+
+    if location in ('left', 'right'):
+        print('LR')
+        lbspine = layoutbox.LayoutBox(parent=lb,
+                                name=lb.name + '.spine',
+                                tightwidth=False,
+                                spine=False)
+
+        if location == 'right':
+            # arrange to right of parent axis
+            layoutbox.hstack([axlb, lb], padding=0.01)
+        else:
+            layoutbox.hstack([lb, axlb], padding=0.01)
+        # constrain the height and center...
+        layoutbox.match_heights([axspine, lbspine], [1., shrink])
+        #lbspine.set_height(axspine.height * shrink)
+        layoutbox.align([axspine, lbspine], 'v_center')
+        # set the width of the spine box
+        lbspine.set_width(lbspine.height * (1./aspect), strength='strong')
+    elif location in ('bottom', 'top'):
+        print('TB')
+        lbspine = layoutbox.LayoutBox(parent=lb,
+                                name=lb.name + '.spine',
+                                tightheight=True,
+                                spine=False)
+
+        if location == 'bottom':
+            print('Bottom!')
+            #layoutbox.vstack([axlb, lb], padding=0.01)
+            lb.solver.addConstraint(lb.top <= axlb.bottom - 0.01)
+
+            lb.solver.dump()
+        else:
+            layoutbox.vstack([lb, axlb], padding=0.01)
+        # constrain the height and center...
+        lb.update_variables()
+        print(axspine.width.value())
+        lb.solver.addConstraint((axspine.width == lbspine.width) | 'strong')
+        lb.update_variables()
+        #layoutbox.match_widths([axspine, lbspine],
+        #                        [1., shrink], strength='weak')
+        #lbspine.set_height(axspine.height * shrink)
+        layoutbox.align([axspine, lbspine], 'h_center')
+        # set the height of the spine box
+        lb.update_variables()
+        print(aspect)
+        lbspine.set_height(axspine.width * (aspect), strength='medium')
+        #lbspine.set_height(0.01, strength='strong')
+        lb.update_variables()
+        print(axspine)
+        print(axspine.width.value())
+        
+    cax.set_layoutbox(lb)
+    cax.set_layoutboxspine(lbspine)
+
+    #lb.solver.dump()
+
+    #layoutbox.print_tree(cax.get_figure().layoutbox)
+
     return cax, kw
 
 
@@ -1228,13 +1299,13 @@ def make_axes_gridspec(parent, **kw):
         pad = kw.pop('pad', 0.05)
         wh_space = 2 * pad / (1 - pad)
 
-        gs = gs_from_subplotspec(1, 2,
+        gs = gs_from_subplotspec(parent.get_figure(), 1, 2,
                                  subplot_spec=parent.get_subplotspec(),
                                  wspace=wh_space,
                                  width_ratios=[x1 - pad, fraction]
                                  )
 
-        gs2 = gs_from_subplotspec(3, 1,
+        gs2 = gs_from_subplotspec(parent.get_figure(), 3, 1,
                                   subplot_spec=gs[1],
                                   hspace=0.,
                                   height_ratios=wh_ratios,

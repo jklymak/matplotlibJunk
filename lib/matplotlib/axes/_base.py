@@ -577,6 +577,9 @@ class _AxesBase(martist.Artist):
             right=rcParams['ytick.right'] and rcParams['ytick.major.right'],
             which='major')
 
+        self.layoutbox = None
+        self.spinelayoutbox = None
+
 
     def __getstate__(self):
         # The renderer should be re-created by the figure, and then cached at
@@ -2422,6 +2425,19 @@ class _AxesBase(martist.Artist):
 
     def get_renderer_cache(self):
         return self._cachedRenderer
+
+    # layoutboxes:
+    def set_layoutbox(self, layoutbox):
+        """
+        Set the layoutbox for this axis...
+        """
+        self.layoutbox = layoutbox
+
+    def set_layoutboxspine(self, layoutbox):
+        """
+        Set the spinelayoutbox for this axis...
+        """
+        self.spinelayoutbox  = layoutbox
 
     # Axes rectangle characteristics
 

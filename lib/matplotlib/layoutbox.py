@@ -20,7 +20,8 @@ class LayoutBox(object):
 
 
 
-    def __init__(self, parent=None, name='', tight=False, artist=None,
+    def __init__(self, parent=None, name='', tightwidth=False,
+                tightheight=False, artist=None,
                  lower_left=(0, 0), upper_right=(1, 1), spine=False):
         Variable = kiwi.Variable
         self.parent = parent
@@ -53,7 +54,8 @@ class LayoutBox(object):
 
         right, top = upper_right
         left, bottom = lower_left
-        self.tight = tight
+        self.tightheight = tightheight
+        self.tightwidth = tightwidth
         self.add_constraints()
         self.children = []
         self.subplotspec = None
@@ -72,7 +74,7 @@ class LayoutBox(object):
         # never let width and height go negative.
         for i in [self.min_width, self.min_height]:
             sol.addEditVariable(i, 1e9)
-            sol.suggestValue(i, 0)
+            sol.suggestValue(i, 0.0)
         # define relation ships between things thing width and right and left
         self.hard_constraints()
         self.soft_constraints()
@@ -82,7 +84,7 @@ class LayoutBox(object):
 
     def parent_constrain(self):
         parent = self.parent
-        eps = 0.00000000000001
+        eps = 0.0001
         hc = [self.left >= parent.left+eps,
               self.bottom >= parent.bottom +eps,
               self.top <= parent.top - eps,
@@ -102,17 +104,25 @@ class LayoutBox(object):
 
     def soft_constraints(self):
         sol = self.solver
-        if self.tight:
-            suggest = 0
+        if self.tightwidth:
+            suggest = 0.
         else:
-            suggest = 100000.
-        for i in [self.pref_width, self.pref_height]:
-            sol.addEditVariable(i, 'strong')
-            sol.suggestValue(i, suggest)
+            suggest = 1.
+        c = [(self.pref_width == suggest)]
+        for i in c:
+            sol.addConstraint(i | 'required')
+        if self.tightheight:
+            suggest = 0.
+        else:
+            suggest = 1.
+        c = [(self.pref_height == suggest)]
+        for i in c:
+            sol.addConstraint(i | 'required')
+
         c = [(self.pref_width == self.width),
              (self.pref_height == self.height)]
         for i in c:
-            sol.addConstraint(i | 0.1)
+            sol.addConstraint(i | 'weak')
 
     def set_parent(self, parent):
         ''' replace the parent of this with the new parent
@@ -120,7 +130,7 @@ class LayoutBox(object):
         self.parent = parent
         self.parent_constrain()
 
-    def set_geometry_soft(self, left, bottom, right, top, strength=1e9):
+    def set_geometry_soft(self, left, bottom, right, top, strength='medium'):
         sol = self.solver
         for i in [self.top, self.bottom,
                   self.left, self.right]:
@@ -132,46 +142,46 @@ class LayoutBox(object):
         sol.suggestValue(self.right, right)
         sol.updateVariables()
 
-    def set_geometry(self, left, bottom, right, top, strength=1e9):
+    def set_geometry(self, left, bottom, right, top, strength='strong'):
         hc = [self.left == left,
             self.right == right,
             self.bottom == bottom,
             self.top == top]
         for c in hc:
-            self.solver.addConstraint(c)
+            self.solver.addConstraint((c | strength))
         self.solver.updateVariables()
 
-    def set_left_margin(self, margin):
+    def set_left_margin(self, margin, strength='strong'):
         c = (self.left == self.parent.left + margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | strength)
 
     def set_left_margin_min(self, margin):
         c = (self.left >= self.parent.left + margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | 'strong')
 
-    def set_right_margin(self, margin):
+    def set_right_margin(self, margin, strength='strong'):
         c = (self.right == self.parent.right - margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | strength)
 
     def set_right_margin_min(self, margin):
         c = (self.right <= self.parent.right - margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | 'strong')
 
-    def set_bottom_margin(self, margin):
+    def set_bottom_margin(self, margin, strength='strong'):
         c = (self.bottom == self.parent.bottom + margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | strength)
 
     def set_bottom_margin_min(self, margin):
         c = (self.bottom >= self.parent.bottom + margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | 'strong')
 
-    def set_top_margin(self, margin):
+    def set_top_margin(self, margin, strength='strong'):
         c = (self.top == self.parent.top - margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | strength)
 
     def set_top_margin_min(self, margin):
         c = (self.top <= self.parent.top - margin )
-        self.solver.addConstraint(c | 'medium')
+        self.solver.addConstraint(c | 'strong')
 
     def set_width_margins(self,margin):
         self.set_left_margin(margin)
@@ -197,19 +207,19 @@ class LayoutBox(object):
         '''
         self.solver.updateVariables()
 
-    def set_height(self,height):
+    def set_height(self, height, strength='strong'):
         c = (self.height == height)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
-    def set_width(self,width):
+    def set_width(self, width, strength='strong'):
         c = (self.width == width)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
-    def set_left(self,left):
+    def set_left(self, left):
         c = (self.left == left)
         self.solver.addConstraint(c | 'strong')
 
-    def set_bottom(self,bottom):
+    def set_bottom(self, bottom):
         c = (self.bottom == bottom)
         self.solver.addConstraint(c | 'strong')
 
@@ -331,9 +341,17 @@ class LayoutBox(object):
             bottompad = padding
             leftpad = padding
             rightpad = padding
-        cblb = LayoutBox(parent=self.parent, name=self.parent.name+'.cblb', artist=ax)
+        cblb = LayoutBox(
+            parent=self.parent,
+            name=self.parent.name+'.right',
+            artist=ax,
+            tight=True)
         # this is the location for the colorbar spine
-        cbspinelb = LayoutBox(parent=cblb, name=cblb.name+'.cbspinelb', spine=True)
+        cbspinelb = LayoutBox(
+            parent=cblb,
+            name=cblb.name+'.rightspine',
+            spine=False)
+        # this is really a spine, but we don't want it to share margins
         c = (self.right  <= cblb.left)
         self.solver.addConstraint(c | 'required')
         # hstack([self,cblb], padding=0.)
@@ -341,21 +359,29 @@ class LayoutBox(object):
         cbspinelb.set_height(self.height*shrink)
         align([self,cbspinelb],'v_center')
 
-        fig = ax.get_figure()
-        renderer = fig.canvas.get_renderer()
-        pos = ax.get_position()
-        invTransFig = fig.transFigure.inverted().transform_bbox
-        bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
+        if 1:
+            fig = ax.get_figure()
+            renderer = fig.canvas.get_renderer()
+            pos = ax.get_position()
+            invTransFig = fig.transFigure.inverted().transform_bbox
+            bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
 
-        # set the width of the parent box.
-        cblb.set_width(bbox.x1-bbox.x0)
-        c = (cblb.width  == bbox.x1-bbox.x0)
-        self.solver.addConstraint(c | 'strong')
-
-        cbspinelb.set_left_margin_min(-bbox.x0+pos.x0+leftpad)
-        cbspinelb.set_right_margin_min(bbox.x1-pos.x1+rightpad)
-        cbspinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
-        cbspinelb.set_top_margin_min(bbox.y1-pos.y1+toppad)
+            # set the width of the parent box.
+            print("Pos:", pos)
+            print("BBOX:", bbox)
+            # cblb.set_width(bbox.x1-bbox.x0)
+            print("Width:", bbox.x1-bbox.x0)
+            c = (cbspinelb.width  == 0.05 * self.width)
+            self.solver.addConstraint(c | 'strong')
+            c = (cblb.width  == bbox.x1-bbox.x0)
+            self.solver.addConstraint(c | 'medium')
+            if 0:
+                print("margin  Left: ", -bbox.x0+pos.x0+leftpad)
+                print("margin Right: ", bbox.x1-pos.x1+rightpad)
+                cbspinelb.set_left_margin(-bbox.x0+pos.x0+leftpad)
+                cbspinelb.set_right_margin(bbox.x1-pos.x1+rightpad)
+                cbspinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
+                cbspinelb.set_top_margin_min(bbox.y1-pos.y1+toppad)
 
         return cblb, cbspinelb
 
@@ -399,7 +425,7 @@ class LayoutBox(object):
         args = (self.name, self.left.value(), self.bottom.value(),
                 self.right.value(), self.top.value(), self.pref_width.value(),
                 self.artist, self.spine)
-        return 'LayoutBox: %s, (left: %1.2f) (bot: %1.2f) (right: %1.2f) (top: %1.2f) (pref_width: %1.2f) (artist: %s) (spine?: %s)'%args
+        return 'LayoutBox: %40s, (left: %1.2f) (bot: %1.2f) (right: %1.2f) (top: %1.2f) (pref_width: %1.2f) (artist: %s) (spine?: %s)'%args
 
 def hstack(boxes, padding=0):
     '''
@@ -419,7 +445,7 @@ def vstack(boxes, padding=0):
         c = (boxes[i-1].bottom - padding >= boxes[i].top)
         boxes[i].solver.addConstraint(c | 'strong')
 
-def match_heights(boxes, height_ratios=None):
+def match_heights(boxes, height_ratios=None, strength='medium'):
     '''
     Stack LayoutBox instances from top to bottom
     '''
@@ -429,9 +455,9 @@ def match_heights(boxes, height_ratios=None):
     for i in range(1,len(boxes)):
         c = (boxes[i-1].height ==
                 boxes[i].height*height_ratios[i-1]/height_ratios[i])
-        boxes[i].solver.addConstraint(c | 'medium')
+        boxes[i].solver.addConstraint(c | strength)
 
-def match_widths(boxes, width_ratios=None):
+def match_widths(boxes, width_ratios=None, strength='medium'):
     '''
     Stack LayoutBox instances from top to bottom
     '''
@@ -441,7 +467,7 @@ def match_widths(boxes, width_ratios=None):
     for i in range(1,len(boxes)):
         c = (boxes[i-1].width ==
                 boxes[i].width*width_ratios[i-1]/width_ratios[i])
-        boxes[i].solver.addConstraint(c | 'medium')
+        boxes[i].solver.addConstraint(c | strength)
 
 def vstackeq(boxes, padding=0, height_ratios=None):
     vstack(boxes,padding=padding)
@@ -602,3 +628,40 @@ def print_tree(lb):
         print_children(lb)
     else:
         print_tree(lb.parent)
+
+def plot_children(fig, box, level=0, printit=True):
+    '''
+    Simple plotting to show where boxes are
+    '''
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    if isinstance(fig, matplotlib.figure.Figure):
+        ax = fig.add_axes([0., 0., 1., 1.])
+    else:
+        ax = fig
+    import matplotlib.patches as patches
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    if printit:
+        print("Level:", level)
+    for child in box.children:
+        rect = child.get_rect()
+        if printit:
+            print(child)
+        ax.add_patch(
+            patches.Rectangle(
+                (child.left.value(), child.bottom.value()),   # (x,y)
+                child.width.value(),          # width
+                child.height.value(),          # height
+                fc = 'none',
+                ec = colors[level]
+            )
+        )
+        if level%2 == 0:
+            ax.text(child.left.value(), child.bottom.value(), child.name,
+                   size=12-level, color=colors[level])
+        else:
+            ax.text(child.right.value(), child.top.value(), child.name,
+                    ha='right', va='top', size=12-level, color=colors[level])
+
+        plot_children(ax, child, level=level+1, printit=printit)

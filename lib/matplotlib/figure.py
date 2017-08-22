@@ -1977,7 +1977,7 @@ class Figure(Artist):
 
         return bbox_inches
 
-    def constrained_layout(self, renderer=None, pad=0.03, h_pad=None,
+    def constrained_layout(self, renderer=None, pad=0.01, h_pad=None,
                      w_pad=None):
         """
         Use layoutbox to determine spine positions withing axes.
@@ -2009,7 +2009,8 @@ class Figure(Artist):
         gss = set([])
         for ax in axes:
             print(ax)
-            gss.add(ax.get_subplotspec().get_gridspec())
+            if hasattr(ax,'get_subplotspec'):
+                gss.add(ax.get_subplotspec().get_gridspec())
         print("Gridspecs to work on: ",gss)
 
         # try to make spine sizes...
@@ -2021,16 +2022,21 @@ class Figure(Artist):
             ax.spinelayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
             ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
 
+
         # now we need to match up margins, but only axes in the same gridspec.
         for gs in gss:
             spinelayouts = gs.layoutbox.find_child_spines()
-            layoutbox.match_margins(spinelayouts, levels=2)
+            if len(spinelayouts) > 1:
+                pass
+                # layoutbox.match_margins(spinelayouts, levels=2)
             # and update the layout for this gridspec.
             gs.layoutbox.update_variables()
+        fig.layoutbox.update_variables()
         # Now set the position of the axes...
+        layoutbox.print_tree(fig.layoutbox)
+
         for ax in axes:
             newpos = ax.spinelayoutbox.get_rect()
-            print(ax.spinelayoutbox)
             ax.set_position(newpos)
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None,

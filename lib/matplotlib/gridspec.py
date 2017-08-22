@@ -36,7 +36,7 @@ class GridSpecBase(object):
     that a subplot will be placed.
     """
 
-    def __init__(self, nrows, ncols,
+    def __init__(self, figure, nrows, ncols,
                  height_ratios=None, width_ratios=None):
         """
         The number of rows and number of columns of the grid need to
@@ -48,6 +48,7 @@ class GridSpecBase(object):
 
         self.set_height_ratios(height_ratios)
         self.set_width_ratios(width_ratios)
+
 
     def get_geometry(self):
         'get the geometry of the grid, e.g., 2,3'
@@ -82,20 +83,30 @@ class GridSpecBase(object):
     def get_height_ratios(self):
         return self._row_height_ratios
 
-    def get_grid_positions(self, fig):
+    def get_grid_positions(self, fig, raw=False):
         """
         return lists of bottom and top position of rows, left and
         right positions of columns.
+
+        If raw=True, then these are all in units relative to the container
+        with no margins.  (used for constrained_layout).
         """
         nrows, ncols = self.get_geometry()
 
-        subplot_params = self.get_subplot_params(fig)
-        left = subplot_params.left
-        right = subplot_params.right
-        bottom = subplot_params.bottom
-        top = subplot_params.top
-        wspace = subplot_params.wspace
-        hspace = subplot_params.hspace
+        left = 0.
+        right = 1.
+        bottom = 0.
+        top = 1.
+        wspace = 0.
+        hspace = 0.
+        if not raw:
+            subplot_params = self.get_subplot_params(fig)
+            left = subplot_params.left
+            right = subplot_params.right
+            bottom = subplot_params.bottom
+            top = subplot_params.top
+            wspace = subplot_params.wspace
+            hspace = subplot_params.hspace
         totWidth = right-left
         totHeight = top-bottom
 
@@ -113,7 +124,6 @@ class GridSpecBase(object):
         sepHeights = [0] + ([sepH] * (nrows-1))
         cellHs = np.add.accumulate(np.ravel(list(zip(sepHeights, cellHeights))))
 
-
         # calculate accumulated widths of rows
         cellW = totWidth/(ncols + wspace*(ncols-1))
         sepW = wspace*cellW
@@ -128,15 +138,13 @@ class GridSpecBase(object):
         sepWidths = [0] + ([sepW] * (ncols-1))
         cellWs = np.add.accumulate(np.ravel(list(zip(sepWidths, cellWidths))))
 
-
-
         figTops = [top - cellHs[2*rowNum] for rowNum in range(nrows)]
         figBottoms = [top - cellHs[2*rowNum+1] for rowNum in range(nrows)]
         figLefts = [left + cellWs[2*colNum] for colNum in range(ncols)]
         figRights = [left + cellWs[2*colNum+1] for colNum in range(ncols)]
 
-
         return figBottoms, figTops, figLefts, figRights
+
 
     def __getitem__(self, key):
         """
@@ -215,12 +223,15 @@ class GridSpec(GridSpecBase):
         self.hspace=hspace
         self.figure=fig
 
-        GridSpecBase.__init__(self, nrows, ncols,
+        GridSpecBase.__init__(self, self.figure, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
-
         self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
             name='gridspec' + layoutbox.randid())
+        # by default the layoutbox for a gridsepc will fill a figure.
+        # but this can change below if the gridspec is created from a
+        # subplotspec. (GridSpecFromSubplotSpec)
+
         #self.set_width_ratios(width_ratios)
         #self.set_height_ratios(height_ratios)
 
@@ -327,7 +338,7 @@ class GridSpecFromSubplotSpec(GridSpecBase):
     GridSpec whose subplot layout parameters are inherited from the
     location specified by a given SubplotSpec.
     """
-    def __init__(self, nrows, ncols,
+    def __init__(self, figure, nrows, ncols,
                  subplot_spec,
                  wspace=None, hspace=None,
                  height_ratios=None, width_ratios=None):
@@ -342,11 +353,15 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         self._hspace=hspace
 
         self._subplot_spec = subplot_spec
+        parentgridspec = subplot_spec.get_gridspec()
 
-        GridSpecBase.__init__(self, nrows, ncols,
+        GridSpecBase.__init__(self, figure, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
-
+        self.figure = figure
+        self.layoutbox = parentgridspec.layoutbox.layout_from_subplotspec(
+            self._subplot_spec,
+            name=figure.name + '.gridspec' + layoutbox.randid())
 
     def get_subplot_params(self, fig=None):
         """
@@ -409,7 +424,7 @@ class SubplotSpec(object):
         # this is prob a bit klunky.  Made sense for otehr layout.
 
         self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
-                name='ss'+layoutbox.randid())
+                name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
 
     def get_gridspec(self):
         return self._gridspec
