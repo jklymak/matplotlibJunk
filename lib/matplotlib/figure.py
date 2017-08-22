@@ -1284,9 +1284,11 @@ class Figure(Artist):
             renderer.open_group('figure')
             if self.get_tight_layout() and self.axes:
                 try:
-                    # self.tight_layout(renderer, **self._tight_parameters)
+                    #self.tight_layout(renderer, **self._tight_parameters)
+                    #self.constrained_layout(renderer)
                     self.constrained_layout(renderer)
                 except ValueError:
+                    print('Error!')
                     pass
                     # ValueError can occur when resizing a window.
 
@@ -1977,7 +1979,7 @@ class Figure(Artist):
 
         return bbox_inches
 
-    def constrained_layout(self, renderer=None, pad=0.01, h_pad=None,
+    def constrained_layout(self, renderer=None, pad=0.0, h_pad=None,
                      w_pad=None):
         """
         Use layoutbox to determine spine positions withing axes.
@@ -2010,13 +2012,18 @@ class Figure(Artist):
                 gss.add(ax.get_subplotspec().get_gridspec())
 
         # try to make spine sizes...
+        print('**************')
+
         for ax in axes:
             pos = ax.get_position()
+            print(pos)
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
+            print(bbox)
             ax.spinelayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
             ax.spinelayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
             ax.spinelayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
+            ax.spinelayoutbox.set_bottom_margin(-bbox.y0+pos.y0+h_pad, strength='medium')
+            # ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
 
 
         # now we need to match up margins, but only axes in the same gridspec.
@@ -2027,9 +2034,10 @@ class Figure(Artist):
                 layoutbox.match_margins(spinelayouts, levels=2)
             # and update the layout for this gridspec.
             gs.layoutbox.update_variables()
-        fig.layoutbox.update_variables()
+
+        #fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        #layoutbox.print_tree(fig.layoutbox)
+        layoutbox.print_tree(fig.layoutbox)
 
         for ax in axes:
             newpos = ax.spinelayoutbox.get_rect()

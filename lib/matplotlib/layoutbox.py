@@ -84,7 +84,7 @@ class LayoutBox(object):
 
     def parent_constrain(self):
         parent = self.parent
-        eps = 0.0001
+        eps = 0.0000000
         hc = [self.left >= parent.left+eps,
               self.bottom >= parent.bottom +eps,
               self.top <= parent.top - eps,
@@ -110,14 +110,14 @@ class LayoutBox(object):
             suggest = 1.
         c = [(self.pref_width == suggest)]
         for i in c:
-            sol.addConstraint(i | 'required')
+            sol.addConstraint(i | 'strong')
         if self.tightheight:
             suggest = 0.
         else:
             suggest = 1.
         c = [(self.pref_height == suggest)]
         for i in c:
-            sol.addConstraint(i | 'required')
+            sol.addConstraint(i | 'strong')
 
         c = [(self.pref_width == self.width),
              (self.pref_height == self.height)]
@@ -195,7 +195,6 @@ class LayoutBox(object):
         self.set_height_margin(margin)
         self.set_width_margin(margin)
 
-
     def get_rect(self):
         return (self.left.value(), self.bottom.value(),
                 self.width.value(), self.height.value())
@@ -247,7 +246,6 @@ class LayoutBox(object):
         The parent is *usually* the gridspec that made the subplotspec.??
         '''
         lb = LayoutBox(parent=self, name=name, artist=artist, spine=spine)
-        #print(subspec.get_geometry())
         gs = subspec.get_gridspec()
         nrows, ncols = gs.get_geometry()
         parent = self.parent
