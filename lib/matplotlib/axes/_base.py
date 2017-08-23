@@ -2425,18 +2425,18 @@ class _AxesBase(martist.Artist):
     def get_renderer_cache(self):
         return self._cachedRenderer
 
-    # layoutboxes:
+    # layoutboxes: allow us to set these after instantiation.  
     def set_layoutbox(self, layoutbox):
         """
         Set the layoutbox for this axis...
         """
         self.layoutbox = layoutbox
 
-    def set_layoutboxspine(self, layoutbox):
+    def set_layoutboxpos(self, layoutbox):
         """
         Set the spinelayoutbox for this axis...
         """
-        self.spinelayoutbox  = layoutbox
+        self.poslayoutbox  = layoutbox
 
     # Axes rectangle characteristics
 

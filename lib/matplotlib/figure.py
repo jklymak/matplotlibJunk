@@ -1184,7 +1184,7 @@ class Figure(Artist):
         if gridspec_kw is None:
             gridspec_kw = {}
 
-        gs = GridSpec(self, nrows, ncols, **gridspec_kw)
+        gs = GridSpec(nrows, ncols, fig=self, **gridspec_kw)
 
         # Create array to hold all axes.
         axarr = np.empty((nrows, ncols), dtype=object)
@@ -1999,10 +1999,10 @@ class Figure(Artist):
 
         return bbox_inches
 
-    def constrained_layout(self, renderer=None, pad=0.0, h_pad=None,
+    def constrained_layout(self, renderer=None, pad=0.01, h_pad=None,
                      w_pad=None):
         """
-        Use layoutbox to determine spine positions withing axes.
+        Use layoutbox to determine pos positions withing axes.
 
         pad : float
           padding between the figure edge and the edges of subplots,
@@ -2031,24 +2031,20 @@ class Figure(Artist):
             if hasattr(ax,'get_subplotspec'):
                 gss.add(ax.get_subplotspec().get_gridspec())
 
-        # try to make spine sizes...
-        print('**************')
+        # try to make pos sizes...
+        #print('**************')
 
         for ax in axes:
             pos = ax.get_position()
-            print(pos)
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
-            print(bbox)
-            ax.spinelayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
-            ax.spinelayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
-            ax.spinelayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            #ax.spinelayoutbox.set_bottom_margin(-bbox.y0+pos.y0+h_pad, strength='medium')
-            ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
+            ax.poslayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
+            ax.poslayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
+            ax.poslayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
+            ax.poslayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
 
         # now we need to match up margins, but only subplots in the same gridspec.
         for gs in gss:
             subplotlayouts = gs.layoutbox.find_child_subplots()
-            print(subplotlayouts)
             if len(subplotlayouts) > 1:
                 # pass
                 layoutbox.match_margins(subplotlayouts, levels=2)
@@ -2057,10 +2053,9 @@ class Figure(Artist):
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        layoutbox.print_tree(fig.layoutbox)
 
         for ax in axes:
-            newpos = ax.spinelayoutbox.get_rect()
+            newpos = ax.poslayoutbox.get_rect()
             ax.set_position(newpos)
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None,

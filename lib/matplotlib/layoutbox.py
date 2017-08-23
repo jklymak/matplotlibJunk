@@ -22,7 +22,7 @@ class LayoutBox(object):
 
     def __init__(self, parent=None, name='', tightwidth=False,
                 tightheight=False, artist=None,
-                 lower_left=(0, 0), upper_right=(1, 1), spine=False,
+                 lower_left=(0, 0), upper_right=(1, 1), pos=False,
                  subplot=False):
         Variable = kiwi.Variable
         self.parent = parent
@@ -35,8 +35,8 @@ class LayoutBox(object):
             parent.add_child(self)
         # keep track of artist associated w/ this layout.  Can be none
         self.artist = artist
-        # keep track if this box is supposed to be a spine that is constrained by the parent.
-        self.spine = spine
+        # keep track if this box is supposed to be a pos that is constrained by the parent.
+        self.pos = pos
         # keep track of whether we need to match this subplot up with others.
         self.subplot = subplot
 
@@ -66,12 +66,12 @@ class LayoutBox(object):
         self.add_constraints()
         self.children = []
         self.subplotspec = None
-        if self.spine:
+        if self.pos:
             self.constrain_margins()
 
     def constrain_margins(self):
         """
-        Only do this for spines.  This sets a variable distance
+        Only do this for poss.  This sets a variable distance
         margin between the spline and the outer edge of the axis
         """
         sol = self.solver
@@ -220,7 +220,6 @@ class LayoutBox(object):
         self.solver.addConstraint(c | strength)
 
     def set_top_margin_min(self, margin):
-        print("Top Margin:", margin)
         self.solver.suggestValue(self.top_margin, margin )
 
     def set_width_margins(self,margin):
@@ -265,7 +264,7 @@ class LayoutBox(object):
     def find_child_subplots(self):
         '''
         Find children of this layout box that are subplots.  We want to line
-        spines up, and this is an easy way to find them all.
+        poss up, and this is an easy way to find them all.
         '''
         if self.subplot:
             subplots = [self]
@@ -276,7 +275,7 @@ class LayoutBox(object):
         return subplots
 
 
-    def layout_from_subplotspec(self, subspec, name='', artist=None, spine=False):
+    def layout_from_subplotspec(self, subspec, name='', artist=None, pos=False):
         '''  Make a layout box from a subplotspec. The layout box is
         constrained to be a fraction of the width/height of the parent,
         and be a fraction of the parent width/height from the left/bottom
@@ -285,7 +284,7 @@ class LayoutBox(object):
 
         The parent is *usually* the gridspec that made the subplotspec.??
         '''
-        lb = LayoutBox(parent=self, name=name, artist=artist, spine=spine)
+        lb = LayoutBox(parent=self, name=name, artist=artist, pos=pos)
         gs = subspec.get_gridspec()
         nrows, ncols = gs.get_geometry()
         parent = self.parent
@@ -370,7 +369,7 @@ class LayoutBox(object):
 
     def layout_axis_right(self, ax, shrink=0.6, padding=None, toppad=0, bottompad=0, leftpad=0, rightpad=0):
         '''
-        return cblb, cbspinelb
+        return cblb, cbposlb
 
         Layout ax to the right of this layout box.
         '''
@@ -384,18 +383,18 @@ class LayoutBox(object):
             name=self.parent.name+'.right',
             artist=ax,
             tight=True)
-        # this is the location for the colorbar spine
-        cbspinelb = LayoutBox(
+        # this is the location for the colorbar pos
+        cbposlb = LayoutBox(
             parent=cblb,
-            name=cblb.name+'.rightspine',
-            spine=False)
-        # this is really a spine, but we don't want it to share margins
+            name=cblb.name+'.rightpos',
+            pos=False)
+        # this is really a pos, but we don't want it to share margins
         c = (self.right  <= cblb.left)
         self.solver.addConstraint(c | 'required')
         # hstack([self,cblb], padding=0.)
 
-        cbspinelb.set_height(self.height*shrink)
-        align([self,cbspinelb],'v_center')
+        cbposlb.set_height(self.height*shrink)
+        align([self,cbposlb],'v_center')
 
         if 1:
             fig = ax.get_figure()
@@ -405,17 +404,17 @@ class LayoutBox(object):
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
 
             # set the width of the parent box.
-            c = (cbspinelb.width  == 0.05 * self.width)
+            c = (cbposlb.width  == 0.05 * self.width)
             self.solver.addConstraint(c | 'strong')
             c = (cblb.width  == bbox.x1-bbox.x0)
             self.solver.addConstraint(c | 'medium')
             if 0:
-                cbspinelb.set_left_margin(-bbox.x0+pos.x0+leftpad)
-                cbspinelb.set_right_margin(bbox.x1-pos.x1+rightpad)
-                cbspinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
-                cbspinelb.set_top_margin_min(bbox.y1-pos.y1+toppad)
+                cbposlb.set_left_margin(-bbox.x0+pos.x0+leftpad)
+                cbposlb.set_right_margin(bbox.x1-pos.x1+rightpad)
+                cbposlb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
+                cbposlb.set_top_margin_min(bbox.y1-pos.y1+toppad)
 
-        return cblb, cbspinelb
+        return cblb, cbposlb
 
 
     def layout_axis_subplotspec(self, subspec, name='', ax=None, pad=None, toppad=0, bottompad=0, leftpad=0, rightpad=0):
@@ -428,9 +427,9 @@ class LayoutBox(object):
                 name=self.name+'.'+name+'.sslb', artist=subspec)
         # this is th contaier for the axis itself
         axlb = LayoutBox(parent=sslb, name=sslb.name+'.axlb', artist=ax)
-        # this is the location needed for the spine.
-        axspinelb = LayoutBox(parent=axlb,
-            name=axlb.name+'.axspinelb', artist=None)
+        # this is the location needed for the pos.
+        axposlb = LayoutBox(parent=axlb,
+            name=axlb.name+'.axposlb', artist=None)
 
         # now do the layout based on ax...
         fig = ax.get_figure()
@@ -439,12 +438,12 @@ class LayoutBox(object):
         invTransFig = fig.transFigure.inverted().transform_bbox
         bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
         # leftpad = 0; rightpad=0; bottompad=0.; toppad=0.
-        axspinelb.set_left_margin_min(-bbox.x0+pos.x0+leftpad)
-        axspinelb.set_right_margin_min(bbox.x1-pos.x1+rightpad)
-        axspinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
-        axspinelb.set_top_margin_min(bbox.y1-pos.y1+toppad)
+        axposlb.set_left_margin_min(-bbox.x0+pos.x0+leftpad)
+        axposlb.set_right_margin_min(bbox.x1-pos.x1+rightpad)
+        axposlb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
+        axposlb.set_top_margin_min(bbox.y1-pos.y1+toppad)
 
-        return sslb, axlb, axspinelb
+        return sslb, axlb, axposlb
 
     def place_children(self):
         for child in self.children:
@@ -456,8 +455,8 @@ class LayoutBox(object):
     def __repr__(self):
         args = (self.name, self.left.value(), self.bottom.value(),
                 self.right.value(), self.top.value(), self.pref_width.value(),
-                self.artist, self.spine)
-        return 'LayoutBox: %40s, (left: %1.2f) (bot: %1.2f) (right: %1.2f) (top: %1.2f) (pref_width: %1.2f) (artist: %s) (spine?: %s)'%args
+                self.artist, self.pos)
+        return 'LayoutBox: %40s, (left: %1.2f) (bot: %1.2f) (right: %1.2f) (top: %1.2f) (pref_width: %1.2f) (artist: %s) (pos?: %s)'%args
 
 def hstack(boxes, padding=0):
     '''
@@ -603,7 +602,7 @@ def constrained_layout(fig, parent=None, axs=None, leftpad=0, bottompad=0,
 
 
     axlbs = []
-    spinelbs = []
+    poslbs = []
 
     renderer = fig.canvas.get_renderer()
     for n,ax in enumerate(axs):
@@ -615,25 +614,25 @@ def constrained_layout(fig, parent=None, axs=None, leftpad=0, bottompad=0,
         invTransFig = fig.transFigure.inverted().transform_bbox
         bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
 
-        spinelb = LayoutBox(parent=axlb, name=name+'spinelb%d'%n)
-        spinelb.set_left_margin_min(-bbox.x0+pos.x0+leftpad)
-        spinelb.set_right_margin_min(bbox.x1-pos.x1+rightpad)
-        spinelb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
-        spinelb.set_top_margin_min(bbox.y1-pos.y1+toppad)
+        poslb = LayoutBox(parent=axlb, name=name+'poslb%d'%n)
+        poslb.set_left_margin_min(-bbox.x0+pos.x0+leftpad)
+        poslb.set_right_margin_min(bbox.x1-pos.x1+rightpad)
+        poslb.set_bottom_margin_min(-bbox.y0+pos.y0+bottompad)
+        poslb.set_top_margin_min(bbox.y1-pos.y1+toppad)
 
         axlbs += [axlb]
-        spinelbs += [spinelb]
+        poslbs += [poslb]
 
 
     # make all the margins match
-    match_margins(spinelbs)
+    match_margins(poslbs)
     # run the solver
     parentlb.update_variables()
 
     # OK, this should give us the new positions that will fit the axes...
 
-    for spinelb,ax in zip(spinelbs,axs):
-        ax.set_position(spinelb.get_rect())
+    for poslb,ax in zip(poslbs,axs):
+        ax.set_position(poslb.get_rect())
 
 def randid():
     '''

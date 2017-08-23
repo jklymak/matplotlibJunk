@@ -50,7 +50,8 @@ class SubplotBase(object):
                     raise ValueError(
                         'Single argument to subplot must be a 3-digit '
                         'integer')
-                self._subplotspec = GridSpec(rows, cols)[num - 1]
+                self._subplotspec = GridSpec(rows, cols,
+                                        fig=self.figure)[num - 1]
                 # num - 1 for converting from MATLAB to python indexing
         elif len(args) == 3:
             rows, cols, num = args
@@ -58,13 +59,15 @@ class SubplotBase(object):
             cols = int(cols)
             if isinstance(num, tuple) and len(num) == 2:
                 num = [int(n) for n in num]
-                self._subplotspec = GridSpec(rows, cols)[num[0] - 1:num[1]]
+                self._subplotspec = GridSpec(rows, cols,
+                                        fig=self.figure)[num[0] - 1:num[1]]
             else:
                 if num < 1 or num > rows*cols:
                     raise ValueError(
                         "num must be 1 <= num <= {maxn}, not {num}".format(
                             maxn=rows*cols, num=num))
-                self._subplotspec = GridSpec(rows, cols)[int(num) - 1]
+                self._subplotspec = GridSpec( rows, cols,
+                                        fig=self.figure)[int(num) - 1]
                 # num - 1 for converting from MATLAB to python indexing
         else:
             raise ValueError('Illegal argument(s) to subplot: %s' % (args,))
@@ -73,14 +76,18 @@ class SubplotBase(object):
 
         # _axes_class is set in the subplot_class_factory
         self._axes_class.__init__(self, fig, self.figbox, **kwargs)
-        # add a layout box to this, for both the full axis, and the spines
+        # add a layout box to this, for both the full axis, and the poss
         # of the axis.  We need both because the axes may become smaller
         # due to parasitic axes and hence no longer fill the subplotspec.
-        self.layoutbox = layoutbox.LayoutBox(parent=
-            self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
-        self.spinelayoutbox = layoutbox.LayoutBox(parent=
-            self.layoutbox, name=self.layoutbox.name+'.spine',
-            spine=True, subplot=True)
+        if self._subplotspec.layoutbox is None:
+            self.layoutbox = None
+            self.poslayoutbox = None
+        else:
+            self.layoutbox = layoutbox.LayoutBox(parent=
+                self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
+            self.poslayoutbox = layoutbox.LayoutBox(parent=
+                self.layoutbox, name=self.layoutbox.name+'.pos',
+                pos=True, subplot=True)
 
 
     def __reduce__(self):
@@ -105,7 +112,8 @@ class SubplotBase(object):
     # COVERAGE NOTE: Never used internally or from examples
     def change_geometry(self, numrows, numcols, num):
         """change subplot geometry, e.g., from 1,1,1 to 2,2,3"""
-        self._subplotspec = GridSpec(numrows, numcols)[num - 1]
+        self._subplotspec = GridSpec(numrows, numcols,
+                                fig=self.figure)[num - 1]
         self.update_params()
         self.set_position(self.figbox)
 

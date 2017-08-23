@@ -205,7 +205,7 @@ class GridSpec(GridSpecBase):
     as the SubplotParams.
     """
 
-    def __init__(self, fig, nrows, ncols,
+    def __init__(self, nrows, ncols, fig=None,
                  left=None, bottom=None, right=None, top=None,
                  wspace=None, hspace=None,
                  width_ratios=None, height_ratios=None):
@@ -215,26 +215,29 @@ class GridSpec(GridSpecBase):
         (e.g., left, right, etc.) can be tuned.
         """
         #self.figure = figure
-        self.left=left
-        self.bottom=bottom
-        self.right=right
-        self.top=top
-        self.wspace=wspace
-        self.hspace=hspace
-        self.figure=fig
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.top = top
+        self.wspace = wspace
+        self.hspace = hspace
+
+        self.figure = fig
 
         GridSpecBase.__init__(self, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
 
-        self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
-            name='gridspec' + layoutbox.randid())
+        if self.figure is None:
+            warnings.warn("GridSpec must be called with the fig keyword "
+                        "if constrained_layout is used")
+            self.layoutbox = None
+        else:
+            self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
+                name='gridspec' + layoutbox.randid())
         # by default the layoutbox for a gridsepc will fill a figure.
         # but this can change below if the gridspec is created from a
         # subplotspec. (GridSpecFromSubplotSpec)
-
-        #self.set_width_ratios(width_ratios)
-        #self.set_height_ratios(height_ratios)
 
 
     _AllowedKeys = ["left", "bottom", "right", "top", "wspace", "hspace"]
@@ -339,7 +342,7 @@ class GridSpecFromSubplotSpec(GridSpecBase):
     GridSpec whose subplot layout parameters are inherited from the
     location specified by a given SubplotSpec.
     """
-    def __init__(self, figure, nrows, ncols,
+    def __init__(self, nrows, ncols,
                  subplot_spec,
                  wspace=None, hspace=None,
                  height_ratios=None, width_ratios=None):
@@ -352,16 +355,18 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         """
         self._wspace=wspace
         self._hspace=hspace
-        print(height_ratios)
         self._subplot_spec = subplot_spec
         GridSpecBase.__init__(self, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
-        self.figure = figure
+        # self.figure = figure
         # do the layoutboxes
         subspeclb = subplot_spec.layoutbox
-        self.layoutbox = layoutbox.LayoutBox(parent=subspeclb,
-                    name=subspeclb.name + 'gridspec' +  layoutbox.randid())
+        if subspeclb is None:
+            self.layoutbox = None
+        else:
+            self.layoutbox = layoutbox.LayoutBox(parent=subspeclb,
+                        name=subspeclb.name + 'gridspec' +  layoutbox.randid())
 
     def get_subplot_params(self, fig=None):
         """
@@ -422,8 +427,11 @@ class SubplotSpec(object):
         self.num1 = num1
         self.num2 = num2
         # this is prob a bit klunky.  Made sense for otehr layout.
-        self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
-                name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
+        if gridspec.layoutbox is not None:
+            self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
+                    name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
+        else:
+            self.layoutbox = None
 
 
     def get_gridspec(self):
