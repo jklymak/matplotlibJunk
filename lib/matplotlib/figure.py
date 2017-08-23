@@ -607,6 +607,22 @@ class Figure(Artist):
         else:
             self._suptitle = sup
 
+        if self.layoutbox is not None:
+            # assign a layout box to the suptitle...
+            figlb = self.layoutbox
+            self._suptitle.layoutbox = layoutbox.LayoutBox(parent=figlb,
+                name=figlb.name+'.suptitle')
+            pos = self._suptitle.get_position()
+            renderer = self.canvas.get_renderer()
+            invTransFig = self.transFigure.inverted().transform_bbox
+            bbox = invTransFig(
+                self._suptitle.get_window_extent(renderer=renderer))
+            height = bbox.y1 - bbox.y0
+            self._suptitle.layoutbox.set_height(height)
+            for child in figlb.children:
+                if not (child == self._suptitle.layoutbox):
+                    layoutbox.vstack([self._suptitle.layoutbox, child],
+                                padding=0.01)
         self.stale = True
         return self._suptitle
 

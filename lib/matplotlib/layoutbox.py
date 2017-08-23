@@ -18,8 +18,6 @@ class LayoutBox(object):
     Basic rectangle representation using kiwi solver variables
     """
 
-
-
     def __init__(self, parent=None, name='', tightwidth=False,
                 tightheight=False, artist=None,
                  lower_left=(0, 0), upper_right=(1, 1), pos=False,
@@ -32,8 +30,10 @@ class LayoutBox(object):
             self.solver = kiwi.Solver()
         else:
             self.solver = parent.solver
+            # parent wants to know about this child!
             parent.add_child(self)
         # keep track of artist associated w/ this layout.  Can be none
+        # not sure I use this anymore...
         self.artist = artist
         # keep track if this box is supposed to be a pos that is constrained by the parent.
         self.pos = pos
