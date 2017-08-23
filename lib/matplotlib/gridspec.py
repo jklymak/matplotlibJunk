@@ -36,7 +36,7 @@ class GridSpecBase(object):
     that a subplot will be placed.
     """
 
-    def __init__(self, figure, nrows, ncols,
+    def __init__(self, nrows, ncols,
                  height_ratios=None, width_ratios=None):
         """
         The number of rows and number of columns of the grid need to
@@ -223,9 +223,10 @@ class GridSpec(GridSpecBase):
         self.hspace=hspace
         self.figure=fig
 
-        GridSpecBase.__init__(self, self.figure, nrows, ncols,
+        GridSpecBase.__init__(self, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
+
         self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
             name='gridspec' + layoutbox.randid())
         # by default the layoutbox for a gridsepc will fill a figure.
@@ -351,9 +352,9 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         """
         self._wspace=wspace
         self._hspace=hspace
-
+        print(height_ratios)
         self._subplot_spec = subplot_spec
-        GridSpecBase.__init__(self, figure, nrows, ncols,
+        GridSpecBase.__init__(self, nrows, ncols,
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
         self.figure = figure

@@ -1189,7 +1189,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightwidth=False,
-                                    spine=False)
+                                    spine=True,
+                                    subplot=False)
 
             if location == 'right':
                 # arrange to right of parent axis
@@ -1206,7 +1207,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightheight=True,
-                                    spine=False)
+                                    spine=True,
+                                    subplot=False)
 
             if location == 'bottom':
                 layoutbox.vstack([axlb, lb], padding=0.01)
@@ -1222,6 +1224,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             #lbspine.set_height(0.01, strength='strong')
 
     else:  # there is more than one parent, so lets use gridspec
+
         gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
 
         lb = layoutbox.LayoutBox(parent=gslb.parent,
@@ -1231,7 +1234,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightwidth=False,
-                                    spine=False)
+                                    spine=True,
+                                    subplot=False)
 
             if location == 'right':
                 # arrange to right of parent axis
@@ -1239,26 +1243,80 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             else:
                 layoutbox.hstack([lb, gslb], padding=0.01)
             # constrain the height and center...
-            layoutbox.match_heights([gslb, lbspine], [1., shrink])
-            #lbspine.set_height(axspine.height * shrink)
-            layoutbox.align([gslb, lbspine], 'v_center')
+            # This isn't quite right.  We'd like the colorbar
+            # spine to line up w/ the axes spines, not the size of the
+            # gs.
+            maxrow = -100000
+            minrow = 1000000
+            maxax = None
+            minax = None
+
+            for ax in parents:
+                nrows, ncols = ax.get_subplotspec().get_gridspec().get_geometry()
+                subspec = ax.get_subplotspec()
+                for num in [subspec.num1, subspec.num2]:
+                    rowNum1, colNum1 =  divmod(subspec.num1, ncols)
+                    if rowNum1 > maxrow:
+                        maxrow = rowNum1
+                        maxax = ax
+                    if rowNum1 < minrow:
+                        minrow = rowNum1
+                        minax = ax
+                print(minrow)
+                print(maxrow)
+
+            # invert the order so these are bottom to top:
+            maxspinelb = minax.spinelayoutbox
+            minspinelb = maxax.spinelayoutbox
+            # now we want the height of the colorbar spine to be
+            # set by the top and bottom of these spines
+            # bottom              top
+            #     b             t
+            # h = (top-bottom)*shrink
+            # b = bottom + (top-bottom - h) / 2.
+            lbspine.set_height((maxspinelb.top-minspinelb.bottom)*shrink)
+            lbspine.set_bottom(
+                        (maxspinelb.top-minspinelb.bottom) *
+                        (1.-shrink)/2. + minspinelb.bottom)
+
+            #layoutbox.match_heights([gslb, lbspine], [1., shrink])
+            #layoutbox.align([gslb, lbspine], 'v_center')
             # set the width of the spine box
             lbspine.set_width(lbspine.height * (1./aspect), strength='strong')
         elif location in ('bottom', 'top'):
             lbspine = layoutbox.LayoutBox(parent=lb,
                                     name=lb.name + '.spine',
                                     tightheight=True,
-                                    spine=False)
+                                    spine=True,
+                                    subplot=False)
 
             if location == 'bottom':
                 layoutbox.vstack([gslb, lb], padding=0.01)
             else:
                 layoutbox.vstack([lb, gslb], padding=0.01)
-            # lb.solver.addConstraint((axspine.width == lbspine.width) | 'strong')
-            layoutbox.match_widths([gslb, lbspine],
-                                    [1., shrink], strength='weak')
-            #lbspine.set_height(axspine.height * shrink)
-            layoutbox.align([gslb, lbspine], 'h_center')
+
+            maxcol = -100000
+            mincol = 1000000
+            maxax = None
+            minax = None
+
+            for ax in parents:
+                nrows, ncols = ax.get_subplotspec().get_gridspec().get_geometry()
+                subspec = ax.get_subplotspec()
+                for num in [subspec.num1, subspec.num2]:
+                    rowNum1, colNum1 =  divmod(subspec.num1, ncols)
+                    if colNum1 > maxcol:
+                        maxcol = colNum1
+                        maxax = ax
+                    if rowNum1 < mincol:
+                        mincol = colNum1
+                        minax = ax
+            maxspinelb = maxax.spinelayoutbox
+            minspinelb = minax.spinelayoutbox
+            lbspine.set_width((maxspinelb.right - minspinelb.left) * shrink)
+            lbspine.set_left(
+                        (maxspinelb.right - minspinelb.left) *
+                        (1.-shrink)/2. + minspinelb.left)
             # set the height of the spine box
             lbspine.set_height(lbspine.width * (aspect), strength='medium')
 

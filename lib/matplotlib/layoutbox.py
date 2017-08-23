@@ -22,7 +22,8 @@ class LayoutBox(object):
 
     def __init__(self, parent=None, name='', tightwidth=False,
                 tightheight=False, artist=None,
-                 lower_left=(0, 0), upper_right=(1, 1), spine=False):
+                 lower_left=(0, 0), upper_right=(1, 1), spine=False,
+                 subplot=False):
         Variable = kiwi.Variable
         self.parent = parent
         self.name = name
@@ -36,6 +37,8 @@ class LayoutBox(object):
         self.artist = artist
         # keep track if this box is supposed to be a spine that is constrained by the parent.
         self.spine = spine
+        # keep track of whether we need to match this subplot up with others.
+        self.subplot = subplot
 
         self.top = Variable(sn + 'top')
         self.bottom = Variable(sn + 'bottom')
@@ -51,6 +54,10 @@ class LayoutBox(object):
         self.min_height = Variable(sn + 'min_height')
         self.pref_width = Variable(sn + 'pref_width')
         self.pref_height = Variable(sn + 'pref_height')
+        self.left_margin = Variable(sn + 'left_margin')
+        self.right_margin = Variable(sn + 'right_margin')
+        self.bottom_margin = Variable(sn + 'bottom_margin')
+        self.top_margin = Variable(sn + 'top_margin')
 
         right, top = upper_right
         left, bottom = lower_left
@@ -59,6 +66,40 @@ class LayoutBox(object):
         self.add_constraints()
         self.children = []
         self.subplotspec = None
+        if self.spine:
+            self.constrain_margins()
+
+    def constrain_margins(self):
+        """
+        Only do this for spines.  This sets a variable distance
+        margin between the spline and the outer edge of the axis
+        """
+        sol = self.solver
+
+        #left
+        if not sol.hasEditVariable(self.left_margin):
+            sol.addEditVariable(self.left_margin, 'medium')
+            sol.suggestValue(self.left_margin, 0.0001)
+        c = (self.left_margin == self.left - self.parent.left)
+        self.solver.addConstraint(c | 'required')
+        #right
+        if not sol.hasEditVariable(self.right_margin):
+            sol.addEditVariable(self.right_margin, 'medium')
+            sol.suggestValue(self.right_margin, 0.0001)
+        c = (self.right_margin == self.parent.right - self.right)
+        self.solver.addConstraint(c | 'required')
+        #bottom
+        if not sol.hasEditVariable(self.bottom_margin):
+            sol.addEditVariable(self.bottom_margin, 'medium')
+            sol.suggestValue(self.bottom_margin, 0.0001)
+        c = (self.bottom_margin == self.bottom - self.parent.bottom)
+        self.solver.addConstraint(c | 'required')
+        #top
+        if not sol.hasEditVariable(self.top_margin):
+            sol.addEditVariable(self.top_margin, 'medium')
+            sol.suggestValue(self.top_margin, 0.0001)
+        c = (self.top_margin == self.parent.top - self.top)
+        self.solver.addConstraint(c | 'required')
 
     def add_child(self, child):
         self.children += [child]
@@ -156,32 +197,31 @@ class LayoutBox(object):
         self.solver.addConstraint(c | strength)
 
     def set_left_margin_min(self, margin):
-        c = (self.left >= self.parent.left + margin )
-        self.solver.addConstraint(c | 'strong')
+        self.solver.suggestValue(self.left_margin, margin )
+        #c = (self.left >= self.parent.left + margin )
+        #self.solver.addConstraint(c | 'strong')
 
     def set_right_margin(self, margin, strength='strong'):
         c = (self.right == self.parent.right - margin )
         self.solver.addConstraint(c | strength)
 
     def set_right_margin_min(self, margin):
-        c = (self.right <= self.parent.right - margin )
-        self.solver.addConstraint(c | 'strong')
+        self.solver.suggestValue(self.right_margin, margin )
 
     def set_bottom_margin(self, margin, strength='strong'):
         c = (self.bottom == self.parent.bottom + margin )
         self.solver.addConstraint(c | strength)
 
     def set_bottom_margin_min(self, margin):
-        c = (self.bottom >= self.parent.bottom + margin )
-        self.solver.addConstraint(c | 'strong')
+        self.solver.suggestValue(self.bottom_margin, margin )
 
     def set_top_margin(self, margin, strength='strong'):
         c = (self.top == self.parent.top - margin )
         self.solver.addConstraint(c | strength)
 
     def set_top_margin_min(self, margin):
-        c = (self.top <= self.parent.top - margin )
-        self.solver.addConstraint(c | 'strong')
+        print("Top Margin:", margin)
+        self.solver.suggestValue(self.top_margin, margin )
 
     def set_width_margins(self,margin):
         self.set_left_margin(margin)
@@ -222,18 +262,18 @@ class LayoutBox(object):
         c = (self.bottom == bottom)
         self.solver.addConstraint(c | 'strong')
 
-    def find_child_spines(self):
+    def find_child_subplots(self):
         '''
-        Find children of this layout box that are spines.  We want to line
+        Find children of this layout box that are subplots.  We want to line
         spines up, and this is an easy way to find them all.
         '''
-        if self.spine:
-            spines = [self]
+        if self.subplot:
+            subplots = [self]
         else:
-            spines = []
+            subplots = []
         for child in self.children:
-            spines += child.find_child_spines()
-        return spines
+            subplots += child.find_child_subplots()
+        return subplots
 
 
     def layout_from_subplotspec(self, subspec, name='', artist=None, spine=False):

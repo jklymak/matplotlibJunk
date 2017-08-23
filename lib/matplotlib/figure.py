@@ -283,6 +283,7 @@ class Figure(Artist):
                  frameon=None,  # whether or not to draw the figure frame
                  subplotpars=None,  # default to rc
                  tight_layout=None,  # default to rc figure.autolayout
+                 constrained_layout=None,
                  ):
         """
         *figsize*
@@ -368,6 +369,7 @@ class Figure(Artist):
         self.layoutbox.set_geometry(0., 0. ,1., 1.)
 
         self.set_tight_layout(tight_layout)
+        self.set_constrained_layout(constrained_layout)
 
         self._axstack = AxesStack()  # track all figure axes and current axes
         self.clf()
@@ -447,6 +449,7 @@ class Figure(Artist):
         """
         return self._tight
 
+
     def set_tight_layout(self, tight):
         """
         Set whether :meth:`tight_layout` is used upon drawing.
@@ -463,6 +466,20 @@ class Figure(Artist):
         self._tight = bool(tight)
         self._tight_parameters = tight if isinstance(tight, dict) else {}
         self.stale = True
+
+    def get_constrained_layout(self):
+        """
+        Return the Boolean flag, True to use :meth:`tight_layout` when drawing.
+        """
+        return self._constrained
+
+    def set_constrained_layout(self, constrained):
+        """
+        Set whether :meth:`constrained_layout` is used upon drawing.
+        """
+        if constrained is None:
+            constrained = not(self.get_tight_layout)
+        self._constrained = bool(constrained)
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
         """
@@ -1282,13 +1299,16 @@ class Figure(Artist):
 
         try:
             renderer.open_group('figure')
+            if self.get_constrained_layout() and self.axes:
+                try:
+                    self.constrained_layout(renderer)
+                except:
+                    pass
             if self.get_tight_layout() and self.axes:
                 try:
-                    #self.tight_layout(renderer, **self._tight_parameters)
-                    #self.constrained_layout(renderer)
-                    self.constrained_layout(renderer)
+                    self.tight_layout(renderer,
+                                      **self._tight_parameters)
                 except ValueError:
-                    print('Error!')
                     pass
                     # ValueError can occur when resizing a window.
 
@@ -2022,20 +2042,20 @@ class Figure(Artist):
             ax.spinelayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
             ax.spinelayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
             ax.spinelayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            ax.spinelayoutbox.set_bottom_margin(-bbox.y0+pos.y0+h_pad, strength='medium')
-            # ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
+            #ax.spinelayoutbox.set_bottom_margin(-bbox.y0+pos.y0+h_pad, strength='medium')
+            ax.spinelayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
 
-
-        # now we need to match up margins, but only axes in the same gridspec.
+        # now we need to match up margins, but only subplots in the same gridspec.
         for gs in gss:
-            spinelayouts = gs.layoutbox.find_child_spines()
-            if len(spinelayouts) > 1:
+            subplotlayouts = gs.layoutbox.find_child_subplots()
+            print(subplotlayouts)
+            if len(subplotlayouts) > 1:
                 # pass
-                layoutbox.match_margins(spinelayouts, levels=2)
+                layoutbox.match_margins(subplotlayouts, levels=2)
             # and update the layout for this gridspec.
-            gs.layoutbox.update_variables()
+            #gs.layoutbox.update_variables()
 
-        #fig.layoutbox.update_variables()
+        fig.layoutbox.update_variables()
         # Now set the position of the axes...
         layoutbox.print_tree(fig.layoutbox)
 

@@ -80,7 +80,7 @@ class SubplotBase(object):
             self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
         self.spinelayoutbox = layoutbox.LayoutBox(parent=
             self.layoutbox, name=self.layoutbox.name+'.spine',
-            spine=True)
+            spine=True, subplot=True)
 
 
     def __reduce__(self):
