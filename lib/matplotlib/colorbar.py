@@ -1389,13 +1389,13 @@ def make_axes_gridspec(parent, **kw):
         pad = kw.pop('pad', 0.05)
         wh_space = 2 * pad / (1 - pad)
 
-        gs = gs_from_subplotspec(parent.get_figure(), 1, 2,
+        gs = gs_from_subplotspec(1, 2,
                                  subplot_spec=parent.get_subplotspec(),
                                  wspace=wh_space,
                                  width_ratios=[x1 - pad, fraction]
                                  )
 
-        gs2 = gs_from_subplotspec(parent.get_figure(), 3, 1,
+        gs2 = gs_from_subplotspec(3, 1,
                                   subplot_spec=gs[1],
                                   hspace=0.,
                                   height_ratios=wh_ratios,
