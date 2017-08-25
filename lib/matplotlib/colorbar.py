@@ -1268,8 +1268,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                         if rowNum1 < minrow:
                             minrow = rowNum1
                             minax = ax
-                    print(minrow)
-                    print(maxrow)
+                    #print(minrow)
+                    #print(maxrow)
 
                 # invert the order so these are bottom to top:
                 maxposlb = minax.poslayoutbox

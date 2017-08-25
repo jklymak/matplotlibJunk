@@ -2047,7 +2047,7 @@ class Figure(Artist):
             if hasattr(ax,'get_subplotspec'):
                 gss.add(ax.get_subplotspec().get_gridspec())
 
-        #  constrain size of poslayoutbox and the axis layoutbox.
+        #  constrain the margins between poslayoutbox and the axis layoutbox.
         for ax in axes:
             pos = ax.get_position()
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
@@ -2069,15 +2069,10 @@ class Figure(Artist):
                 axs = axs[1:]
                 # now compare ax to all the axs:
                 ss0 = ax.get_subplotspec()
-                print(ss0.num1)
                 if ss0.num2 is None:
                     ss0.num2 = ss0.num1
-                print(ss0.num2)
-                print('Hello')
                 rowNum0min, colNum0min = divmod(ss0.num1, ncols)
                 rowNum0max, colNum0max = divmod(ss0.num2, ncols)
-                print('Here')
-                print(len(axs))
                 for axc in axs:
                     ssc = axc.get_subplotspec()
                     # get the rowNums and colNums
@@ -2126,15 +2121,13 @@ class Figure(Artist):
                     else:
                         ax.poslayoutbox.set_height(                            axc.poslayoutbox.height)
                     if dcolsC > dcols0:
-                        ax.poslayoutbox.set_width_min(
-                            axc.poslayoutbox.width * dcols0 / dcolsC)
-                    elif dcolsC < dcols0:
                         axc.poslayoutbox.set_width_min(
                             ax.poslayoutbox.width * dcolsC / dcols0)
+                    elif dcolsC < dcols0:
+                        ax0.poslayoutbox.set_width_min(
+                            axc.poslayoutbox.width * dcols0 / dcolsC)
                     else:
                         ax.poslayoutbox.set_width(axc.poslayoutbox.width)
-                    print("dcols0", dcols0)
-                    print("dcolsC", dcolsC)
                     ax.poslayoutbox.set_width_min(0.001)
 
 
@@ -2148,8 +2141,8 @@ class Figure(Artist):
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        layoutbox.print_tree(fig.layoutbox)
-        fig.layoutbox.solver.dump()
+        #fig.layoutbox.solver.dump()
+        #layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
             newpos = ax.poslayoutbox.get_rect()
             ax.set_position(newpos)

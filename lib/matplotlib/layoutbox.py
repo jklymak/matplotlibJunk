@@ -54,10 +54,17 @@ class LayoutBox(object):
         self.min_height = Variable(sn + 'min_height')
         self.pref_width = Variable(sn + 'pref_width')
         self.pref_height = Variable(sn + 'pref_height')
+        # margis are only used for axes-position layout boxes.  maybe should
+        # be a separate subclass:
         self.left_margin = Variable(sn + 'left_margin')
         self.right_margin = Variable(sn + 'right_margin')
         self.bottom_margin = Variable(sn + 'bottom_margin')
         self.top_margin = Variable(sn + 'top_margin')
+        # mins
+        self.left_margin_min = Variable(sn + 'left_margin_min')
+        self.right_margin_min = Variable(sn + 'right_margin_min')
+        self.bottom_margin_min = Variable(sn + 'bottom_margin_min')
+        self.top_margin_min = Variable(sn + 'top_margin_min')
 
         right, top = upper_right
         left, bottom = lower_left
@@ -72,33 +79,61 @@ class LayoutBox(object):
     def constrain_margins(self):
         """
         Only do this for poss.  This sets a variable distance
-        margin between the spline and the outer edge of the axis
+        margin between the position of the axes and the outer edge of
+        the axes.
+
+        Margins are variable because they change with the fogure size.
+
+        Margin minimums are set to make room for axes decorations.  However,
+        the margins can be larger if we are mathicng the position size to
+        otehr axes.
         """
         sol = self.solver
 
         #left
-        if not sol.hasEditVariable(self.left_margin):
-            sol.addEditVariable(self.left_margin, 'medium')
-            sol.suggestValue(self.left_margin, 0.0001)
+        if not sol.hasEditVariable(self.left_margin_min):
+            sol.addEditVariable(self.left_margin_min, 'strong')
+            sol.suggestValue(self.left_margin_min, 0.0001)
+        # if not sol.hasEditVariable(self.left_margin):
+        #     sol.addEditVariable(self.left_margin, 'weak')
+        #     sol.suggestValue(self.left_margin, 0.0001)
         c = (self.left_margin == self.left - self.parent.left)
         self.solver.addConstraint(c | 'required')
+        c = (self.left_margin >= self.left_margin_min)
+        self.solver.addConstraint(c | 'strong')
+
         #right
-        if not sol.hasEditVariable(self.right_margin):
-            sol.addEditVariable(self.right_margin, 'medium')
-            sol.suggestValue(self.right_margin, 0.0001)
+        if not sol.hasEditVariable(self.right_margin_min):
+            sol.addEditVariable(self.right_margin_min, 'strong')
+            sol.suggestValue(self.right_margin_min, 0.0001)
+        # if not sol.hasEditVariable(self.right_margin):
+        #     sol.addEditVariable(self.right_margin, 'weak')
+        #     sol.suggestValue(self.right_margin, 0.0001)
         c = (self.right_margin == self.parent.right - self.right)
         self.solver.addConstraint(c | 'required')
+        c = (self.right_margin >= self.right_margin_min)
+        self.solver.addConstraint(c | 'required')
         #bottom
-        if not sol.hasEditVariable(self.bottom_margin):
-            sol.addEditVariable(self.bottom_margin, 'medium')
-            sol.suggestValue(self.bottom_margin, 0.0001)
+        if not sol.hasEditVariable(self.bottom_margin_min):
+            sol.addEditVariable(self.bottom_margin_min, 'strong')
+            sol.suggestValue(self.bottom_margin_min, 0.0001)
+        # if not sol.hasEditVariable(self.bottom_margin):
+        #     sol.addEditVariable(self.bottom_margin, 'weak')
+        #     sol.suggestValue(self.bottom_margin, 0.0001)
         c = (self.bottom_margin == self.bottom - self.parent.bottom)
         self.solver.addConstraint(c | 'required')
+        c = (self.bottom_margin >= self.bottom_margin_min)
+        self.solver.addConstraint(c | 'required')
         #top
-        if not sol.hasEditVariable(self.top_margin):
-            sol.addEditVariable(self.top_margin, 'medium')
-            sol.suggestValue(self.top_margin, 0.0001)
+        if not sol.hasEditVariable(self.top_margin_min):
+            sol.addEditVariable(self.top_margin_min, 'strong')
+            sol.suggestValue(self.top_margin_min, 0.0001)
+        # if not sol.hasEditVariable(self.top_margin):
+        #     sol.addEditVariable(self.top_margin, 'weak')
+        #     sol.suggestValue(self.top_margin, 0.0001)
         c = (self.top_margin == self.parent.top - self.top)
+        self.solver.addConstraint(c | 'required')
+        c = (self.top_margin >= self.top_margin_min)
         self.solver.addConstraint(c | 'required')
 
     def add_child(self, child):
@@ -197,7 +232,7 @@ class LayoutBox(object):
         self.solver.addConstraint(c | strength)
 
     def set_left_margin_min(self, margin):
-        self.solver.suggestValue(self.left_margin, margin )
+        self.solver.suggestValue(self.left_margin_min, margin )
         #c = (self.left >= self.parent.left + margin )
         #self.solver.addConstraint(c | 'strong')
 
@@ -206,21 +241,21 @@ class LayoutBox(object):
         self.solver.addConstraint(c | strength)
 
     def set_right_margin_min(self, margin):
-        self.solver.suggestValue(self.right_margin, margin )
+        self.solver.suggestValue(self.right_margin_min, margin )
 
     def set_bottom_margin(self, margin, strength='strong'):
         c = (self.bottom == self.parent.bottom + margin )
         self.solver.addConstraint(c | strength)
 
     def set_bottom_margin_min(self, margin):
-        self.solver.suggestValue(self.bottom_margin, margin )
+        self.solver.suggestValue(self.bottom_margin_min, margin )
 
     def set_top_margin(self, margin, strength='strong'):
         c = (self.top == self.parent.top - margin )
         self.solver.addConstraint(c | strength)
 
     def set_top_margin_min(self, margin):
-        self.solver.suggestValue(self.top_margin, margin )
+        self.solver.suggestValue(self.top_margin_min, margin )
 
     def set_width_margins(self,margin):
         self.set_left_margin(margin)
@@ -466,23 +501,23 @@ class LayoutBox(object):
                 self.artist, self.pos)
         return 'LayoutBox: %40s, (left: %1.2f) (bot: %1.2f) (right: %1.2f) (top: %1.2f) (pref_width: %1.2f) (artist: %s) (pos?: %s)'%args
 
-def hstack(boxes, padding=0):
+def hstack(boxes, padding=0, strength='strong'):
     '''
     Stack LayoutBox instances from left to right
     '''
 
     for i in range(1,len(boxes)):
         c = (boxes[i-1].right + padding <= boxes[i].left)
-        boxes[i].solver.addConstraint(c | 'strong')
+        boxes[i].solver.addConstraint(c | strength)
 
-def vstack(boxes, padding=0):
+def vstack(boxes, padding=0, strength='strong'):
     '''
     Stack LayoutBox instances from top to bottom
     '''
 
     for i in range(1,len(boxes)):
         c = (boxes[i-1].bottom - padding >= boxes[i].top)
-        boxes[i].solver.addConstraint(c | 'strong')
+        boxes[i].solver.addConstraint(c | strength)
 
 def match_heights(boxes, height_ratios=None, strength='medium'):
     '''
