@@ -249,8 +249,16 @@ class LayoutBox(object):
         c = (self.height == height)
         self.solver.addConstraint(c | strength)
 
+    def set_height_min(self, height, strength='strong'):
+        c = (self.height >= height)
+        self.solver.addConstraint(c | strength)
+
     def set_width(self, width, strength='strong'):
         c = (self.width == width)
+        self.solver.addConstraint(c | strength)
+
+    def set_width_min(self, width, strength='strong'):
+        c = (self.width >= width)
         self.solver.addConstraint(c | strength)
 
     def set_left(self, left):

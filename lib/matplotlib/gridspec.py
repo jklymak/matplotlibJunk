@@ -354,7 +354,8 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         if subspeclb is None:
             self.layoutbox = None
         else:
-            self.layoutbox = layoutbox.LayoutBox(parent=subspeclb,
+            # OK, this here does need to divide the figure.
+            self.layoutbox = subspeclb.layout_from_subplotspec(subplot_spec,
                         name=subspeclb.name + 'gridspec' +  layoutbox.randid())
 
     def get_subplot_params(self, fig=None):
@@ -412,10 +413,15 @@ class SubplotSpec(object):
         self._gridspec = gridspec
         self.num1 = num1
         self.num2 = num2
-        # this is prob a bit klunky.  Made sense for otehr layout.
         if gridspec.layoutbox is not None:
-            self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
-                    name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
+            glb = gridspec.layoutbox
+            # So note that here we don't assign any layout yet,
+            # just make the layoutbox that will conatin all items
+            # associated w/ this axis.
+            # self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
+            #         name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
+            self.layoutbox = layoutbox.LayoutBox(parent=glb,
+                    name=glb.name + '.ss' + layoutbox.randid())
         else:
             self.layoutbox = None
 

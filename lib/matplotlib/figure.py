@@ -2047,9 +2047,7 @@ class Figure(Artist):
             if hasattr(ax,'get_subplotspec'):
                 gss.add(ax.get_subplotspec().get_gridspec())
 
-        # try to make pos sizes...
-        #print('**************')
-
+        #  constrain size of poslayoutbox and the axis layoutbox.
         for ax in axes:
             pos = ax.get_position()
             bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
@@ -2059,17 +2057,99 @@ class Figure(Artist):
             ax.poslayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
 
         # now we need to match up margins, but only subplots in the same gridspec.
+        # OK, we want subplots to be lined up w/ each other
         for gs in gss:
-            subplotlayouts = gs.layoutbox.find_child_subplots()
-            if len(subplotlayouts) > 1:
-                # pass
-                layoutbox.match_margins(subplotlayouts, levels=2)
-            # and update the layout for this gridspec.
-            #gs.layoutbox.update_variables()
+            nrows, ncols = gs.get_geometry()
+            axs = []
+            for ax in axes:
+                if hasattr(ax,'get_subplotspec'):
+                    if ax.get_subplotspec().get_gridspec() == gs:
+                        axs += [ax]
+            for ax in axs:
+                axs = axs[1:]
+                # now compare ax to all the axs:
+                ss0 = ax.get_subplotspec()
+                print(ss0.num1)
+                if ss0.num2 is None:
+                    ss0.num2 = ss0.num1
+                print(ss0.num2)
+                print('Hello')
+                rowNum0min, colNum0min = divmod(ss0.num1, ncols)
+                rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+                print('Here')
+                print(len(axs))
+                for axc in axs:
+                    ssc = axc.get_subplotspec()
+                    # get the rowNums and colNums
+                    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+                    if ssc.num2 is None:
+                        ssc.num2 = ssc.num1
+                    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+                    # OK, this tells us the relative layout of ax
+                    # with axc
+                    if colNum0max < colNumCmin:
+                        layoutbox.hstack([ss0.layoutbox, ssc.layoutbox])
+                    if colNumCmax < colNum0min:
+                        layoutbox.hstack([ssc.layoutbox, ss0.layoutbox])
+                    if colNum0min == colNumCmin:
+                        # we want the poslayoutboxes to line up on left
+                        # side of the axes spines...
+                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
+                             'left')
+                    if colNum0max == colNumCmax:
+                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
+                            'right')
+                    # vertical alignment
+                    if rowNumCmax > rowNum0min:
+                        layoutbox.vstack([ss0.layoutbox, ssc.layoutbox])
+                    if rowNum0max > rowNumCmin:
+                        layoutbox.vstack([ssc.layoutbox, ss0.layoutbox])
+                    if rowNum0min == rowNumCmin:
+                        # we want the poslayoutboxes to line up on left
+                        # side of the axes spines...
+                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
+                             'top')
+                    if rowNum0max == rowNumCmax:
+                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
+                            'bottom')
+                    # make the widths similar...
+                    drowsC = rowNumCmax - rowNumCmin + 1
+                    drows0 = rowNum0max - rowNum0min + 1
+                    dcolsC = colNumCmax - colNumCmin + 1
+                    dcols0 = colNum0max - colNum0min + 1
+                    if drowsC > drows0:
+                        ax.poslayoutbox.set_height_min(
+                            axc.poslayoutbox.height * drows0 / drowsC)
+                    elif drowsC < drows0:
+                        axc.poslayoutbox.set_height_min(
+                            ax.poslayoutbox.height * drowsC / drows0)
+                    else:
+                        ax.poslayoutbox.set_height(                            axc.poslayoutbox.height)
+                    if dcolsC > dcols0:
+                        ax.poslayoutbox.set_width_min(
+                            axc.poslayoutbox.width * dcols0 / dcolsC)
+                    elif dcolsC < dcols0:
+                        axc.poslayoutbox.set_width_min(
+                            ax.poslayoutbox.width * dcolsC / dcols0)
+                    else:
+                        ax.poslayoutbox.set_width(axc.poslayoutbox.width)
+                    print("dcols0", dcols0)
+                    print("dcolsC", dcolsC)
+                    ax.poslayoutbox.set_width_min(0.001)
+
+
+
+        # subplotlayouts = gs.layoutbox.find_child_subplots()
+        # if len(subplotlayouts) > 1:
+        #     # pass
+        #     layoutbox.match_margins(subplotlayouts, levels=2)
+        # and update the layout for this gridspec.
+        #gs.layoutbox.update_variables()
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-
+        layoutbox.print_tree(fig.layoutbox)
+        fig.layoutbox.solver.dump()
         for ax in axes:
             newpos = ax.poslayoutbox.get_rect()
             ax.set_position(newpos)
