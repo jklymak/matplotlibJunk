@@ -613,7 +613,7 @@ class Figure(Artist):
             self._suptitle.layoutbox = layoutbox.LayoutBox(parent=figlb,
                 name=figlb.name+'.suptitle')
             pos = self._suptitle.get_position()
-            renderer = self.canvas.get_renderer()
+            renderer = layoutbox.get_renderer(self)
             invTransFig = self.transFigure.inverted().transform_bbox
             bbox = invTransFig(
                 self._suptitle.get_window_extent(renderer=renderer))
@@ -1318,9 +1318,9 @@ class Figure(Artist):
         try:
             renderer.open_group('figure')
             if self.get_constrained_layout() and self.axes:
-                try:
+                if True:
                     self.constrained_layout(renderer)
-                except:
+                else:
                     pass
             if self.get_tight_layout() and self.axes:
                 try:
@@ -2015,137 +2015,48 @@ class Figure(Artist):
 
         return bbox_inches
 
-    def constrained_layout(self, renderer=None, pad=0.01, h_pad=None,
+    def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
                      w_pad=None):
         """
         Use layoutbox to determine pos positions withing axes.
 
-        pad : float
-          padding between the figure edge and the edges of subplots,
-          as a fraction of the font-size.
-        h_pad, w_pad : float
-          padding (height/width) between edges of adjacent subplots.
-          Defaults to `pad_inches`.
+        pad : string or float
+            The padding aorund a subplot.  i.e. half the distance between
+            subplot decorations, or the distance to the edge of the figure.
+
+            String is a float followed by 'px' (pixesl), 'pt' (points),
+            'in' (inches), 'cm' (centimeters), 'mm' (millimeters)
+            or 'fg' (figure-normalized units.).  i.e. pad='7.5mm'.
+            Default is '10.0pt';  Note units assume a dots per inch
+            given by `figure.canvas.get_renderer().dpi`.
+
+            If a float is provided, it is in figure relative units.
+            i.e. `pad=0.01` means that the padding will be 1 percent of
+            the figure width or height.
+
+        h_pad, w_pad : string or float
+          padding (height/width) as above but for the vertical or
+          horizontal padding.  If provided, override the value in `pad`.
         """
 
-        # Prob should convert pad to inches or pixels or...
+        import matplotlib.figunits as figunits
 
         if h_pad is None:
             h_pad = pad
         if w_pad is None:
             w_pad = pad
+        # convert to unit-relative lengths
+        w_pad = figunits.tofigw(w_pad, self)
+        h_pad = figunits.tofigh(h_pad, self)
 
-        axes = self.axes
         fig = self
+
         if renderer is None:
-            renderer = fig.canvas.get_renderer()
-        invTransFig = fig.transFigure.inverted().transform_bbox
+            renderer = layoutbox.get_renderer(fig)
+        layoutbox.constrained_layout(fig, renderer, h_pad, w_pad)
+        # this often needs to get called twice...
+#        layoutbox.constrained_layout(fig, renderer, h_pad, w_pad)
 
-        # list of unique gridspecs that contain the child axes:
-        gss = set([])
-        for ax in axes:
-            if hasattr(ax,'get_subplotspec'):
-                gss.add(ax.get_subplotspec().get_gridspec())
-
-        #  constrain the margins between poslayoutbox and the axis layoutbox.
-        for ax in axes:
-            pos = ax.get_position()
-            bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
-            ax.poslayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
-            ax.poslayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
-            ax.poslayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            ax.poslayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
-
-        # now we need to match up margins, but only subplots in the same gridspec.
-        # OK, we want subplots to be lined up w/ each other
-        for gs in gss:
-            nrows, ncols = gs.get_geometry()
-            axs = []
-            for ax in axes:
-                if hasattr(ax,'get_subplotspec'):
-                    if ax.get_subplotspec().get_gridspec() == gs:
-                        axs += [ax]
-            for ax in axs:
-                axs = axs[1:]
-                # now compare ax to all the axs:
-                ss0 = ax.get_subplotspec()
-                if ss0.num2 is None:
-                    ss0.num2 = ss0.num1
-                rowNum0min, colNum0min = divmod(ss0.num1, ncols)
-                rowNum0max, colNum0max = divmod(ss0.num2, ncols)
-                for axc in axs:
-                    ssc = axc.get_subplotspec()
-                    # get the rowNums and colNums
-                    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
-                    if ssc.num2 is None:
-                        ssc.num2 = ssc.num1
-                    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
-                    # OK, this tells us the relative layout of ax
-                    # with axc
-                    if colNum0max < colNumCmin:
-                        layoutbox.hstack([ss0.layoutbox, ssc.layoutbox])
-                    if colNumCmax < colNum0min:
-                        layoutbox.hstack([ssc.layoutbox, ss0.layoutbox])
-                    if colNum0min == colNumCmin:
-                        # we want the poslayoutboxes to line up on left
-                        # side of the axes spines...
-                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
-                             'left')
-                    if colNum0max == colNumCmax:
-                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
-                            'right')
-                    # vertical alignment
-                    if rowNumCmax > rowNum0min:
-                        layoutbox.vstack([ss0.layoutbox, ssc.layoutbox])
-                    if rowNum0max > rowNumCmin:
-                        layoutbox.vstack([ssc.layoutbox, ss0.layoutbox])
-                    if rowNum0min == rowNumCmin:
-                        # we want the poslayoutboxes to line up on left
-                        # side of the axes spines...
-                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
-                             'top')
-                    if rowNum0max == rowNumCmax:
-                        layoutbox.align([ax.poslayoutbox, axc.poslayoutbox],
-                            'bottom')
-                    # make the widths similar...
-                    drowsC = rowNumCmax - rowNumCmin + 1
-                    drows0 = rowNum0max - rowNum0min + 1
-                    dcolsC = colNumCmax - colNumCmin + 1
-                    dcols0 = colNum0max - colNum0min + 1
-                    if drowsC > drows0:
-                        ax.poslayoutbox.set_height_min(
-                            axc.poslayoutbox.height * drows0 / drowsC)
-                    elif drowsC < drows0:
-                        axc.poslayoutbox.set_height_min(
-                            ax.poslayoutbox.height * drowsC / drows0)
-                    else:
-                        ax.poslayoutbox.set_height(                            axc.poslayoutbox.height)
-                    if dcolsC > dcols0:
-                        axc.poslayoutbox.set_width_min(
-                            ax.poslayoutbox.width * dcolsC / dcols0)
-                    elif dcolsC < dcols0:
-                        ax0.poslayoutbox.set_width_min(
-                            axc.poslayoutbox.width * dcols0 / dcolsC)
-                    else:
-                        ax.poslayoutbox.set_width(axc.poslayoutbox.width)
-                    ax.poslayoutbox.set_width_min(0.001)
-
-
-
-        # subplotlayouts = gs.layoutbox.find_child_subplots()
-        # if len(subplotlayouts) > 1:
-        #     # pass
-        #     layoutbox.match_margins(subplotlayouts, levels=2)
-        # and update the layout for this gridspec.
-        #gs.layoutbox.update_variables()
-
-        fig.layoutbox.update_variables()
-        # Now set the position of the axes...
-        #fig.layoutbox.solver.dump()
-        #layoutbox.print_tree(fig.layoutbox)
-        for ax in axes:
-            newpos = ax.poslayoutbox.get_rect()
-            ax.set_position(newpos)
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None, w_pad=None,
                     rect=None):
