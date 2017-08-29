@@ -1,6 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 
+Conventions:
+
+"constrain_x" means to constrain the variable with either
+another kiwisolver variable, or a float.  i.e. `constrain_width(0.2)`
+will set a constraint that the width has to be 0.2 and this constraint is
+permanent - i.e. it will not be removed if it becomes obsolete.
+
+"edit_x" means to set x to a value (just a float), and that this value can
+change.  So `edit_width(0.2)` will set width to be 0.2, but `edit_width(0.3)`
+will allow it to change to 0.3 later.  Note that these values are still just
+"suggestions" in `kiwisolver` parlance, and could be over-ridden by
+other constrains.
+
+
+
 """
 from __future__ import division, print_function
 import kiwisolver as kiwi
@@ -170,7 +185,6 @@ class LayoutBox(object):
         for i in [self.min_width, self.min_height]:
             sol.addEditVariable(i, 1e9)
             sol.suggestValue(i, 0.0)
-
         # define relation ships between things thing width and right and left
         self.hard_constraints()
         # self.soft_constraints()
@@ -226,19 +240,7 @@ class LayoutBox(object):
         self.parent = parent
         self.parent_constrain()
 
-    def set_geometry_soft(self, left, bottom, right, top, strength='medium'):
-        sol = self.solver
-        for i in [self.top, self.bottom,
-                  self.left, self.right]:
-            if not sol.hasEditVariable(i):
-                sol.addEditVariable(i, strength)
-        sol.suggestValue(self.top, top)
-        sol.suggestValue(self.bottom, bottom)
-        sol.suggestValue(self.left, left)
-        sol.suggestValue(self.right, right)
-        sol.updateVariables()
-
-    def set_geometry(self, left, bottom, right, top, strength='strong'):
+    def constrain_geometry(self, left, bottom, right, top, strength='strong'):
         hc = [self.left == left,
             self.right == right,
             self.bottom == bottom,
@@ -247,47 +249,35 @@ class LayoutBox(object):
             self.solver.addConstraint((c | strength))
         self.solver.updateVariables()
 
-    def set_left_margin(self, margin, strength='strong'):
+    def constrain_left_margin(self, margin, strength='strong'):
         c = (self.left == self.parent.left + margin )
         self.solver.addConstraint(c | strength)
 
-    def set_left_margin_min(self, margin):
+    def edit_left_margin_min(self, margin):
         self.solver.suggestValue(self.left_margin_min, margin )
         #c = (self.left >= self.parent.left + margin )
         #self.solver.addConstraint(c | 'strong')
 
-    def set_right_margin(self, margin, strength='strong'):
+    def constrain_right_margin(self, margin, strength='strong'):
         c = (self.right == self.parent.right - margin )
         self.solver.addConstraint(c | strength)
 
-    def set_right_margin_min(self, margin):
+    def edit_right_margin_min(self, margin):
         self.solver.suggestValue(self.right_margin_min, margin )
 
-    def set_bottom_margin(self, margin, strength='strong'):
+    def constrain_bottom_margin(self, margin, strength='strong'):
         c = (self.bottom == self.parent.bottom + margin )
         self.solver.addConstraint(c | strength)
 
-    def set_bottom_margin_min(self, margin):
+    def edit_bottom_margin_min(self, margin):
         self.solver.suggestValue(self.bottom_margin_min, margin )
 
-    def set_top_margin(self, margin, strength='strong'):
+    def constrain_top_margin(self, margin, strength='strong'):
         c = (self.top == self.parent.top - margin )
         self.solver.addConstraint(c | strength)
 
-    def set_top_margin_min(self, margin):
+    def edit_top_margin_min(self, margin):
         self.solver.suggestValue(self.top_margin_min, margin )
-
-    def set_width_margins(self,margin):
-        self.set_left_margin(margin)
-        self.set_right_margin(margin)
-
-    def set_height_margins(self,margin):
-        self.set_top_margin(margin)
-        self.set_bottom_margin(margin)
-
-    def set_margins(self,margin):
-        self.set_height_margin(margin)
-        self.set_width_margin(margin)
 
     def get_rect(self):
         return (self.left.value(), self.bottom.value(),
@@ -300,7 +290,7 @@ class LayoutBox(object):
         '''
         self.solver.updateVariables()
 
-    def suggest_height(self, height, strength='strong'):
+    def edit_height(self, height, strength='strong'):
         '''
         Set the height of the layout box.
 
@@ -322,11 +312,11 @@ class LayoutBox(object):
         self.solver.addConstraint(c | strength)
 
 
-    def set_height_min(self, height, strength='strong'):
+    def constrain_height_min(self, height, strength='strong'):
         c = (self.height >= height)
         self.solver.addConstraint(c | strength)
 
-    def suggest_width(self, width, strength='strong'):
+    def edit_width(self, width, strength='strong'):
         sol = self.solver
         for i in [self.width]:
             if not sol.hasEditVariable(i):
@@ -341,16 +331,24 @@ class LayoutBox(object):
         c = (self.width == width)
         self.solver.addConstraint(c | strength)
 
-    def set_width_min(self, width, strength='strong'):
+    def constrain_width_min(self, width, strength='strong'):
         c = (self.width >= width)
         self.solver.addConstraint(c | strength)
 
-    def set_left(self, left):
+    def constrain_left(self, left):
         c = (self.left == left)
         self.solver.addConstraint(c | 'strong')
 
-    def set_bottom(self, bottom):
+    def constrain_bottom(self, bottom):
         c = (self.bottom == bottom)
+        self.solver.addConstraint(c | 'strong')
+
+    def constrain_right(self, right):
+        c = (self.right == right)
+        self.solver.addConstraint(c | 'strong')
+
+    def constrain_top(self, top):
+        c = (self.top == top)
         self.solver.addConstraint(c | 'strong')
 
     def find_child_subplots(self):
@@ -457,13 +455,6 @@ class LayoutBox(object):
             self.solver.addConstraint((c | 'strong'))
 
         return lb
-
-    def place_children(self):
-        for child in self.children:
-            child.place_children()
-            ax = child.artist
-            if (child and hasmethod(ax,'set_position')):
-                ax.set_position(child.get_rect())
 
     def __repr__(self):
         args = (self.name, self.left.value(), self.bottom.value(),

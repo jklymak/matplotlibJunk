@@ -1279,7 +1279,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 # h = (top-bottom)*shrink
                 # b = bottom + (top-bottom - h) / 2.
                 lbpos.constrain_height((maxposlb.top-minposlb.bottom)*shrink)
-                lbpos.set_bottom(
+                lbpos.constrain_bottom(
                             (maxposlb.top-minposlb.bottom) *
                             (1.-shrink)/2. + minposlb.bottom)
 
@@ -1320,7 +1320,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 minposlb = minax.poslayoutbox
                 lbpos.constrain_width((maxposlb.right - minposlb.left)
                                         * shrink)
-                lbpos.set_left(
+                lbpos.constrain_left(
                             (maxposlb.right - minposlb.left) *
                             (1.-shrink)/2. + minposlb.left)
                 # set the height of the pos box

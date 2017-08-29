@@ -366,7 +366,7 @@ class Figure(Artist):
 
         self.subplotpars = subplotpars
         self.layoutbox = layoutbox.LayoutBox(parent=None, name='figlb')
-        self.layoutbox.set_geometry(0., 0. ,1., 1.)
+        self.layoutbox.constrain_geometry(0., 0. ,1., 1.)
 
         self.set_tight_layout(tight_layout)
         self.set_constrained_layout(constrained_layout)

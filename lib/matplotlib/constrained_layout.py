@@ -78,10 +78,10 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             #ax.get_tightbbox(renderer=renderer)
             bbox = invTransFig(tightbbox)
 
-            ax.poslayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
-            ax.poslayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
-            ax.poslayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            ax.poslayoutbox.set_top_margin_min(bbox.y1-pos.y1+h_pad)
+            ax.poslayoutbox.edit_left_margin_min(-bbox.x0+pos.x0+w_pad)
+            ax.poslayoutbox.edit_right_margin_min(bbox.x1-pos.x1+w_pad)
+            ax.poslayoutbox.edit_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
+            ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_pad)
         # constrain the layoutbox height....
         # not sure this will work in both directions.  This may need
         # to be an editable variable rather than a set value..
@@ -89,7 +89,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             bbox = invTransFig(
                 fig._suptitle.get_window_extent(renderer=renderer))
             height = bbox.y1 - bbox.y0
-            fig._suptitle.layoutbox.suggest_height(height)
+            fig._suptitle.layoutbox.edit_height(height)
 
         # OK, the above lines up ax.poslayoutbox with ax.layoutbox
         # now we need to
@@ -178,18 +178,18 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                             dcolsC = colNumCmax - colNumCmin + 1
                             dcols0 = colNum0max - colNum0min + 1
                             if drowsC > drows0:
-                                ax.poslayoutbox.set_height_min(
+                                ax.poslayoutbox.constrain_height_min(
                                     axc.poslayoutbox.height * drows0 / drowsC)
                             elif drowsC < drows0:
-                                axc.poslayoutbox.set_height_min(
+                                axc.poslayoutbox.constrain_height_min(
                                     ax.poslayoutbox.height * drowsC / drows0)
                             else:
                                 ax.poslayoutbox.constrain_height(                            axc.poslayoutbox.height)
                             if dcolsC > dcols0:
-                                axc.poslayoutbox.set_width_min(
+                                axc.poslayoutbox.constrain_width_min(
                                     ax.poslayoutbox.width * dcolsC / dcols0)
                             elif dcolsC < dcols0:
-                                ax.poslayoutbox.set_width_min(
+                                ax.poslayoutbox.constrain_width_min(
                                     axc.poslayoutbox.width * dcols0 / dcolsC)
                             else:
                                 ax.poslayoutbox.constrain_width(
@@ -201,8 +201,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     # or width.  This stops that...  It *should* have been
                     # taken into account w/ pref_width...
 
-                    ax.poslayoutbox.set_height_min(20., strength='weak')
-                    ax.poslayoutbox.set_width_min(20., strength='weak')
+                    ax.poslayoutbox.constrain_height_min(20., strength='weak')
+                    ax.poslayoutbox.constrain_width_min(20., strength='weak')
 
 
         # subplotlayouts = gs.layoutbox.find_child_subplots()
