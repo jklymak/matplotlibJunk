@@ -719,6 +719,23 @@ def plot_children(fig, box, level=0, printit=True):
 
         plot_children(ax, child, level=level+1, printit=printit)
 
+#########
+def  get_axall_tightbbox(ax, renderer):
+
+    from matplotlib.legend import Legend
+    import matplotlib.transforms as transforms
+
+
+    # main bbox of the axis....
+    bbox = ax.get_tightbbox(renderer=renderer)
+    # now add the possibility of the legend...
+    for child in ax.get_children():
+        if isinstance(child, Legend):
+            bboxn = child._legend_box.get_window_extent(renderer)
+            bbox = transforms.Bbox.union([bbox, bboxn])
+    
+    return bbox
+
 
 ######################################################
 def constrained_layout(fig, renderer, h_pad, w_pad):
@@ -772,7 +789,10 @@ def constrained_layout(fig, renderer, h_pad, w_pad):
         # this has to happen every call to `figure.constrained_layout`
         for ax in axes:
             pos = ax.get_position()
-            bbox = invTransFig(ax.get_tightbbox(renderer=renderer))
+            tightbbox = get_axall_tightbbox(ax, renderer)
+            #ax.get_tightbbox(renderer=renderer)
+            bbox = invTransFig(tightbbox)
+
             ax.poslayoutbox.set_left_margin_min(-bbox.x0+pos.x0+w_pad)
             ax.poslayoutbox.set_right_margin_min(bbox.x1-pos.x1+w_pad)
             ax.poslayoutbox.set_bottom_margin_min(-bbox.y0+pos.y0+h_pad)

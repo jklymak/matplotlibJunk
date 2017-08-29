@@ -47,6 +47,8 @@ from matplotlib.transforms import BboxTransformTo, BboxTransformFrom
 from matplotlib.offsetbox import HPacker, VPacker, TextArea, DrawingArea
 from matplotlib.offsetbox import DraggableOffsetBox
 
+import matplotlib.layoutbox as layoutbox
+
 from matplotlib.container import ErrorbarContainer, BarContainer, StemContainer
 from . import legend_handler
 
@@ -187,7 +189,7 @@ class Legend(Artist):
                  bbox_to_anchor=None,  # bbox that the legend will be anchored.
                  bbox_transform=None,  # transform for the bbox
                  frameon=None,  # draw frame
-                 handler_map=None,
+                 handler_map=None
                  ):
         """
         - *parent*: the artist that contains the legend
