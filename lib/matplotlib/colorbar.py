@@ -1207,10 +1207,10 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                     layoutbox.hstack([lb, axlb], padding=0.01)
                 # constrain the height and center...
                 layoutbox.match_heights([axpos, lbpos], [1., shrink])
-                #lbpos.set_height(axpos.height * shrink)
                 layoutbox.align([axpos, lbpos], 'v_center')
                 # set the width of the pos box
-                lbpos.set_width(axpos.height * (1./aspect), strength='strong')
+                lbpos.constrain_width(axpos.height * (1./aspect),
+                                       strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
@@ -1225,12 +1225,10 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 # constrain the height and center...
                 layoutbox.match_widths([axpos, lbpos],
                                         [1., shrink], strength='strong')
-                #lbpos.set_height(axpos.height * shrink)
                 layoutbox.align([axpos, lbpos], 'h_center')
                 # set the height of the pos box
-                lbpos.set_height(axpos.width * (aspect), strength='medium')
-                #lbpos.set_height(0.01, strength='strong')
-
+                lbpos.constraint_height(axpos.width * (aspect),
+                                    strength='medium')
         else:  # there is more than one parent, so lets use gridspec
 
             lb = layoutbox.LayoutBox(parent=gslb.parent,
@@ -1280,7 +1278,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 #     b             t
                 # h = (top-bottom)*shrink
                 # b = bottom + (top-bottom - h) / 2.
-                lbpos.set_height((maxposlb.top-minposlb.bottom)*shrink)
+                lbpos.constrain_height((maxposlb.top-minposlb.bottom)*shrink)
                 lbpos.set_bottom(
                             (maxposlb.top-minposlb.bottom) *
                             (1.-shrink)/2. + minposlb.bottom)
@@ -1288,7 +1286,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 #layoutbox.match_heights([gslb, lbpos], [1., shrink])
                 #layoutbox.align([gslb, lbpos], 'v_center')
                 # set the width of the pos box
-                lbpos.set_width(lbpos.height * (1./aspect), strength='strong')
+                lbpos.constrain_width(lbpos.height * (1./aspect),
+                                        strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
@@ -1319,12 +1318,14 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                             minax = ax
                 maxposlb = maxax.poslayoutbox
                 minposlb = minax.poslayoutbox
-                lbpos.set_width((maxposlb.right - minposlb.left) * shrink)
+                lbpos.constrain_width((maxposlb.right - minposlb.left)
+                                        * shrink)
                 lbpos.set_left(
                             (maxposlb.right - minposlb.left) *
                             (1.-shrink)/2. + minposlb.left)
                 # set the height of the pos box
-                lbpos.set_height(lbpos.width * (aspect), strength='medium')
+                lbpos.constrain_height(lbpos.width * (aspect),
+                                    strength='medium')
 
     cax.set_layoutbox(lb)
     cax.set_layoutboxpos(lbpos)

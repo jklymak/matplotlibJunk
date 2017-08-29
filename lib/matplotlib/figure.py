@@ -612,17 +612,10 @@ class Figure(Artist):
             figlb = self.layoutbox
             self._suptitle.layoutbox = layoutbox.LayoutBox(parent=figlb,
                 name=figlb.name+'.suptitle')
-            pos = self._suptitle.get_position()
-            renderer = layoutbox.get_renderer(self)
-            invTransFig = self.transFigure.inverted().transform_bbox
-            bbox = invTransFig(
-                self._suptitle.get_window_extent(renderer=renderer))
-            height = bbox.y1 - bbox.y0
-            self._suptitle.layoutbox.set_height(height)
             for child in figlb.children:
                 if not (child == self._suptitle.layoutbox):
                     layoutbox.vstack([self._suptitle.layoutbox, child],
-                                padding=0.01)
+                                padding=0.01, strength='required')
         self.stale = True
         return self._suptitle
 
@@ -2040,6 +2033,7 @@ class Figure(Artist):
         """
 
         import matplotlib.figunits as figunits
+        from .constrained_layout import (do_constrained_layout)
 
         if h_pad is None:
             h_pad = pad
@@ -2053,7 +2047,8 @@ class Figure(Artist):
 
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
-        layoutbox.constrained_layout(fig, renderer, h_pad, w_pad)
+        do_constrained_layout(fig, renderer, h_pad, w_pad)
+        #layoutbox.print_tree(fig.layoutbox)
         # this often needs to get called twice...
 #        layoutbox.constrained_layout(fig, renderer, h_pad, w_pad)
 
