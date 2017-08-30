@@ -1,3 +1,21 @@
+
+"""
+This module provides the routine to adjust subplot layouts so that there are
+no overlapping axes or axes decorations.  All axes decorations are dealt with
+(labels, ticks, titles, ticklabels) and some dependent artists are also dealt
+with (colorbar, suptitle, legend).
+
+Layout is done via :meth:`~matplotlib.gridspec`, with one constraint per
+gridspec, so it is possible to have overlapping axes if the gridspecs
+overlap (i.e. using :meth:`~matplotlib.gridspec.GridSpecFromSubplotSpec`).
+Axes placed using ``figure.subplots()`` or ``figure.add_subplots()`` will
+participate in the layout.  Axes manually placed via ``figure.add_axes()``
+will not.
+
+See Tutorial (TODO: link)
+
+"""
+
 from __future__ import division, print_function
 
 from matplotlib.legend import Legend
@@ -8,8 +26,10 @@ import matplotlib.layoutbox as layoutbox
 
 #########
 def  get_axall_tightbbox(ax, renderer):
-
-
+    '''
+    Get the tight_bbox of the axis ax, and any dependent decorations, like
+    a `Legend` instance.
+    '''
 
     # main bbox of the axis....
     bbox = ax.get_tightbbox(renderer=renderer)
@@ -18,6 +38,7 @@ def  get_axall_tightbbox(ax, renderer):
         if isinstance(child, Legend):
             bboxn = child._legend_box.get_window_extent(renderer)
             bbox = transforms.Bbox.union([bbox, bboxn])
+        # add other children here....
 
     return bbox
 
@@ -25,6 +46,41 @@ def  get_axall_tightbbox(ax, renderer):
 ######################################################
 def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
+    """
+    Do the constrained_layout.  Called at draw time in
+     ``figure.constrained_layout()
+
+    Parameters:
+
+
+    fig: Figure
+      is the ``figure`` instance to do the layout in.
+
+    renderer: Renderer
+      the renderer to use.
+
+     h_pad, v_pad : float
+       are in figure-normalized units.
+
+    """
+
+    '''  Steps:
+
+    1. get a list of unique gridspecs in this figure.  Each gridspec will be
+    constrained separately
+    2. Check for gaps in the gridspecs.  i.e. if not every axes slot in the
+    gridspec has been filled.  If empty, add a ghost axis that is made so
+    that it cannot be seen (though visible=True).  This is needed to make
+    a blank spot in the layout.
+    3. Compare the tight_bbox of each axes to its `position`, and assume that
+    the difference is the space needed by the elements around the edge of
+    the axes (decorations) like the title, ticklabels, x-labels, etc.  This
+    can include legends who overspill the axes boundaries.
+    4. Constrain gridspec elements to line up:
+        a) if colnum0 neq colnumC, the two subplotspecs are stacked next to
+        each other, width the appropriate order.
+        b) if colnum0 ==
+    '''
     invTransFig = fig.transFigure.inverted().transform_bbox
 
     axes = fig.axes
@@ -62,14 +118,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                 for nn,hss in enumerate(hassubplotspec):
                     if hss < 1:
                         ax = fig.add_subplot(gs[nn])
-                        # print("adding gs in %d"%nn)
-                        #ax.set_visible(False)
                         ax.set_frame_on(False)
                         ax.set_xticks([])
                         ax.set_yticks([])
                         ax.set_facecolor((1.,0.,0.,0.))
 
-
+        axes = fig.axes
         #  constrain the margins between poslayoutbox and the axis layoutbox.
         # this has to happen every call to `figure.constrained_layout`
         for ax in axes:
@@ -118,12 +172,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     axs = axs[1:]
                     # now compare ax to all the axs:
                     ss0 = ax.get_subplotspec()
+
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
                     rowNum0min, colNum0min = divmod(ss0.num1, ncols)
                     rowNum0max, colNum0max = divmod(ss0.num2, ncols)
                     for axc in axs:
-
                         if ax == axc:
                             pass
                         else:
@@ -149,14 +203,11 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 layoutbox.align([  ax.poslayoutbox,
                                                    axc.poslayoutbox],
                                                 'right')
+                            ####
                             # vertical alignment
-                            #if rowNumCmax - rowNum0max == 1:
-                            #    layoutbox.vpack([ss0.layoutbox, ssc.layoutbox])
                             if rowNumCmax > rowNum0min:
                                 layoutbox.vstack([ss0.layoutbox,
                                                 ssc.layoutbox])
-                            #if rowNum0max - rowNumCmax == 1:
-                            #    layoutbox.vpack([ssc.layoutbox, ss0.layoutbox])
                             if rowNum0max > rowNumCmin:
                                 layoutbox.vstack([ssc.layoutbox,
                                                     ss0.layoutbox])
@@ -215,7 +266,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
         #fig.layoutbox.solver.dump()
-        # layoutbox.print_tree(fig.layoutbox)
+        #layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
             newpos = ax.poslayoutbox.get_rect()
             ax.set_position(newpos)

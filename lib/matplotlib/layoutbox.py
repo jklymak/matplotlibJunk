@@ -335,21 +335,21 @@ class LayoutBox(object):
         c = (self.width >= width)
         self.solver.addConstraint(c | strength)
 
-    def constrain_left(self, left):
+    def constrain_left(self, left,  strength='strong'):
         c = (self.left == left)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
-    def constrain_bottom(self, bottom):
+    def constrain_bottom(self, bottom, strength='strong'):
         c = (self.bottom == bottom)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
-    def constrain_right(self, right):
+    def constrain_right(self, right, strength='strong'):
         c = (self.right == right)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
-    def constrain_top(self, top):
+    def constrain_top(self, top, strength='strong'):
         c = (self.top == top)
-        self.solver.addConstraint(c | 'strong')
+        self.solver.addConstraint(c | strength)
 
     def find_child_subplots(self):
         '''
@@ -446,13 +446,12 @@ class LayoutBox(object):
         width = figRight - figLeft
         height = figTop - figBottom
 
-        eps = 0.001
         cs = [lb.left   == self.left  + self.width * figLeft,
             lb.bottom  == self.bottom + self.height * figBottom,
             lb.width == self.width * width ,
             lb.height == self.height * height ]
         for c in cs:
-            self.solver.addConstraint((c | 'strong'))
+            self.solver.addConstraint((c | 'medium'))
 
         return lb
 
@@ -473,7 +472,7 @@ def hstack(boxes, padding=0, strength='strong'):
 
 def hpack(boxes, padding=0, strength='strong'):
     '''
-    Stack LayoutBox instances from left to right
+    Stack LayoutBox instances from left to right.
     '''
 
     for i in range(1,len(boxes)):

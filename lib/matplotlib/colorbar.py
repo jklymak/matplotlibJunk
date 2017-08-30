@@ -1176,6 +1176,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
     # OK, now make a layoutbox for the cb axis.  Later, we will use this
     # to make the colorbar fit nicely.
 
+    # this si the layoutbox for the gridspec that parent[0]
+    # belongs to.
     gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
 
     if gslb is None:
@@ -1186,6 +1188,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
         cax.set_aspect(aspect, anchor=anchor, adjustable='box')
     else:
         if len(parents) == 1:
+            # this is a single axis...
             ax = parents[0]
             axlb = ax.layoutbox
             axpos = ax.poslayoutbox
@@ -1202,7 +1205,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
                 if location == 'right':
                     # arrange to right of parent axis
-                    layoutbox.hstack([axlb, lb], padding=0.01)
+                    layoutbox.hstack([axlb, lb], padding=0.01, strength='strong')
                 else:
                     layoutbox.hstack([lb, axlb], padding=0.01)
                 # constrain the height and center...
@@ -1230,10 +1233,11 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 lbpos.constraint_height(axpos.width * (aspect),
                                     strength='medium')
         else:  # there is more than one parent, so lets use gridspec
-
+            # the colorbar will be a sibling of this gridspec, so the
+            # parent is the same parent as the gridspec.  Either the figure,
+            # or a subplotspec.
             lb = layoutbox.LayoutBox(parent=gslb.parent,
                                     name=gslb.parent.name + '.cbar')
-
             if location in ('left', 'right'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
@@ -1242,8 +1246,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                         subplot=False)
 
                 if location == 'right':
-                    # arrange to right of parent axis
-                    layoutbox.hstack([gslb, lb], padding=0.01)
+                    # arrange to right of the gridpec sibbling
+                    layoutbox.hstack([gslb, lb], padding=0.01, strength='strong')
                 else:
                     layoutbox.hstack([lb, gslb], padding=0.01)
                 # constrain the height and center...
@@ -1256,8 +1260,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 minax = None
 
                 for ax in parents:
-                    nrows, ncols = ax.get_subplotspec().get_gridspec().get_geometry()
                     subspec = ax.get_subplotspec()
+                    nrows, ncols = subspec.get_gridspec().get_geometry()
                     for num in [subspec.num1, subspec.num2]:
                         rowNum1, colNum1 =  divmod(subspec.num1, ncols)
                         if rowNum1 > maxrow:
@@ -1272,22 +1276,26 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 # invert the order so these are bottom to top:
                 maxposlb = minax.poslayoutbox
                 minposlb = maxax.poslayoutbox
+                print('minposlb;', minposlb)
+                print('maxposlb:', maxposlb)
                 # now we want the height of the colorbar pos to be
                 # set by the top and bottom of these poss
                 # bottom              top
                 #     b             t
                 # h = (top-bottom)*shrink
                 # b = bottom + (top-bottom - h) / 2.
-                lbpos.constrain_height((maxposlb.top-minposlb.bottom)*shrink)
-                lbpos.constrain_bottom(
-                            (maxposlb.top-minposlb.bottom) *
-                            (1.-shrink)/2. + minposlb.bottom)
+                if 1:
+                    lbpos.constrain_height((maxposlb.top - minposlb.bottom) *
+                        shrink, strength='strong')
+                    lbpos.constrain_bottom(
+                                (maxposlb.top - minposlb.bottom) *
+                                (1. - shrink)/2. + minposlb.bottom,
+                                strength='strong')
 
-                #layoutbox.match_heights([gslb, lbpos], [1., shrink])
-                #layoutbox.align([gslb, lbpos], 'v_center')
                 # set the width of the pos box
-                lbpos.constrain_width(lbpos.height * (1./aspect),
-                                        strength='strong')
+                if 1:
+                    lbpos.constrain_width(lbpos.height * (1./aspect),
+                                        strength=100)
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',

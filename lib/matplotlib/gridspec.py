@@ -354,9 +354,9 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         if subspeclb is None:
             self.layoutbox = None
         else:
-            # OK, this here does need to divide the figure.
+            # OK, this is needed to divide the figure.
             self.layoutbox = subspeclb.layout_from_subplotspec(subplot_spec,
-                        name=subspeclb.name + 'gridspec' +  layoutbox.randid())
+                        name=subspeclb.name + '.gridspec' +  layoutbox.randid())
 
     def get_subplot_params(self, fig=None):
         """Return a dictionary of subplot layout parameters.
@@ -417,9 +417,8 @@ class SubplotSpec(object):
             glb = gridspec.layoutbox
             # So note that here we don't assign any layout yet,
             # just make the layoutbox that will conatin all items
-            # associated w/ this axis.
-            # self.layoutbox = gridspec.layoutbox.layout_from_subplotspec(self,
-            #         name=gridspec.layoutbox.name + '.ss' + layoutbox.randid())
+            # associated w/ this axis.  This can include other axes like
+            # a colorbar or a legend.
             self.layoutbox = layoutbox.LayoutBox(parent=glb,
                     name=glb.name + '.ss' + layoutbox.randid())
         else:

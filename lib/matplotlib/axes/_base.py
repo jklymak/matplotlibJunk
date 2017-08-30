@@ -2426,7 +2426,7 @@ class _AxesBase(martist.Artist):
     def get_renderer_cache(self):
         return self._cachedRenderer
 
-    # layoutboxes: allow us to set these after instantiation.  
+    # layoutboxes: allow us to set these after instantiation.
     def set_layoutbox(self, layoutbox):
         """
         Set the layoutbox for this axis...
