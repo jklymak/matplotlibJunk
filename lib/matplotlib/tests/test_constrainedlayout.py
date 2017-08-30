@@ -197,3 +197,40 @@ def test_constrained_layout8():
 
 
     fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+
+@image_comparison(baseline_images=['constrained_layout8'],
+        extensions=['png', 'pdf'])
+def test_constrained_layout8():
+    'Test for gridspecs that are not completely full'
+    fig = plt.figure(figsize=(10,5), constrained_layout=True)
+    gs = gridspec.GridSpec(3, 4, fig=fig)
+    #ax = fig.add_subplot(111)
+    axs = []
+    j = 1
+    for i in [0, 3]:
+        ax = fig.add_subplot(gs[j, i])
+        axs += [ax]
+        pcm = example_pcolor(ax, fontsize=9)
+        if i > 0:
+            ax.set_ylabel('')
+        if j < 1:
+            ax.set_xlabel('')
+        #axs[j, i].set_title('%d %d'%(j,i))
+        ax.set_title('')
+    j = 0
+    for i in [1]:
+        ax = fig.add_subplot(gs[j, i])
+        axs += [ax]
+        pcm = example_pcolor(ax, fontsize=9)
+        if i > 0:
+            ax.set_ylabel('')
+        if j < 1:
+            ax.set_xlabel('')
+        #axs[j, i].set_title('%d %d'%(j,i))
+        ax.set_title('')
+    ax = fig.add_subplot(gs[2,:])
+    axs += [ax]
+    pcm = example_pcolor(ax, fontsize=9)
+
+
+    fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)

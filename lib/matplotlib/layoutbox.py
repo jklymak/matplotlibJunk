@@ -379,6 +379,9 @@ class LayoutBox(object):
         nrows, ncols = gs.get_geometry()
         parent = self.parent
 
+        # OK, now, we want to set the position of this subplotspec
+        # based on its subplotspec parameters.  The new gridspec will inherit.
+
         # from gridspec.  prob should be new method in gridspec
         left = 0.0
         right = 1.0
@@ -445,13 +448,13 @@ class LayoutBox(object):
 
         width = figRight - figLeft
         height = figTop - figBottom
-
-        cs = [lb.left   == self.left  + self.width * figLeft,
-            lb.bottom  == self.bottom + self.height * figBottom,
-            lb.width == self.width * width ,
-            lb.height == self.height * height ]
+        parent = self.parent
+        cs = [self.left   == parent.left  + parent.width * figLeft,
+            self.bottom  == parent.bottom + parent.height * figBottom,
+            self.width == parent.width * width ,
+            self.height == parent.height * height ]
         for c in cs:
-            self.solver.addConstraint((c | 'medium'))
+            self.solver.addConstraint((c | 'strong'))
 
         return lb
 
