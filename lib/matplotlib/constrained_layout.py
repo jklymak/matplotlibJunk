@@ -22,6 +22,7 @@ from matplotlib.legend import Legend
 import matplotlib.transforms as transforms
 import numpy as np
 import matplotlib.layoutbox as layoutbox
+import warnings
 
 
 #########
@@ -89,16 +90,21 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     gss = set([])
     for ax in axes:
         if hasattr(ax,'get_subplotspec'):
-            gss.add(ax.get_subplotspec().get_gridspec())
+            gs = ax.get_subplotspec().get_gridspec()
+            if gs.layoutbox is not None:
+                gss.add(gs)
+    if len(gss) == 0:
+        warnings.warn('There are no gridspecs with layoutboxes. '
+         'Possibly did not call parent GridSpec with the fig= '
+         'keyword')
 
     # check for unoccupied gridspec slots and make fake axes for thses
     # slots...  Do for each gs separately.
     #   This only needs to happen once.
 
-    # the whole thing needs to happen twice, however.
     for boo in range(2):
+        # not sure this works properly for non-homogeneous gridspec
         if fig.layoutbox.constrained_layout_called < 1:
-            #print('Hi')
             for gs in gss:
                 nrows, ncols = gs.get_geometry()
                 hassubplotspec = np.zeros(nrows * ncols)
@@ -111,9 +117,6 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     ss0 = ax.get_subplotspec()
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
-                    #print(ss0.num1)
-                    #print(ss0.num2)
-
                     hassubplotspec[ss0.num1:ss0.num2+1] = 1.2
                 for nn,hss in enumerate(hassubplotspec):
                     if hss < 1:
@@ -123,44 +126,69 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                         ax.set_yticks([])
                         ax.set_facecolor((1.,0.,0.,0.))
 
-        axes = fig.axes
+
         #  constrain the margins between poslayoutbox and the axis layoutbox.
         # this has to happen every call to `figure.constrained_layout`
+        axes = fig.axes
         for ax in axes:
-            pos = ax.get_position()
-            tightbbox = get_axall_tightbbox(ax, renderer)
-            #ax.get_tightbbox(renderer=renderer)
-            bbox = invTransFig(tightbbox)
+            if ax.layoutbox is not None:
+                pos = ax.get_position()
+                tightbbox = get_axall_tightbbox(ax, renderer)
+                #ax.get_tightbbox(renderer=renderer)
+                bbox = invTransFig(tightbbox)
 
-            ax.poslayoutbox.edit_left_margin_min(-bbox.x0+pos.x0+w_pad)
-            ax.poslayoutbox.edit_right_margin_min(bbox.x1-pos.x1+w_pad)
-            ax.poslayoutbox.edit_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
-            ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_pad)
+                ax.poslayoutbox.edit_left_margin_min(-bbox.x0+pos.x0+w_pad)
+                ax.poslayoutbox.edit_right_margin_min(bbox.x1-pos.x1+w_pad)
+                ax.poslayoutbox.edit_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
+                ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_pad)
+
+                ## Sometimes its possible for the solver to collapse
+                # rather than expand axes, so they all have zero height
+                # or width.  This stops that...  It *should* have been
+                # taken into account w/ pref_width...
+                if fig.layoutbox.constrained_layout_called < 1:
+                    ax.poslayoutbox.constrain_height_min(20., strength='weak')
+                    ax.poslayoutbox.constrain_width_min(20., strength='weak')
+
+
         # constrain the layoutbox height....
         # not sure this will work in both directions.  This may need
         # to be an editable variable rather than a set value..
         if fig._suptitle is not None:
-            bbox = invTransFig(
-                fig._suptitle.get_window_extent(renderer=renderer))
-            height = bbox.y1 - bbox.y0
-            fig._suptitle.layoutbox.edit_height(height)
+           bbox = invTransFig(
+               fig._suptitle.get_window_extent(renderer=renderer))
+           height = bbox.y1 - bbox.y0
+           fig._suptitle.layoutbox.edit_height(height)
+
 
         # OK, the above lines up ax.poslayoutbox with ax.layoutbox
         # now we need to
         #   1) arrange the subplotspecs.  We do it at this level because
         #      the subplotspecs are meant to contain other dependent axes
-        #      like colorbars or legends.  Currently there is an error if
-        #      there are un-occupied slots in the gridspec.  Probably need
-        #      ghost subplotspecs....
+        #      like colorbars or legends.
         #   2) line up the right and left side of the ax.poslayoutbox
         #      that have the same subplotspec maxes.
 
-        # this only needs to happen twice:
-        if fig.layoutbox.constrained_layout_called < 2:
+        # arrange the subplotspecs...  This is all done relative to each
+        # other.  Some subplotspecs conatain axes, and others contain gridspecs
+        # the ones that contain gridspecs are a set proportion of their
+        # parent gridspec.  The ones that contain axes are not so constrained.
+
+        if fig.layoutbox.constrained_layout_called < 1:
+            figlb = fig.layoutbox
+            for child in figlb.children:
+                name = (child.name).split('.')[-1][:-3]
+                if name == 'gridspec':
+                    layoutbox.arange_subplotspecs(child)
+
+        # this only needs to happen once:
+        if fig.layoutbox.constrained_layout_called < 1:
             fig.layoutbox.constrained_layout_called += 1
             for gs in gss:
                 nrows, ncols = gs.get_geometry()
                 axs = []
+
+                # get axes in this gridspec....
                 for ax in axes:
                     if hasattr(ax,'get_subplotspec'):
                         if ax.get_subplotspec().get_gridspec() == gs:
@@ -246,27 +274,11 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 ax.poslayoutbox.constrain_width(
                                     axc.poslayoutbox.width)
 
-
-                    ## Sometimes its possible for the solver to collapse
-                    # rather than expand axes, so they all have zero height
-                    # or width.  This stops that...  It *should* have been
-                    # taken into account w/ pref_width...
-
-                    ax.poslayoutbox.constrain_height_min(20., strength='weak')
-                    ax.poslayoutbox.constrain_width_min(20., strength='weak')
-
-
-        # subplotlayouts = gs.layoutbox.find_child_subplots()
-        # if len(subplotlayouts) > 1:
-        #     # pass
-        #     layoutbox.match_margins(subplotlayouts, levels=2)
-        # and update the layout for this gridspec.
-        #gs.layoutbox.update_variables()
-
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
         #fig.layoutbox.solver.dump()
         #layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
-            newpos = ax.poslayoutbox.get_rect()
-            ax.set_position(newpos)
+            if ax.layoutbox is not None:
+                newpos = ax.poslayoutbox.get_rect()
+                ax.set_position(newpos)

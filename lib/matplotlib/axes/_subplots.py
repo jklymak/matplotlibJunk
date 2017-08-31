@@ -83,11 +83,14 @@ class SubplotBase(object):
             self.layoutbox = None
             self.poslayoutbox = None
         else:
-            self.layoutbox = layoutbox.LayoutBox(parent=
-                self._subplotspec.layoutbox, name=self._subplotspec.layoutbox.name+'.ax'+layoutbox.randid())
+            self.layoutbox = layoutbox.LayoutBox(
+                parent=self._subplotspec.layoutbox,
+                name=self._subplotspec.layoutbox.name +
+                    '.ax'+layoutbox.randid(),
+                artist=self)
             self.poslayoutbox = layoutbox.LayoutBox(parent=
                 self.layoutbox, name=self.layoutbox.name+'.pos',
-                pos=True, subplot=True)
+                pos=True, subplot=True, artist=self)
 
 
     def __reduce__(self):

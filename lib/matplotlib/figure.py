@@ -365,7 +365,9 @@ class Figure(Artist):
             subplotpars = SubplotParams()
 
         self.subplotpars = subplotpars
-        self.layoutbox = layoutbox.LayoutBox(parent=None, name='figlb')
+        self.layoutbox = layoutbox.LayoutBox(parent=None,
+                                            name='figlb',
+                                            artist=self)
         self.layoutbox.constrain_geometry(0., 0. ,1., 1.)
 
         self.set_tight_layout(tight_layout)
@@ -610,8 +612,9 @@ class Figure(Artist):
         if self.layoutbox is not None:
             # assign a layout box to the suptitle...
             figlb = self.layoutbox
-            self._suptitle.layoutbox = layoutbox.LayoutBox(parent=figlb,
-                name=figlb.name+'.suptitle')
+            self._suptitle.layoutbox = layoutbox.LayoutBox(
+                                            parent=figlb,
+                                            name=figlb.name+'.suptitle')
             for child in figlb.children:
                 if not (child == self._suptitle.layoutbox):
                     layoutbox.vstack([self._suptitle.layoutbox, child],

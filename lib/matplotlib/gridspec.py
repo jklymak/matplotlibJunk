@@ -228,7 +228,8 @@ class GridSpec(GridSpecBase):
             self.layoutbox = None
         else:
             self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
-                name='gridspec' + layoutbox.randid())
+                name='gridspec' + layoutbox.randid(),
+                artist=self)
         # by default the layoutbox for a gridsepc will fill a figure.
         # but this can change below if the gridspec is created from a
         # subplotspec. (GridSpecFromSubplotSpec)
@@ -356,7 +357,8 @@ class GridSpecFromSubplotSpec(GridSpecBase):
         else:
             # OK, this is needed to divide the figure.
             self.layoutbox = subspeclb.layout_from_subplotspec(subplot_spec,
-                        name=subspeclb.name + '.gridspec' +  layoutbox.randid())
+                    name=subspeclb.name + '.gridspec' +  layoutbox.randid(),
+                    artist=self)
 
     def get_subplot_params(self, fig=None):
         """Return a dictionary of subplot layout parameters.
@@ -420,7 +422,8 @@ class SubplotSpec(object):
             # associated w/ this axis.  This can include other axes like
             # a colorbar or a legend.
             self.layoutbox = layoutbox.LayoutBox(parent=glb,
-                    name=glb.name + '.ss' + layoutbox.randid())
+                    name=glb.name + '.ss' + layoutbox.randid(),
+                    artist=self)
         else:
             self.layoutbox = None
 

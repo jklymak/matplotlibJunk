@@ -378,6 +378,8 @@ class LayoutBox(object):
         gs = subspec.get_gridspec()
         nrows, ncols = gs.get_geometry()
         parent = self.parent
+        print('from_subspc', self.name)
+
 
         # OK, now, we want to set the position of this subplotspec
         # based on its subplotspec parameters.  The new gridspec will inherit.
@@ -454,7 +456,8 @@ class LayoutBox(object):
             self.width == parent.width * width ,
             self.height == parent.height * height ]
         for c in cs:
-            self.solver.addConstraint((c | 'strong'))
+            self.solver.addConstraint((c | 'required'))
+        print('from_subspc', self.name)
 
         return lb
 
@@ -532,11 +535,11 @@ def hstackeq(boxes, padding=0, width_ratios=None):
     hstack(boxes,padding=padding)
     match_widths(boxes, width_ratios=width_ratios)
 
-def align(boxes, attr):
+def align(boxes, attr, strength='strong'):
     cons = []
     for box in boxes[1:]:
         cons= (getattr(boxes[0], attr) == getattr(box, attr))
-        boxes[0].solver.addConstraint(cons | 'medium')
+        boxes[0].solver.addConstraint(cons | strength)
 
 
 
@@ -600,12 +603,68 @@ def match_margins(boxes, levels=1):
     match_width_margins(boxes, levels=levels)
     match_height_margins(boxes, levels=levels)
 
+
+def arange_subplotspecs(gs):
+    """
+    arange the subplotspec childgren of this gridspec, and then do
+    the same of any gridspec children of those gridspecs...
+    """
+    sschildren = []
+    for child in gs.children:
+        name = (child.name).split('.')[-1][:-3]
+        if name == 'ss':
+            for child2 in child.children:
+                # check for gridspec children...
+                name = (child2.name).split('.')[-1][:-3]
+                if name == 'gridspec':
+                    arange_subplotspecs(child2)
+            sschildren += [child]
+    # now arrange the subplots...
+    for child0 in sschildren:
+        ss0 = child0.artist
+        nrows, ncols = ss0.get_gridspec().get_geometry()
+        if ss0.num2 is None:
+            ss0.num2 = ss0.num1
+        rowNum0min, colNum0min = divmod(ss0.num1, ncols)
+        rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+        sschildren = sschildren[:-1]
+        for childc in sschildren:
+            ssc = childc.artist
+            rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+            if ssc.num2 is None:
+                ssc.num2 = ssc.num1
+            rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+            # OK, this tells us the relative layout of ax
+            # with axc
+            if colNum0max < colNumCmin:
+                hstack([ss0.layoutbox, ssc.layoutbox])
+            if colNumCmax < colNum0min:
+                hstack([ssc.layoutbox, ss0.layoutbox])
+
+            ####
+            # vertical alignment
+            if rowNumCmax > rowNum0min:
+                vstack([ss0.layoutbox,
+                                ssc.layoutbox])
+            if rowNum0max > rowNumCmin:
+                vstack([ssc.layoutbox,
+                                    ss0.layoutbox])
+
+
+
+layoutboxobjnum = 0
+
 def randid():
     '''
     Generate a short uuid for layoutbox objects...
     '''
 
-    return ('%04d'%(np.random.rand(1)*1000.))
+    global layoutboxobjnum
+
+    layoutboxobjnum += 1
+
+    # return ('%04d'%(np.random.rand(1)*1000.))
+    return ('%03d'%(layoutboxobjnum))
 
 def print_children(lb):
     '''

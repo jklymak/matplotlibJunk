@@ -1194,14 +1194,16 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             axpos = ax.poslayoutbox
             axsslb = ax.get_subplotspec().layoutbox
             lb = layoutbox.LayoutBox(parent=axsslb,
-                                    name=axsslb.name + '.cbar')
+                                    name=axsslb.name + '.cbar',
+                                    artist = cax)
 
             if location in ('left', 'right'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
                                         tightwidth=False,
                                         pos=True,
-                                        subplot=False)
+                                        subplot=False,
+                                        artist=cax)
 
                 if location == 'right':
                     # arrange to right of parent axis
@@ -1219,7 +1221,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                         name=lb.name + '.pos',
                                         tightheight=True,
                                         pos=True,
-                                        subplot=False)
+                                        subplot=False,
+                                        artist=cax)
 
                 if location == 'bottom':
                     layoutbox.vstack([axlb, lb], padding=0.01)
@@ -1237,13 +1240,15 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
             # parent is the same parent as the gridspec.  Either the figure,
             # or a subplotspec.
             lb = layoutbox.LayoutBox(parent=gslb.parent,
-                                    name=gslb.parent.name + '.cbar')
+                                    name=gslb.parent.name + '.cbar',
+                                    artist=cax)
             if location in ('left', 'right'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
                                         tightwidth=False,
                                         pos=True,
-                                        subplot=False)
+                                        subplot=False,
+                                        artist=cax)
 
                 if location == 'right':
                     # arrange to right of the gridpec sibbling
@@ -1276,8 +1281,6 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 # invert the order so these are bottom to top:
                 maxposlb = minax.poslayoutbox
                 minposlb = maxax.poslayoutbox
-                print('minposlb;', minposlb)
-                print('maxposlb:', maxposlb)
                 # now we want the height of the colorbar pos to be
                 # set by the top and bottom of these poss
                 # bottom              top
@@ -1295,13 +1298,14 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 # set the width of the pos box
                 if 1:
                     lbpos.constrain_width(lbpos.height * (1./aspect),
-                                        strength=100)
+                                        strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(parent=lb,
                                         name=lb.name + '.pos',
                                         tightheight=True,
                                         pos=True,
-                                        subplot=False)
+                                        subplot=False,
+                                        artist=cax)
 
                 if location == 'bottom':
                     layoutbox.vstack([gslb, lb], padding=0.01)
