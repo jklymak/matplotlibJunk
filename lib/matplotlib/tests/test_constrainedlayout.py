@@ -6,9 +6,6 @@ import warnings
 
 import numpy as np
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-
 from matplotlib.testing.decorators import image_comparison
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredOffsetbox, DrawingArea
@@ -24,6 +21,7 @@ def example_plot(ax, fontsize=12):
     ax.set_ylabel('y-label', fontsize=fontsize)
     ax.set_title('Title', fontsize=fontsize)
 
+
 def example_pcolor(ax, fontsize=12):
     dx, dy = 0.6, 0.6
     y, x = np.mgrid[slice(-3, 3 + dy, dy),
@@ -37,13 +35,13 @@ def example_pcolor(ax, fontsize=12):
     ax.set_title('Title', fontsize=fontsize)
     return pcm
 
-@image_comparison(baseline_images=['constrained_layout9'],
-        extensions=['png', 'pdf'])
+
+@image_comparison(baseline_images=['constrained_layout9'])
 def test_constrained_layout9():
     'Test for handling suptitle and for sharex and sharey'
-    fig, axs = plt.subplots(2,2, constrained_layout=True,
+    fig, axs = plt.subplots(2, 2, constrained_layout=True,
                             sharex=False, sharey=False)
-    #ax = fig.add_subplot(111)
+    # ax = fig.add_subplot(111)
     for ax in axs.flatten():
         pcm = example_pcolor(ax, fontsize=24)
         ax.set_title('')
@@ -54,11 +52,10 @@ def test_constrained_layout9():
     fig.suptitle('Test Suptitle', fontsize=28)
 
 
-@image_comparison(baseline_images=['constrained_layout11'],
-        extensions=['png', 'pdf'])
+@image_comparison(baseline_images=['constrained_layout11'])
 def test_constrained_layout11():
     'Test for multiple nested gridspecs '
-    fig = plt.figure(constrained_layout=True, figsize=(10,3))
+    fig = plt.figure(constrained_layout=True, figsize=(10, 3))
     gs0 = gridspec.GridSpec(1, 2, fig=fig)
     gsl = gridspec.GridSpecFromSubplotSpec(1, 2, gs0[0])
     gsl0 = gridspec.GridSpecFromSubplotSpec(2, 2, gsl[1])
@@ -89,7 +86,6 @@ if 1:
     def test_constrained_layout2():
         'Test constrained_layout for 2x2 subplots'
         fig, axs = plt.subplots(2, 2, constrained_layout=True)
-        #ax = fig.add_subplot(111)
         for ax in axs.flatten():
             example_plot(ax, fontsize=24)
 
@@ -97,7 +93,6 @@ if 1:
     def test_constrained_layout3():
         'Test constrained_layout for colorbars with subplots'
         fig, axs = plt.subplots(2, 2, constrained_layout=True)
-        #ax = fig.add_subplot(111)
         for ax in axs.flatten():
             pcm = example_pcolor(ax, fontsize=24)
             fig.colorbar(pcm, ax=ax, use_gridspec=False)
@@ -105,21 +100,23 @@ if 1:
     @image_comparison(baseline_images=['constrained_layout4'])
     def test_constrained_layout4():
         'Test constrained_layout for a single colorbar with subplots'
-        fig, axs = plt.subplots(2,2, constrained_layout=True)
-        #ax = fig.add_subplot(111)
+        fig, axs = plt.subplots(2, 2, constrained_layout=True)
         for ax in axs.flatten():
             pcm = example_pcolor(ax, fontsize=24)
         fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
 
     @image_comparison(baseline_images=['constrained_layout5'])
     def test_constrained_layout5():
-        'Test constrained_layout for a single colorbar with subplots, colorbar bottom'
+        '''
+        Test constrained_layout for a single colorbar with subplots,
+        colorbar bottom
+        '''
         fig, axs = plt.subplots(2, 2, constrained_layout=True)
-        #ax = fig.add_subplot(111)
         for ax in axs.flatten():
             pcm = example_pcolor(ax, fontsize=24)
         fig.colorbar(pcm, ax=axs,
-            use_gridspec=False, pad=0.01, shrink=0.6, location='bottom')
+                     use_gridspec=False, pad=0.01, shrink=0.6,
+                     location='bottom')
 
     @image_comparison(baseline_images=['constrained_layout6'])
     def test_constrained_layout6():
@@ -140,14 +137,15 @@ if 1:
             axsr += [ax]
             pcm = example_pcolor(ax, fontsize=12)
 
-        fig.colorbar(pcm, ax = axsr, use_gridspec=False, pad=0.01, shrink=0.99, location='bottom', ticks=ticker.MaxNLocator(nbins=5))
+        fig.colorbar(pcm, ax=axsr, use_gridspec=False,
+                     pad=0.01, shrink=0.99, location='bottom',
+                     ticks=ticker.MaxNLocator(nbins=5))
 
     @image_comparison(baseline_images=['constrained_layout8'])
     def test_constrained_layout8():
         'Test for gridspecs that are not completely full'
-        fig = plt.figure(figsize=(7,4), constrained_layout=True)
+        fig = plt.figure(figsize=(7, 4), constrained_layout=True)
         gs = gridspec.GridSpec(3, 5, fig=fig)
-        #ax = fig.add_subplot(111)
         axs = []
         j = 1
         for i in [0, 1]:
@@ -158,7 +156,6 @@ if 1:
                 ax.set_ylabel('')
             if j < 1:
                 ax.set_xlabel('')
-            #axs[j, i].set_title('%d %d'%(j,i))
             ax.set_title('')
         j = 0
         for i in [2, 4]:
@@ -169,15 +166,12 @@ if 1:
                 ax.set_ylabel('')
             if j < 1:
                 ax.set_xlabel('')
-            #axs[j, i].set_title('%d %d'%(j,i))
             ax.set_title('')
-        ax = fig.add_subplot(gs[2,:])
+        ax = fig.add_subplot(gs[2, :])
         axs += [ax]
         pcm = example_pcolor(ax, fontsize=10)
 
-
         fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
-
 
     @image_comparison(baseline_images=['constrained_layout7'])
     def test_constrained_layout7():
@@ -198,17 +192,15 @@ if 1:
             axsr += [ax]
             pcm = example_pcolor(ax, fontsize=12)
 
-        fig.colorbar(pcm, ax = axsr, use_gridspec=False, pad=0.01,
-                    shrink=0.99, location='bottom',
-                    ticks=ticker.MaxNLocator(nbins=5))
+        fig.colorbar(pcm, ax=axsr, use_gridspec=False, pad=0.01,
+                     shrink=0.99, location='bottom',
+                     ticks=ticker.MaxNLocator(nbins=5))
 
-    @image_comparison(baseline_images=['constrained_layout8'],
-            extensions=['png', 'pdf'])
+    @image_comparison(baseline_images=['constrained_layout8'])
     def test_constrained_layout8():
         'Test for gridspecs that are not completely full'
-        fig = plt.figure(figsize=(10,5), constrained_layout=True)
+        fig = plt.figure(figsize=(10, 5), constrained_layout=True)
         gs = gridspec.GridSpec(3, 4, fig=fig)
-        #ax = fig.add_subplot(111)
         axs = []
         j = 1
         for i in [0, 3]:
@@ -219,7 +211,6 @@ if 1:
                 ax.set_ylabel('')
             if j < 1:
                 ax.set_xlabel('')
-            #axs[j, i].set_title('%d %d'%(j,i))
             ax.set_title('')
         j = 0
         for i in [1]:
@@ -230,22 +221,17 @@ if 1:
                 ax.set_ylabel('')
             if j < 1:
                 ax.set_xlabel('')
-            #axs[j, i].set_title('%d %d'%(j,i))
             ax.set_title('')
-        ax = fig.add_subplot(gs[2,:])
+        ax = fig.add_subplot(gs[2, :])
         axs += [ax]
         pcm = example_pcolor(ax, fontsize=9)
 
-
         fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
 
-
-    @image_comparison(baseline_images=['constrained_layout10'],
-            extensions=['png', 'pdf'])
+    @image_comparison(baseline_images=['constrained_layout10'])
     def test_constrained_layout10():
         'Test for handling legend outside axis'
-        fig, axs = plt.subplots(2,2, constrained_layout=True)
-        #ax = fig.add_subplot(111)
+        fig, axs = plt.subplots(2, 2, constrained_layout=True)
         for ax in axs.flatten():
             ax.plot(np.arange(12), label='This is a label')
         ax.legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
