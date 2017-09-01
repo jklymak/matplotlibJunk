@@ -580,7 +580,6 @@ class _AxesBase(martist.Artist):
         self.layoutbox = None
         self.spinelayoutbox = None
 
-
     def __getstate__(self):
         # The renderer should be re-created by the figure, and then cached at
         # that point.
@@ -1269,8 +1268,8 @@ class _AxesBase(martist.Artist):
           etc.
           =====   =====================
         """
-        if (isinstance(aspect, six.string_types)
-                and aspect in ('equal', 'auto')):
+        if (isinstance(aspect, six.string_types) and
+                aspect in ('equal', 'auto')):
             self._aspect = aspect
         else:
             self._aspect = float(aspect)  # raise ValueError if necessary
@@ -2437,7 +2436,7 @@ class _AxesBase(martist.Artist):
         """
         Set the spinelayoutbox for this axis...
         """
-        self.poslayoutbox  = layoutbox
+        self.poslayoutbox = layoutbox
 
     # Axes rectangle characteristics
 

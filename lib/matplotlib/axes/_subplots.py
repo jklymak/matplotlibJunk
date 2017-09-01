@@ -51,7 +51,7 @@ class SubplotBase(object):
                         'Single argument to subplot must be a 3-digit '
                         'integer')
                 self._subplotspec = GridSpec(rows, cols,
-                                        fig=self.figure)[num - 1]
+                                             fig=self.figure)[num - 1]
                 # num - 1 for converting from MATLAB to python indexing
         elif len(args) == 3:
             rows, cols, num = args
@@ -59,15 +59,18 @@ class SubplotBase(object):
             cols = int(cols)
             if isinstance(num, tuple) and len(num) == 2:
                 num = [int(n) for n in num]
-                self._subplotspec = GridSpec(rows, cols,
-                                        fig=self.figure)[num[0] - 1:num[1]]
+                self._subplotspec = GridSpec(
+                        rows, cols,
+                        fig=self.figure)[num[0] - 1:num[1]]
             else:
                 if num < 1 or num > rows*cols:
                     raise ValueError(
-                        "num must be 1 <= num <= {maxn}, not {num}".format(
-                            maxn=rows*cols, num=num))
-                self._subplotspec = GridSpec( rows, cols,
-                                        fig=self.figure)[int(num) - 1]
+                        (
+                            "num must be 1 <= num <= {maxn}, not {num}"
+                        ).format(maxn=rows*cols, num=num))
+                self._subplotspec = GridSpec(
+                        rows, cols,
+                        fig=self.figure)[int(num) - 1]
                 # num - 1 for converting from MATLAB to python indexing
         else:
             raise ValueError('Illegal argument(s) to subplot: %s' % (args,))
@@ -83,15 +86,16 @@ class SubplotBase(object):
             self.layoutbox = None
             self.poslayoutbox = None
         else:
+            name = self._subplotspec.layoutbox.name + '.ax'
+            name = name + layoutbox.randid()
             self.layoutbox = layoutbox.LayoutBox(
-                parent=self._subplotspec.layoutbox,
-                name=self._subplotspec.layoutbox.name +
-                    '.ax'+layoutbox.randid(),
-                artist=self)
-            self.poslayoutbox = layoutbox.LayoutBox(parent=
-                self.layoutbox, name=self.layoutbox.name+'.pos',
-                pos=True, subplot=True, artist=self)
-
+                    parent=self._subplotspec.layoutbox,
+                    name=name,
+                    artist=self)
+            self.poslayoutbox = layoutbox.LayoutBox(
+                    parent=self.layoutbox,
+                    name=self.layoutbox.name+'.pos',
+                    pos=True, subplot=True, artist=self)
 
     def __reduce__(self):
         # get the first axes class which does not
@@ -116,7 +120,7 @@ class SubplotBase(object):
     def change_geometry(self, numrows, numcols, num):
         """change subplot geometry, e.g., from 1,1,1 to 2,2,3"""
         self._subplotspec = GridSpec(numrows, numcols,
-                                fig=self.figure)[num - 1]
+                                     fig=self.figure)[num - 1]
         self.update_params()
         self.set_position(self.figbox)
 

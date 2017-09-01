@@ -24,9 +24,13 @@ import numpy as np
 import matplotlib.layoutbox as layoutbox
 import warnings
 
+import logging
 
-#########
-def  get_axall_tightbbox(ax, renderer):
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)s - %(message)s')
+
+
+def get_axall_tightbbox(ax, renderer):
     '''
     Get the tight_bbox of the axis ax, and any dependent decorations, like
     a `Legend` instance.
@@ -40,7 +44,6 @@ def  get_axall_tightbbox(ax, renderer):
             bboxn = child._legend_box.get_window_extent(renderer)
             bbox = transforms.Bbox.union([bbox, bboxn])
         # add other children here....
-
     return bbox
 
 
@@ -49,7 +52,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
     """
     Do the constrained_layout.  Called at draw time in
-     ``figure.constrained_layout()
+     ``figure.constrained_layout()``
 
     Parameters:
 
@@ -89,14 +92,14 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     # list of unique gridspecs that contain child axes:
     gss = set([])
     for ax in axes:
-        if hasattr(ax,'get_subplotspec'):
+        if hasattr(ax, 'get_subplotspec'):
             gs = ax.get_subplotspec().get_gridspec()
             if gs.layoutbox is not None:
                 gss.add(gs)
     if len(gss) == 0:
         warnings.warn('There are no gridspecs with layoutboxes. '
-         'Possibly did not call parent GridSpec with the fig= '
-         'keyword')
+                      'Possibly did not call parent GridSpec with the fig= '
+                      'keyword')
 
     # check for unoccupied gridspec slots and make fake axes for thses
     # slots...  Do for each gs separately.
@@ -110,7 +113,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                 hassubplotspec = np.zeros(nrows * ncols)
                 axs = []
                 for ax in axes:
-                    if hasattr(ax,'get_subplotspec'):
+                    if hasattr(ax, 'get_subplotspec'):
                         if ax.get_subplotspec().get_gridspec() == gs:
                             axs += [ax]
                 for ax in axs:
@@ -118,14 +121,13 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
                     hassubplotspec[ss0.num1:ss0.num2+1] = 1.2
-                for nn,hss in enumerate(hassubplotspec):
+                for nn, hss in enumerate(hassubplotspec):
                     if hss < 1:
                         ax = fig.add_subplot(gs[nn])
                         ax.set_frame_on(False)
                         ax.set_xticks([])
                         ax.set_yticks([])
-                        ax.set_facecolor((1.,0.,0.,0.))
-
+                        ax.set_facecolor((1., 0., 0., 0.))
 
         #  constrain the margins between poslayoutbox and the axis layoutbox.
         # this has to happen every call to `figure.constrained_layout`
@@ -134,15 +136,17 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             if ax.layoutbox is not None:
                 pos = ax.get_position()
                 tightbbox = get_axall_tightbbox(ax, renderer)
-                #ax.get_tightbbox(renderer=renderer)
                 bbox = invTransFig(tightbbox)
 
-                ax.poslayoutbox.edit_left_margin_min(-bbox.x0+pos.x0+w_pad)
-                ax.poslayoutbox.edit_right_margin_min(bbox.x1-pos.x1+w_pad)
-                ax.poslayoutbox.edit_bottom_margin_min(-bbox.y0+pos.y0+h_pad)
+                ax.poslayoutbox.edit_left_margin_min(-bbox.x0 + pos.x0 + w_pad)
+                ax.poslayoutbox.edit_right_margin_min(bbox.x1 - pos.x1 + w_pad)
+                ax.poslayoutbox.edit_bottom_margin_min(
+                                            -bbox.y0 + pos.y0 + h_pad)
                 ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_pad)
 
-                ## Sometimes its possible for the solver to collapse
+                logging.debug('left %f' % (-bbox.x0 + pos.x0 + w_pad))
+                logging.debug('right %f' % (bbox.x1 - pos.x1 + w_pad))
+                # Sometimes its possible for the solver to collapse
                 # rather than expand axes, so they all have zero height
                 # or width.  This stops that...  It *should* have been
                 # taken into account w/ pref_width...
@@ -150,16 +154,14 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     ax.poslayoutbox.constrain_height_min(20., strength='weak')
                     ax.poslayoutbox.constrain_width_min(20., strength='weak')
 
-
         # constrain the layoutbox height....
         # not sure this will work in both directions.  This may need
         # to be an editable variable rather than a set value..
         if fig._suptitle is not None:
-           bbox = invTransFig(
-               fig._suptitle.get_window_extent(renderer=renderer))
-           height = bbox.y1 - bbox.y0
-           fig._suptitle.layoutbox.edit_height(height)
-
+            sup = fig._suptitle
+            bbox = invTransFig(sup.get_window_extent(renderer=renderer))
+            height = bbox.y1 - bbox.y0
+            sup.layoutbox.edit_height(height)
 
         # OK, the above lines up ax.poslayoutbox with ax.layoutbox
         # now we need to
@@ -190,7 +192,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
                 # get axes in this gridspec....
                 for ax in axes:
-                    if hasattr(ax,'get_subplotspec'):
+                    if hasattr(ax, 'get_subplotspec'):
                         if ax.get_subplotspec().get_gridspec() == gs:
                             axs += [ax]
                 # check for unoccupied gridspec slots and make a fake
@@ -218,39 +220,43 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                             # OK, this tells us the relative layout of ax
                             # with axc
                             if colNum0max < colNumCmin:
-                                layoutbox.hstack([ss0.layoutbox, ssc.layoutbox])
+                                layoutbox.hstack([ss0.layoutbox,
+                                                  ssc.layoutbox])
                             if colNumCmax < colNum0min:
-                                layoutbox.hstack([ssc.layoutbox, ss0.layoutbox])
+                                layoutbox.hstack([ssc.layoutbox,
+                                                  ss0.layoutbox])
                             if colNum0min == colNumCmin:
                                 # we want the poslayoutboxes to line up on left
                                 # side of the axes spines...
-                                layoutbox.align([  ax.poslayoutbox,
-                                                   axc.poslayoutbox],
+                                layoutbox.align([ax.poslayoutbox,
+                                                 axc.poslayoutbox],
                                                 'left')
                             if colNum0max == colNumCmax:
-                                layoutbox.align([  ax.poslayoutbox,
-                                                   axc.poslayoutbox],
+                                layoutbox.align([ax.poslayoutbox,
+                                                 axc.poslayoutbox],
                                                 'right')
                             ####
                             # vertical alignment
                             if rowNumCmax > rowNum0min:
                                 layoutbox.vstack([ss0.layoutbox,
-                                                ssc.layoutbox])
+                                                  ssc.layoutbox])
                             if rowNum0max > rowNumCmin:
                                 layoutbox.vstack([ssc.layoutbox,
-                                                    ss0.layoutbox])
+                                                  ss0.layoutbox])
                             if rowNum0min == rowNumCmin:
-                                layoutbox.align([  ax.poslayoutbox,
-                                                   axc.poslayoutbox],
+                                layoutbox.align([ax.poslayoutbox,
+                                                 axc.poslayoutbox],
                                                 'top')
-                                layoutbox.align([ssc.layoutbox, ss0.layoutbox],
-                                     'top')
+                                layoutbox.align([ssc.layoutbox,
+                                                 ss0.layoutbox],
+                                                'top')
                             if rowNum0max == rowNumCmax:
-                                layoutbox.align([ ax.poslayoutbox,
-                                                   axc.poslayoutbox],
+                                layoutbox.align([ax.poslayoutbox,
+                                                 axc.poslayoutbox],
                                                 'bottom')
-                                layoutbox.align([ssc.layoutbox, ss0.layoutbox],
-                                     'bottom')
+                                layoutbox.align([ssc.layoutbox,
+                                                 ss0.layoutbox],
+                                                'bottom')
                             # make the widths similar...
                             drowsC = rowNumCmax - rowNumCmin + 1
                             drows0 = rowNum0max - rowNum0min + 1
@@ -263,7 +269,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 axc.poslayoutbox.constrain_height_min(
                                     ax.poslayoutbox.height * drowsC / drows0)
                             else:
-                                ax.poslayoutbox.constrain_height(                            axc.poslayoutbox.height)
+                                ax.poslayoutbox.constrain_height(
+                                                axc.poslayoutbox.height)
                             if dcolsC > dcols0:
                                 axc.poslayoutbox.constrain_width_min(
                                     ax.poslayoutbox.width * dcolsC / dcols0)
@@ -276,8 +283,6 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        #fig.layoutbox.solver.dump()
-        #layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()

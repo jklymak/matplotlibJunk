@@ -31,6 +31,7 @@ import matplotlib.layoutbox as layoutbox
 
 import numpy as np
 
+
 class GridSpecBase(object):
     """
     A base class of GridSpec that specifies the geometry of the grid
@@ -46,7 +47,6 @@ class GridSpecBase(object):
         self._nrows, self._ncols = nrows, ncols
         self.set_height_ratios(height_ratios)
         self.set_width_ratios(width_ratios)
-
 
     def get_geometry(self):
         'get the geometry of the grid, e.g., 2,3'
@@ -143,7 +143,6 @@ class GridSpecBase(object):
 
         return figBottoms, figTops, figLefts, figRights
 
-
     def __getitem__(self, key):
         """
         create and return a SuplotSpec instance.
@@ -162,7 +161,7 @@ class GridSpecBase(object):
             else:
                 if k1 < 0:
                     k1 += nrows
-                if k1 >= nrows or k1 < 0 :
+                if k1 >= nrows or k1 < 0:
                     raise IndexError("index out of range")
                 row1, row2 = k1, k1+1
 
@@ -171,7 +170,7 @@ class GridSpecBase(object):
             else:
                 if k2 < 0:
                     k2 += ncols
-                if k2 >= ncols or k2 < 0 :
+                if k2 >= ncols or k2 < 0:
                     raise IndexError("index out of range")
                 col1, col2 = k2, k2+1
 
@@ -186,7 +185,7 @@ class GridSpecBase(object):
             else:
                 if key < 0:
                     key += total
-                if key >= total or key < 0 :
+                if key >= total or key < 0:
                     raise IndexError("index out of range")
                 num1, num2 = key, None
 
@@ -224,16 +223,16 @@ class GridSpec(GridSpecBase):
 
         if self.figure is None:
             warnings.warn("GridSpec must be called with the fig keyword "
-                        "if constrained_layout is used")
+                          "if constrained_layout is used")
             self.layoutbox = None
         else:
-            self.layoutbox = layoutbox.LayoutBox(parent=self.figure.layoutbox,
+            self.layoutbox = layoutbox.LayoutBox(
+                parent=self.figure.layoutbox,
                 name='gridspec' + layoutbox.randid(),
                 artist=self)
         # by default the layoutbox for a gridsepc will fill a figure.
         # but this can change below if the gridspec is created from a
         # subplotspec. (GridSpecFromSubplotSpec)
-
 
     _AllowedKeys = ["left", "bottom", "right", "top", "wspace", "hspace"]
 
@@ -356,8 +355,9 @@ class GridSpecFromSubplotSpec(GridSpecBase):
             self.layoutbox = None
         else:
             # OK, this is needed to divide the figure.
-            self.layoutbox = subspeclb.layout_from_subplotspec(subplot_spec,
-                    name=subspeclb.name + '.gridspec' +  layoutbox.randid(),
+            self.layoutbox = subspeclb.layout_from_subplotspec(
+                    subplot_spec,
+                    name=subspeclb.name + '.gridspec' + layoutbox.randid(),
                     artist=self)
 
     def get_subplot_params(self, fig=None):
@@ -390,7 +390,6 @@ class GridSpecFromSubplotSpec(GridSpecBase):
 
         return sp
 
-
     def get_topmost_subplotspec(self):
         """Get the topmost SubplotSpec instance associated with the subplot."""
         return self._subplot_spec.get_topmost_subplotspec()
@@ -421,16 +420,15 @@ class SubplotSpec(object):
             # just make the layoutbox that will conatin all items
             # associated w/ this axis.  This can include other axes like
             # a colorbar or a legend.
-            self.layoutbox = layoutbox.LayoutBox(parent=glb,
+            self.layoutbox = layoutbox.LayoutBox(
+                    parent=glb,
                     name=glb.name + '.ss' + layoutbox.randid(),
                     artist=self)
         else:
             self.layoutbox = None
 
-
     def get_gridspec(self):
         return self._gridspec
-
 
     def get_geometry(self):
         """Get the subplot geometry (``n_rows, n_cols, row, col``).
@@ -439,7 +437,6 @@ class SubplotSpec(object):
         """
         rows, cols = self.get_gridspec().get_geometry()
         return rows, cols, self.num1, self.num2
-
 
     def get_position(self, fig, return_all=False):
         """Update the subplot position from ``fig.subplotpars``.
@@ -451,15 +448,14 @@ class SubplotSpec(object):
         figBottoms, figTops, figLefts, figRights = \
             gridspec.get_grid_positions(fig)
 
-        rowNum, colNum =  divmod(self.num1, ncols)
+        rowNum, colNum = divmod(self.num1, ncols)
         figBottom = figBottoms[rowNum]
         figTop = figTops[rowNum]
         figLeft = figLefts[colNum]
         figRight = figRights[colNum]
 
         if self.num2 is not None:
-
-            rowNum2, colNum2 =  divmod(self.num2, ncols)
+            rowNum2, colNum2 = divmod(self.num2, ncols)
             figBottom2 = figBottoms[rowNum2]
             figTop2 = figTops[rowNum2]
             figLeft2 = figLefts[colNum2]
@@ -488,10 +484,10 @@ class SubplotSpec(object):
 
     def __eq__(self, other):
         # other may not even have the attributes we are checking.
-        return ((self._gridspec, self.num1, self.num2)
-                == (getattr(other, "_gridspec", object()),
-                    getattr(other, "num1", object()),
-                    getattr(other, "num2", object())))
+        return ((self._gridspec, self.num1, self.num2) ==
+                (getattr(other, "_gridspec", object()),
+                getattr(other, "num1", object()),
+                getattr(other, "num2", object())))
 
     if six.PY2:
         def __ne__(self, other):

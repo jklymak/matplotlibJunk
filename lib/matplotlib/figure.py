@@ -366,9 +366,9 @@ class Figure(Artist):
 
         self.subplotpars = subplotpars
         self.layoutbox = layoutbox.LayoutBox(parent=None,
-                                            name='figlb',
-                                            artist=self)
-        self.layoutbox.constrain_geometry(0., 0. ,1., 1.)
+                                             name='figlb',
+                                             artist=self)
+        self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
         self.set_tight_layout(tight_layout)
         self.set_constrained_layout(constrained_layout)
@@ -389,7 +389,7 @@ class Figure(Artist):
         # We can't use "isinstance" here, because then we'd end up importing
         # webagg unconditiionally.
         if (self.canvas is not None and
-            'WebAgg' in self.canvas.__class__.__name__):
+                'WebAgg' in self.canvas.__class__.__name__):
             from matplotlib.backends import backend_webagg
             return backend_webagg.ipython_inline_display(self)
 
@@ -450,7 +450,6 @@ class Figure(Artist):
         Return the Boolean flag, True to use :meth:`tight_layout` when drawing.
         """
         return self._tight
-
 
     def set_tight_layout(self, tight):
         """
@@ -618,7 +617,7 @@ class Figure(Artist):
             for child in figlb.children:
                 if not (child == self._suptitle.layoutbox):
                     layoutbox.vstack([self._suptitle.layoutbox, child],
-                                padding=0.01, strength='required')
+                                     padding=0.01, strength='required')
         self.stale = True
         return self._suptitle
 
@@ -879,7 +878,7 @@ class Figure(Artist):
         'make a hashable key out of args and kwargs'
 
         def fixitems(items):
-            #items may have arrays and lists in them, so convert them
+            # items may have arrays and lists in them, so convert them
             # to tuples for the key
             ret = []
             for k, v in items:
@@ -2012,7 +2011,7 @@ class Figure(Artist):
         return bbox_inches
 
     def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
-                     w_pad=None):
+                           w_pad=None):
         """
         Use layoutbox to determine pos positions withing axes.
 
@@ -2051,13 +2050,9 @@ class Figure(Artist):
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
         do_constrained_layout(fig, renderer, h_pad, w_pad)
-        #layoutbox.print_tree(fig.layoutbox)
-        # this often needs to get called twice...
-#        layoutbox.constrained_layout(fig, renderer, h_pad, w_pad)
-
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None, w_pad=None,
-                    rect=None):
+                     rect=None):
         """
         Adjust subplot parameters to give specified padding.
 
