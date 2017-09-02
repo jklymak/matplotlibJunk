@@ -375,7 +375,6 @@ class LayoutBox(object):
         gs = subspec.get_gridspec()
         nrows, ncols = gs.get_geometry()
         parent = self.parent
-        print('from_subspc', self.name)
 
         # OK, now, we want to set the position of this subplotspec
         # based on its subplotspec parameters.  The new gridspec will inherit.
@@ -454,8 +453,7 @@ class LayoutBox(object):
               self.height == parent.height * height]
         for c in cs:
             self.solver.addConstraint((c | 'required'))
-        print('from_subspc', self.name)
-
+        
         return lb
 
     def __repr__(self):
@@ -658,13 +656,13 @@ def arange_subplotspecs(gs):
 
             ####
             # vertical alignment
-            if rowNumCmax > rowNum0min:
+
+            if rowNum0max < rowNumCmin:
                 vstack([ss0.layoutbox,
                         ssc.layoutbox])
-            if rowNum0max > rowNumCmin:
+            if rowNumCmax < rowNum0min:
                 vstack([ssc.layoutbox,
                         ss0.layoutbox])
-
 
 layoutboxobjnum = 0
 
