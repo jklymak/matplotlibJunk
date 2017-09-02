@@ -54,6 +54,7 @@ cursord = {
     cursors.HAND          : gdk.Cursor(gdk.HAND2),
     cursors.POINTER       : gdk.Cursor(gdk.LEFT_PTR),
     cursors.SELECT_REGION : gdk.Cursor(gdk.TCROSS),
+    cursors.WAIT          : gdk.Cursor(gdk.WATCH),
     }
 
 # ref gtk+/gtk/gtkwidget.h
@@ -386,16 +387,20 @@ class FigureCanvasGTK (gtk.DrawingArea, FigureCanvasBase):
     def expose_event(self, widget, event):
         """Expose_event for all GTK backends. Should not be overridden.
         """
+        toolbar = self.toolbar
+        if toolbar:
+            toolbar.set_cursor(cursors.WAIT)
         if GTK_WIDGET_DRAWABLE(self):
             if self._need_redraw:
                 x, y, w, h = self.allocation
                 self._pixmap_prepare (w, h)
                 self._render_figure(self._pixmap, w, h)
                 self._need_redraw = False
-
             x, y, w, h = event.area
             self.window.draw_drawable (self.style.fg_gc[self.state],
                                        self._pixmap, x, y, x, y, w, h)
+        if toolbar:
+            toolbar.set_cursor(toolbar._lastCursor)
         return False  # finish event propagation?
 
     filetypes = FigureCanvasBase.filetypes.copy()
@@ -619,6 +624,7 @@ class NavigationToolbar2GTK(NavigationToolbar2, gtk.Toolbar):
 
     def set_cursor(self, cursor):
         self.canvas.window.set_cursor(cursord[cursor])
+        gtk.main_iteration()
 
     def release(self, event):
         try: del self._pixmapBack
@@ -701,7 +707,7 @@ class NavigationToolbar2GTK(NavigationToolbar2, gtk.Toolbar):
         fc = FileChooserDialog(
             title='Save the figure',
             parent=self.win,
-            path=os.path.expanduser(rcParams.get('savefig.directory', '')),
+            path=os.path.expanduser(rcParams['savefig.directory']),
             filetypes=self.canvas.get_supported_filetypes(),
             default_filetype=self.canvas.get_default_filetype())
         fc.set_current_name(self.canvas.get_default_filename())
@@ -712,15 +718,12 @@ class NavigationToolbar2GTK(NavigationToolbar2, gtk.Toolbar):
         fname, format = chooser.get_filename_from_user()
         chooser.destroy()
         if fname:
-            startpath = os.path.expanduser(rcParams.get('savefig.directory', ''))
-            if startpath == '':
-                # explicitly missing key or empty str signals to use cwd
-                rcParams['savefig.directory'] = startpath
-            else:
-                # save dir for next time
-                rcParams['savefig.directory'] = os.path.dirname(six.text_type(fname))
+            # Save dir for next time, unless empty str (i.e., use cwd).
+            if startpath != "":
+                rcParams['savefig.directory'] = (
+                    os.path.dirname(six.text_type(fname)))
             try:
-                self.canvas.print_figure(fname, format=format)
+                self.canvas.figure.savefig(fname, format=format)
             except Exception as e:
                 error_msg_gtk(str(e), parent=self)
 

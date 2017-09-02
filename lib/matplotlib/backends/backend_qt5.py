@@ -90,6 +90,7 @@ cursord = {
     cursors.HAND: QtCore.Qt.PointingHandCursor,
     cursors.POINTER: QtCore.Qt.ArrowCursor,
     cursors.SELECT_REGION: QtCore.Qt.CrossCursor,
+    cursors.WAIT: QtCore.Qt.WaitCursor,
     }
 
 
@@ -249,6 +250,15 @@ class FigureCanvasQT(QtWidgets.QWidget, FigureCanvasBase):
         # Key auto-repeat enabled by default
         self._keyautorepeat = True
 
+        # In cases with mixed resolution displays, we need to be careful if the
+        # dpi_ratio changes - in this case we need to resize the canvas
+        # accordingly. We could watch for screenChanged events from Qt, but
+        # the issue is that we can't guarantee this will be emitted *before*
+        # the first paintEvent for the canvas, so instead we keep track of the
+        # dpi_ratio value here and in paintEvent we resize the canvas if
+        # needed.
+        self._dpi_ratio_prev = None
+
     @property
     def _dpi_ratio(self):
         # Not available on Qt4 or some older Qt5.
@@ -342,6 +352,10 @@ class FigureCanvasQT(QtWidgets.QWidget, FigureCanvasBase):
         self._keyautorepeat = bool(val)
 
     def resizeEvent(self, event):
+        # _dpi_ratio_prev will be set the first time the canvas is painted, and
+        # the rendered buffer is useless before anyways.
+        if self._dpi_ratio_prev is None:
+            return
         w = event.size().width() * self._dpi_ratio
         h = event.size().height() * self._dpi_ratio
         dpival = self.figure.dpi
@@ -648,8 +662,8 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
             QtWidgets.QMessageBox.warning(
                 self.parent, "Error", "There are no axes to edit.")
             return
-        if len(allaxes) == 1:
-            axes = allaxes[0]
+        elif len(allaxes) == 1:
+            axes, = allaxes
         else:
             titles = []
             for axes in allaxes:
@@ -711,8 +725,8 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
         sorted_filetypes = sorted(six.iteritems(filetypes))
         default_filetype = self.canvas.get_default_filetype()
 
-        startpath = matplotlib.rcParams.get('savefig.directory', '')
-        startpath = os.path.expanduser(startpath)
+        startpath = os.path.expanduser(
+            matplotlib.rcParams['savefig.directory'])
         start = os.path.join(startpath, self.canvas.get_default_filename())
         filters = []
         selectedFilter = None
@@ -728,15 +742,12 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
                                          "Choose a filename to save to",
                                          start, filters, selectedFilter)
         if fname:
-            if startpath == '':
-                # explicitly missing key or empty str signals to use cwd
-                matplotlib.rcParams['savefig.directory'] = startpath
-            else:
-                # save dir for next time
-                savefig_dir = os.path.dirname(six.text_type(fname))
-                matplotlib.rcParams['savefig.directory'] = savefig_dir
+            # Save dir for next time, unless empty str (i.e., use cwd).
+            if startpath != "":
+                matplotlib.rcParams['savefig.directory'] = (
+                    os.path.dirname(six.text_type(fname)))
             try:
-                self.canvas.print_figure(six.text_type(fname))
+                self.canvas.figure.savefig(six.text_type(fname))
             except Exception as e:
                 QtWidgets.QMessageBox.critical(
                     self, "Error saving file", six.text_type(e),

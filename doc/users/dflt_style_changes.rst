@@ -13,6 +13,8 @@ values is a single line of python
 
 .. code::
 
+  import matplotlib.style
+  import matplotlib as mpl
   mpl.style.use('classic')
 
 See :ref:`customizing-with-matplotlibrc-files` for details about how to
@@ -598,6 +600,8 @@ in your :file:`matplotlibrc` file.
 The default value of the ``linecolor`` kwarg for `~matplotlib.Axes.hexbin` has
 changed from ``'none'`` to ``'face'``. If 'none' is now supplied, no line edges
 are drawn around the hexagons.
+
+.. _barbarh_align:
 
 ``bar`` and ``barh``
 --------------------

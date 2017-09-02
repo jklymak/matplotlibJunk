@@ -833,7 +833,7 @@ def test_nonfinite_limits():
 
 
 @image_comparison(baseline_images=['imshow', 'imshow'],
-                  remove_text=True)
+                  remove_text=True, style='mpl20')
 def test_imshow():
     # Create a NxN image
     N = 100
@@ -855,7 +855,7 @@ def test_imshow():
     ax.imshow("r", data=data)
 
 
-@image_comparison(baseline_images=['imshow_clip'])
+@image_comparison(baseline_images=['imshow_clip'], style='mpl20')
 def test_imshow_clip():
     # As originally reported by Gellule Xg <gellule.xg@free.fr>
 
@@ -1718,9 +1718,7 @@ def test_stackplot_baseline():
             x = 1 / (.1 + np.random.random())
             y = 2 * np.random.random() - .5
             z = 10 / (.1 + np.random.random())
-            for i in range(m):
-                w = (i / float(m) - y) * z
-                a[i] += x * np.exp(-w * w)
+            a += x * np.exp(-((np.arange(m) / m - y) * z) ** 2)
         a = np.zeros((m, n))
         for i in range(n):
             for j in range(5):
@@ -5266,6 +5264,38 @@ def test_twinx_knows_limits():
     ax2.plot([0, 0.5], [1, 2])
 
     assert((xtwin.viewLim.intervalx == ax2.viewLim.intervalx).all())
+
+
+@pytest.mark.style('mpl20')
+@pytest.mark.parametrize('args, kwargs, warning_count',
+                         [((1, 1), {'width': 1, 'bottom': 1}, 0),
+                          ((1, ), {'height': 1, 'bottom': 1}, 0),
+                          ((), {'x': 1, 'height': 1}, 0),
+                          ((), {'left': 1, 'height': 1}, 1)])
+def test_bar_signature(args, kwargs, warning_count):
+    fig, ax = plt.subplots()
+    with warnings.catch_warnings(record=True) as w:
+        r, = ax.bar(*args, **kwargs)
+
+    assert r.get_width() == kwargs.get('width', 0.8)
+    assert r.get_y() == kwargs.get('bottom', 0)
+    assert len(w) == warning_count
+
+
+@pytest.mark.style('mpl20')
+@pytest.mark.parametrize('args, kwargs, warning_count',
+                         [((1, 1), {'height': 1, 'left': 1}, 0),
+                          ((1, ), {'width': 1, 'left': 1}, 0),
+                          ((), {'y': 1, 'width': 1}, 0),
+                          ((), {'bottom': 1, 'width': 1}, 1)])
+def test_barh_signature(args, kwargs, warning_count):
+    fig, ax = plt.subplots()
+    with warnings.catch_warnings(record=True) as w:
+        r, = ax.barh(*args, **kwargs)
+
+    assert r.get_height() == kwargs.get('height', 0.8)
+    assert r.get_x() == kwargs.get('left', 0)
+    assert len(w) == warning_count
 
 
 def test_zero_linewidth():

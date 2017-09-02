@@ -30,7 +30,7 @@ from collections import OrderedDict
 from math import radians, cos, sin
 from matplotlib import verbose, rcParams, __version__
 from matplotlib.backend_bases import (
-    _Backend, FigureCanvasBase, FigureManagerBase, RendererBase)
+    _Backend, FigureCanvasBase, FigureManagerBase, RendererBase, cursors)
 from matplotlib.cbook import maxdict
 from matplotlib.figure import Figure
 from matplotlib.font_manager import findfont, get_font
@@ -190,7 +190,8 @@ class RendererAgg(RendererBase):
         flags = get_hinting_flag()
         font = self._get_agg_font(prop)
 
-        if font is None: return None
+        if font is None:
+            return None
         if len(s) == 1 and ord(s) > 127:
             font.load_char(ord(s), flags=flags)
         else:
@@ -422,9 +423,14 @@ class FigureCanvasAgg(FigureCanvasBase):
         # acquire a lock on the shared font cache
         RendererAgg.lock.acquire()
 
+        toolbar = self.toolbar
         try:
+            if toolbar:
+                toolbar.set_cursor(cursors.WAIT)
             self.figure.draw(self.renderer)
         finally:
+            if toolbar:
+                toolbar.set_cursor(toolbar._lastCursor)
             RendererAgg.lock.release()
 
     def get_renderer(self, cleared=False):
@@ -563,14 +569,18 @@ class FigureCanvasAgg(FigureCanvasBase):
             # The image is "pasted" onto a white background image to safely
             # handle any transparency
             image = Image.frombuffer('RGBA', size, buf, 'raw', 'RGBA', 0, 1)
-            rgba = mcolors.to_rgba(rcParams.get('savefig.facecolor', 'white'))
+            rgba = mcolors.to_rgba(rcParams['savefig.facecolor'])
             color = tuple([int(x * 255.0) for x in rgba[:3]])
             background = Image.new('RGB', size, color)
             background.paste(image, image)
             options = {k: kwargs[k]
-                       for k in ['quality', 'optimize', 'progressive']
+                       for k in ['quality', 'optimize', 'progressive', 'dpi']
                        if k in kwargs}
             options.setdefault('quality', rcParams['savefig.jpeg_quality'])
+            if 'dpi' in options:
+                # Set the same dpi in both x and y directions
+                options['dpi'] = (options['dpi'], options['dpi'])
+
             return background.save(filename_or_obj, format='jpeg', **options)
         print_jpeg = print_jpg
 

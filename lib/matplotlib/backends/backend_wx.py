@@ -316,7 +316,7 @@ class RendererWx(RendererBase):
         if angle == 0.0:
             gfx_ctx.DrawText(s, x, y)
         else:
-            rads = angle / 180.0 * math.pi
+            rads = math.radians(angle)
             xo = h * math.sin(rads)
             yo = h * math.cos(rads)
             gfx_ctx.DrawRotatedText(s, x - xo, y - yo, rads)
@@ -1474,6 +1474,7 @@ cursord = {
     cursors.HAND: wx.CURSOR_HAND,
     cursors.POINTER: wx.CURSOR_ARROW,
     cursors.SELECT_REGION: wx.CURSOR_CROSS,
+    cursors.WAIT: wx.CURSOR_WAIT,
 }
 
 
@@ -1586,7 +1587,7 @@ class NavigationToolbar2Wx(NavigationToolbar2, wx.ToolBar):
                     (ext, format, ext), stacklevel=0)
                 format = ext
             try:
-                self.canvas.print_figure(
+                self.canvas.figure.savefig(
                     os.path.join(dirname, filename), format=format)
             except Exception as e:
                 error_msg_wx(str(e))
@@ -1594,6 +1595,7 @@ class NavigationToolbar2Wx(NavigationToolbar2, wx.ToolBar):
     def set_cursor(self, cursor):
         cursor = wxc.Cursor(cursord[cursor])
         self.canvas.SetCursor(cursor)
+        self.canvas.Update()
 
     def release(self, event):
         try:

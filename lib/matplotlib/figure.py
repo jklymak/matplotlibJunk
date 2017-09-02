@@ -1747,7 +1747,7 @@ class Figure(Artist):
         'whenever the axes state change, ``func(self)`` will be called'
         self._axobservers.append(func)
 
-    def savefig(self, *args, **kwargs):
+    def savefig(self, fname, **kwargs):
         """
         Save the current figure.
 
@@ -1825,7 +1825,6 @@ class Figure(Artist):
             tight bbox is calculated.
 
         """
-
         kwargs.setdefault('dpi', rcParams['savefig.dpi'])
         frameon = kwargs.pop('frameon', rcParams['savefig.frameon'])
         transparent = kwargs.pop('transparent',
@@ -1849,7 +1848,7 @@ class Figure(Artist):
             original_frameon = self.get_frameon()
             self.set_frameon(frameon)
 
-        self.canvas.print_figure(*args, **kwargs)
+        self.canvas.print_figure(fname, **kwargs)
 
         if frameon:
             self.set_frameon(original_frameon)

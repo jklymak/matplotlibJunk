@@ -284,10 +284,13 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 # Again, for these simple examples this style seems like overkill, however
 # once the graphs get slightly more complex it pays off.
 #
+# Backends
+# ========
+#
 # .. _what-is-a-backend:
 #
 # What is a backend?
-# ==================
+# ------------------
 #
 # A lot of documentation on the website and in the mailing lists refers
 # to the "backend" and many new users are confused by this term.
@@ -399,10 +402,6 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 #                 :term:`pdf`
 #                 :term:`svg`
 #                 ...
-# :term:`GDK`     :term:`png`    :term:`raster graphics` --
-#                 :term:`jpg`    the `Gimp Drawing Kit`_ Deprecated in 2.0
-#                 :term:`tiff`
-#                 ...
 # =============   ============   ================================================
 #
 # And here are the user interfaces and renderer combinations supported;
@@ -413,27 +412,43 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 # ============   ================================================================
 # Backend        Description
 # ============   ================================================================
-# GTKAgg         Agg rendering to a :term:`GTK` 2.x canvas (requires PyGTK_ and
-#                pycairo_ or cairocffi_; Python2 only)
+# Qt5Agg         Agg rendering in a :term:`Qt5` canvas (requires PyQt5_).  This
+#                backend can be activated in IPython with ``%matplotlib qt5``.
+# ipympl         Agg rendering embedded in a Jupyter widget.  (requires ipympl)
+#                This can be enabled in a Jupyter notebook with
+#                ``%matplotlib ipympl``
 # GTK3Agg        Agg rendering to a :term:`GTK` 3.x canvas (requires PyGObject_
 #                and pycairo_ or cairocffi_)
-# GTK            GDK rendering to a :term:`GTK` 2.x canvas (not recommended and d
-#                eprecated in 2.0) (requires PyGTK_ and pycairo_ or cairocffi_;
-#                Python2 only)
-# GTKCairo       Cairo rendering to a :term:`GTK` 2.x canvas (requires PyGTK_
-#                and pycairo_ or cairocffi_; Python2 only)
+#                This backend can be activated in IPython with
+#                ``%matplotlib gtk3``.
+# macosx         Agg rendering into a Cocoa canvas in OSX.
+#                This backend can be activated in IPython with
+#                ``%matplotlib osx``.
+# TkAgg          Agg rendering to a :term:`Tk` canvas (requires TkInter_).
+#                This backend can be activated in IPython with
+#                ``%matplotlib tk``.
+# nbAgg          Embed an interactive figure in a Jupyter classic notebook.  This
+#                backend can be enabled in Jupyter notebooks via
+#                ``%matplotlib notebook``.
+# WebAgg         On ``show()`` will start a tornado server with an interactive
+#                figure.
 # GTK3Cairo      Cairo rendering to a :term:`GTK` 3.x canvas (requires PyGObject_
 #                and pycairo_ or cairocffi_)
+# Qt4Agg         Agg rendering to a :term:`Qt4` canvas (requires PyQt4_
+#                or ``pyside``).
+#                This backend can be activated in IPython with
+#                ``%matplotlib qt4``.
+# GTKAgg         Agg rendering to a :term:`GTK` 2.x canvas (requires PyGTK_ and
+#                pycairo_ or cairocffi_; Python2 only)
+#                This backend can be activated in IPython with
+#                ``%matplotlib gtk``.
+# GTKCairo       Cairo rendering to a :term:`GTK` 2.x canvas (requires PyGTK_
+#                and pycairo_ or cairocffi_; Python2 only)
 # WXAgg          Agg rendering to a :term:`wxWidgets` canvas
-#                (requires wxPython_)
-# WX             Native :term:`wxWidgets` drawing to a :term:`wxWidgets` Canvas
-#                (not recommended and deprecated in 2.0) (requires wxPython_)
-# TkAgg          Agg rendering to a :term:`Tk` canvas (requires TkInter_)
-# Qt4Agg         Agg rendering to a :term:`Qt4` canvas (requires PyQt4_ or ``pyside``)
-# Qt5Agg         Agg rendering in a :term:`Qt5` canvas (requires PyQt5_)
-# macosx         Cocoa rendering in OSX windows
-#                (presently lacks blocking show() behavior when matplotlib
-#                is in non-interactive mode)
+#                (requires wxPython_.  v4.0 (in beta) is
+#                required for python3).
+#                This backend can be activated in IPython with
+#                ``%matplotlib wx``.
 # ============   ================================================================
 #
 # .. _`Anti-Grain Geometry`: http://antigrain.com/
@@ -451,18 +466,28 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 # .. _PyQt4: https://riverbankcomputing.com/software/pyqt/intro
 # .. _PyQt5: https://riverbankcomputing.com/software/pyqt/intro
 #
-# WX backends
-# ===========
+# ipympl
+# ------
 #
-# At present the release version of `wxPython` (also known as wxPython classic)
-# does not support python3. A work in progress redesigned version known as
-# wxPython-Phoenix_ does support python3.
-# Matplotlib should work with both versions.
+# The Jupyter widget ecosystem is moving too fast to support directly in
+# Matplotlib.  To install ipympl
 #
-# .. _wxPython-Phoenix: https://wxpython.org/Phoenix/docs/html/main.html
+# .. code-block:: bash
+#
+#    pip install ipympl
+#    jupyter nbextension enable --py --sys-prefix ipympl
+#
+# or
+#
+# .. code-block:: bash
+#
+#    conda install ipympl -c conda-forge
+#
+# See `jupyter-matplotlib <https://github.com/matplotlib/jupyter-matplotlib>`__
+# for more details.
 #
 # GTK and Cairo
-# =============
+# -------------
 #
 # Both `GTK2` and `GTK3` have implicit dependencies on PyCairo regardless of the
 # specific Matplotlib backend used. Unfortunatly the latest release of PyCairo
@@ -471,7 +496,7 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 # wrapper.
 #
 # How do I select PyQt4 or PySide?
-# ========================================
+# --------------------------------
 #
 # You can choose either PyQt4 or PySide when using the `qt4` backend by setting
 # the appropriate value for `backend.qt4` in your :file:`matplotlibrc` file. The
@@ -714,3 +739,58 @@ for i in range(3):
 # attempt at evenly spaced (along the *x* axis) sampling. See the
 # :ref:`sphx_glr_gallery_lines_bars_and_markers_markevery_demo.py`
 # for more information.
+#
+# Splitting lines into smaller chunks
+# -----------------------------------
+#
+# If you are using the Agg backend (see :ref:`what-is-a-backend`),
+# then you can make use of the ``agg.path.chunksize`` rc parameter.
+# This allows you to specify a chunk size, and any lines with
+# greater than that many vertices will be split into multiple
+# lines, each of which have no more than ``agg.path.chunksize``
+# many vertices. (Unless ``agg.path.chunksize`` is zero, in
+# which case there is no chunking.) For some kind of data,
+# chunking the line up into reasonable sizes can greatly
+# decrease rendering time.
+#
+# The following script will first display the data without any
+# chunk size restriction, and then display the same data with
+# a chunk size of 10,000. The difference can best be seen when
+# the figures are large, try maximizing the GUI and then
+# interacting with them::
+#
+#   import numpy as np
+#   import matplotlib.pyplot as plt
+#   import matplotlib as mpl
+#   mpl.rcParams['path.simplify_threshold'] = 1.0
+#
+#   # Setup, and create the data to plot
+#   y = np.random.rand(100000)
+#   y[50000:] *= 2
+#   y[np.logspace(1,np.log10(50000), 400).astype(int)] = -1
+#   mpl.rcParams['path.simplify'] = True
+#
+#   mpl.rcParams['agg.path.chunksize'] = 0
+#   plt.plot(y)
+#   plt.show()
+#
+#   mpl.rcParams['agg.path.chunksize'] = 10000
+#   plt.plot(y)
+#   plt.show()
+#
+# Using the *fast* style
+# ----------------------
+#
+# The *fast* style can be used to automatically set
+# simplification and chunking parameters to reasonable
+# settings to speed up plotting large amounts of data.
+# It can be used simply by running::
+#
+#   import matplotlib.style as mplstyle
+#   mplstyle.use('fast')
+#
+# It is very light weight, so it plays nicely with other
+# styles, just make sure the fast style is applied last
+# so that other styles do not overwrite the settings::
+#
+#   mplstyle.use(['dark_background', 'ggplot', 'fast'])

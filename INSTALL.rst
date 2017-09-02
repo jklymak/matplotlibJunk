@@ -178,7 +178,7 @@ Matplotlib requires a large number of dependencies:
   * `Python <https://www.python.org/downloads/>`_ (>= 2.7 or >= 3.4)
   * `NumPy <http://www.numpy.org>`_ (>= |minimum_numpy_version|)
   * `setuptools <https://setuptools.readthedocs.io/en/latest/>`__
-  * dateutil (>= 1.1)
+  * `dateutil <https://pypi.python.org/pypi/python-dateutil>`_ (>= 2.0)
   * `pyparsing <https://pyparsing.wikispaces.com/>`__
   * `libpng <http://www.libpng.org>`__ (>= 1.2)
   * `pytz <http://pytz.sourceforge.net/>`__
@@ -189,6 +189,7 @@ Matplotlib requires a large number of dependencies:
     (for Python 2.7 only)
   * `subprocess32 <https://pypi.python.org/pypi/subprocess32/>`_ (for Python
     2.7 only, on Linux and macOS only)
+
 
 Optionally, you can also install a number of packages to enable better user
 interface toolkits. See :ref:`what-is-a-backend` for more details on the
@@ -206,15 +207,14 @@ optional Matplotlib backends and the capabilities they provide.
 For better support of animation output format and image file formats, LaTeX,
 etc., you can install the following:
 
-  * `ffmpeg <https://www.ffmpeg.org/>`__/`avconv
-    <https://libav.org/avconv.html>`__ or `mencoder
-    <https://mplayerhq.hu/design7/news.html>`__ (for saving movies);
-  * `ImageMagick <https://www.imagemagick.org/script/index.php>`__ (for saving
-    animated gifs);
-  * `Pillow <https://python-pillow.org/>`__ (for a larger selection of image
-    file formats: JPEG, BMP, and TIFF image files);
-  * `LaTeX <https://miktex.org/>`_ and `GhostScript <https://ghostscript.com/download/>`_
-    (for rendering text with LaTeX);
+  * `ffmpeg <https://www.ffmpeg.org/>`_/`avconv
+    <https://libav.org/avconv.html>`_: for saving movies;
+  * `ImageMagick <https://www.imagemagick.org/script/index.php>`_: for saving
+    animated gifs;
+  * `Pillow <https://python-pillow.org/>`_ (>=2.0): for a larger selection of
+    image file formats: JPEG, BMP, and TIFF image files;
+  * `LaTeX <https://miktex.org/>`_ and `GhostScript
+    <https://ghostscript.com/download/>`_ (for rendering text with LaTeX).
 
 .. note::
 

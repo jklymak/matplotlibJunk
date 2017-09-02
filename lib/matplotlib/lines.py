@@ -16,7 +16,8 @@ import numpy as np
 from . import artist, colors as mcolors, docstring, rcParams
 from .artist import Artist, allow_rasterization
 from .cbook import (
-    iterable, is_numlike, ls_mapper, ls_mapper_r, STEP_LOOKUP_MAP)
+    _to_unmasked_float_array, iterable, is_numlike, ls_mapper, ls_mapper_r,
+    STEP_LOOKUP_MAP)
 from .markers import MarkerStyle
 from .path import Path
 from .transforms import Bbox, TransformedPath, IdentityTransform
@@ -648,37 +649,17 @@ class Line2D(Artist):
     def recache(self, always=False):
         if always or self._invalidx:
             xconv = self.convert_xunits(self._xorig)
-            if isinstance(self._xorig, np.ma.MaskedArray):
-                x = np.ma.asarray(xconv, float).filled(np.nan)
-            else:
-                x = np.asarray(xconv, float)
-            x = x.ravel()
+            x = _to_unmasked_float_array(xconv).ravel()
         else:
             x = self._x
         if always or self._invalidy:
             yconv = self.convert_yunits(self._yorig)
-            if isinstance(self._yorig, np.ma.MaskedArray):
-                y = np.ma.asarray(yconv, float).filled(np.nan)
-            else:
-                y = np.asarray(yconv, float)
-            y = y.ravel()
+            y = _to_unmasked_float_array(yconv).ravel()
         else:
             y = self._y
 
-        if len(x) == 1 and len(y) > 1:
-            x = x * np.ones(y.shape, float)
-        if len(y) == 1 and len(x) > 1:
-            y = y * np.ones(x.shape, float)
-
-        if len(x) != len(y):
-            raise RuntimeError('xdata and ydata must be the same length')
-
-        self._xy = np.empty((len(x), 2), dtype=float)
-        self._xy[:, 0] = x
-        self._xy[:, 1] = y
-
-        self._x = self._xy[:, 0]  # just a view
-        self._y = self._xy[:, 1]  # just a view
+        self._xy = np.column_stack(np.broadcast_arrays(x, y)).astype(float)
+        self._x, self._y = self._xy.T  # views
 
         self._subslice = False
         if (self.axes and len(x) > 1000 and self._is_sorted(x) and

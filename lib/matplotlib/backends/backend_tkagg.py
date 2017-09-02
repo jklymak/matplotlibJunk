@@ -45,6 +45,7 @@ cursord = {
     cursors.HAND: "hand2",
     cursors.POINTER: "arrow",
     cursors.SELECT_REGION: "tcross",
+    cursors.WAIT: "watch",
     }
 
 
@@ -697,6 +698,7 @@ class NavigationToolbar2TkAgg(NavigationToolbar2, Tk.Frame):
 
     def set_cursor(self, cursor):
         self.window.configure(cursor=cursord[cursor])
+        self.window.update_idletasks()
 
     def _Button(self, text, file, command, extension='.gif'):
         img_file = os.path.join(
@@ -766,8 +768,7 @@ class NavigationToolbar2TkAgg(NavigationToolbar2, Tk.Frame):
         # work - JDH!
         #defaultextension = self.canvas.get_default_filetype()
         defaultextension = ''
-        initialdir = rcParams.get('savefig.directory', '')
-        initialdir = os.path.expanduser(initialdir)
+        initialdir = os.path.expanduser(rcParams['savefig.directory'])
         initialfile = self.canvas.get_default_filename()
         fname = tkinter_tkfiledialog.asksaveasfilename(
             master=self.window,
@@ -778,20 +779,17 @@ class NavigationToolbar2TkAgg(NavigationToolbar2, Tk.Frame):
             initialfile=initialfile,
             )
 
-        if fname == "" or fname == ():
+        if fname in ["", ()]:
             return
-        else:
-            if initialdir == '':
-                # explicitly missing key or empty str signals to use cwd
-                rcParams['savefig.directory'] = initialdir
-            else:
-                # save dir for next time
-                rcParams['savefig.directory'] = os.path.dirname(six.text_type(fname))
-            try:
-                # This method will handle the delegation to the correct type
-                self.canvas.print_figure(fname)
-            except Exception as e:
-                tkinter_messagebox.showerror("Error saving file", str(e))
+        # Save dir for next time, unless empty str (i.e., use cwd).
+        if initialdir != "":
+            rcParams['savefig.directory'] = (
+                os.path.dirname(six.text_type(fname)))
+        try:
+            # This method will handle the delegation to the correct type
+            self.canvas.figure.savefig(fname)
+        except Exception as e:
+            tkinter_messagebox.showerror("Error saving file", str(e))
 
     def set_active(self, ind):
         self._ind = ind
@@ -982,8 +980,7 @@ class SaveFigureTk(backend_tools.SaveFigureBase):
         # work - JDH!
         # defaultextension = self.figure.canvas.get_default_filetype()
         defaultextension = ''
-        initialdir = rcParams.get('savefig.directory', '')
-        initialdir = os.path.expanduser(initialdir)
+        initialdir = os.path.expanduser(rcParams['savefig.directory'])
         initialfile = self.figure.canvas.get_default_filename()
         fname = tkinter_tkfiledialog.asksaveasfilename(
             master=self.figure.canvas.manager.window,
@@ -1006,7 +1003,7 @@ class SaveFigureTk(backend_tools.SaveFigureBase):
                     six.text_type(fname))
             try:
                 # This method will handle the delegation to the correct type
-                self.figure.canvas.print_figure(fname)
+                self.figure.savefig(fname)
             except Exception as e:
                 tkinter_messagebox.showerror("Error saving file", str(e))
 

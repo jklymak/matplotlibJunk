@@ -42,7 +42,6 @@ from contextlib import contextmanager
 from functools import partial
 import importlib
 import io
-import itertools
 import os
 import sys
 import time
@@ -99,12 +98,6 @@ _default_backends = {
     'svg': 'matplotlib.backends.backend_svg',
     'svgz': 'matplotlib.backends.backend_svg',
 }
-
-
-# Used to ensure that caching based on renderer id() is unique without being as
-# expensive as a real UUID. 0 is used for renderers that don't derive from
-# here, so start at 1.
-_unique_renderer_id = itertools.count(1)
 
 
 def register_backend(format, backend, description=None):
@@ -277,12 +270,7 @@ class RendererBase(object):
 
     """
     def __init__(self):
-        # A lightweight id for unique-ification purposes. Along with id(self),
-        # the combination should be unique enough to use as part of a cache key.
-        self._uid = next(_unique_renderer_id)
-
         self._texmanager = None
-
         self._text2path = textpath.TextToPath()
 
     def open_group(self, s, gid=None):
@@ -2315,7 +2303,7 @@ class FigureCanvasBase(object):
         default_filetype = self.get_default_filetype()
         default_filename = default_basename + '.' + default_filetype
 
-        save_dir = os.path.expanduser(rcParams.get('savefig.directory', ''))
+        save_dir = os.path.expanduser(rcParams['savefig.directory'])
 
         # ensure non-existing filename in save dir
         i = 1
@@ -2818,7 +2806,8 @@ class NavigationToolbar2(object):
         self._idPress = None
         self._idRelease = None
         self._active = None
-        self._lastCursor = None
+        # This cursor will be set after the initial draw.
+        self._lastCursor = cursors.POINTER
         self._init_toolbar()
         self._idDrag = self.canvas.mpl_connect(
             'motion_notify_event', self.mouse_move)
@@ -2904,14 +2893,13 @@ class NavigationToolbar2(object):
                 self.set_cursor(cursors.POINTER)
                 self._lastCursor = cursors.POINTER
         else:
-            if self._active == 'ZOOM':
-                if self._lastCursor != cursors.SELECT_REGION:
-                    self.set_cursor(cursors.SELECT_REGION)
-                    self._lastCursor = cursors.SELECT_REGION
+            if (self._active == 'ZOOM'
+                    and self._lastCursor != cursors.SELECT_REGION):
+                self.set_cursor(cursors.SELECT_REGION)
+                self._lastCursor = cursors.SELECT_REGION
             elif (self._active == 'PAN' and
                   self._lastCursor != cursors.MOVE):
                 self.set_cursor(cursors.MOVE)
-
                 self._lastCursor = cursors.MOVE
 
     def mouse_move(self, event):
@@ -3201,6 +3189,11 @@ class NavigationToolbar2(object):
 
     def set_cursor(self, cursor):
         """Set the current cursor to one of the :class:`Cursors` enums values.
+
+        If required by the backend, this method should trigger an update in
+        the backend event loop after the cursor is set, as this method may be
+        called e.g. before a long-running task during which the GUI is not
+        updated.
         """
 
     def update(self):
