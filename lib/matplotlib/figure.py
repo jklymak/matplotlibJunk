@@ -2013,7 +2013,7 @@ class Figure(Artist):
     def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
                            w_pad=None):
         """
-        Use layoutbox to determine pos positions withing axes.
+        Use ``layoutbox`` to determine pos positions within axes.
 
         pad : string or float
             The padding aorund a subplot.  i.e. half the distance between
