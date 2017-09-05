@@ -421,6 +421,7 @@ class SubplotSpec(object):
                     parent=glb,
                     name=glb.name + '.ss' + layoutbox.randid(),
                     artist=self)
+
         else:
             self.layoutbox = None
 

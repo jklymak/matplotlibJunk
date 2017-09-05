@@ -1399,6 +1399,13 @@ def make_axes_gridspec(parent, **kw):
     pad_s = (1. - shrink) * 0.5
     wh_ratios = [pad_s, shrink, pad_s]
 
+    # we need to none the tree of layoutboxes because
+    # constrained_layout can't remove and replace the tree
+    # hierarchy w/o a seg fault.
+    gs = parent.get_subplotspec().get_gridspec()
+    layoutbox.nonetree(gs.layoutbox)
+    warnings.warn("colorbar called with use_gridspec=True. Disabling "
+                  "constrained_layout.")
     gs_from_subplotspec = gridspec.GridSpecFromSubplotSpec
     if orientation == 'vertical':
         pad = kw.pop('pad', 0.05)

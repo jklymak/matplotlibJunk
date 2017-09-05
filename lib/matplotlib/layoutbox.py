@@ -190,7 +190,7 @@ class LayoutBox(object):
         # self.soft_constraints()
         if self.parent:
             self.parent_constrain()
-        sol.updateVariables()
+        # sol.updateVariables()
 
     def parent_constrain(self):
         parent = self.parent
@@ -247,7 +247,7 @@ class LayoutBox(object):
               self.top == top]
         for c in hc:
             self.solver.addConstraint((c | strength))
-        self.solver.updateVariables()
+        # self.solver.updateVariables()
 
     def constrain_left_margin(self, margin, strength='strong'):
         c = (self.left == self.parent.left + margin)
@@ -453,7 +453,7 @@ class LayoutBox(object):
               self.height == parent.height * height]
         for c in cs:
             self.solver.addConstraint((c | 'required'))
-        
+
         return lb
 
     def __repr__(self):
@@ -688,6 +688,22 @@ def print_children(lb):
     for child in lb.children:
         print_children(child)
 
+def nonetree(lb):
+    '''
+    Make all elements in this tree none...  This signals not to do any more
+    layout.
+    '''
+    if lb is not None:
+        if lb.parent is None:
+            nonechildren(lb)
+        else:
+            nonetree(lb.parent)
+
+def nonechildren(lb):
+    for child in lb.children:
+        nonechildren(child)
+    lb.artist.layoutbox = None
+    lb = None
 
 def print_tree(lb):
     '''
