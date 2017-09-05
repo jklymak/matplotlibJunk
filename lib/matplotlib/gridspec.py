@@ -222,6 +222,7 @@ class GridSpec(GridSpecBase):
                           "if constrained_layout is used")
             self.layoutbox = None
         else:
+            self.figure.init_layoutbox()
             self.layoutbox = layoutbox.LayoutBox(
                 parent=self.figure.layoutbox,
                 name='gridspec' + layoutbox.randid(),

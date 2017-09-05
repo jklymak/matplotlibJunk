@@ -365,10 +365,7 @@ class Figure(Artist):
             subplotpars = SubplotParams()
 
         self.subplotpars = subplotpars
-        self.layoutbox = layoutbox.LayoutBox(parent=None,
-                                             name='figlb',
-                                             artist=self)
-        self.layoutbox.constrain_geometry(0., 0., 1., 1.)
+        self.layoutbox = None
 
         self.set_tight_layout(tight_layout)
         self.set_constrained_layout(constrained_layout)
@@ -2009,6 +2006,17 @@ class Figure(Artist):
 
         return bbox_inches
 
+    def init_layoutbox(self):
+        """
+        initilaize the layoutbox for use in constrained_layout.
+        """
+        if self.layoutbox is None:
+            self.layoutbox = layoutbox.LayoutBox(parent=None,
+                                     name='figlb',
+                                     artist=self)
+            self.layoutbox.constrain_geometry(0., 0., 1., 1.)
+
+
     def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
                            w_pad=None):
         """
@@ -2036,6 +2044,12 @@ class Figure(Artist):
         import matplotlib.figunits as figunits
         from .constrained_layout import (do_constrained_layout)
 
+        if self.layoutbox is None:
+            warnings.warn("Calling figure.constrained_layout, but figure "
+                          "not setup to do constrained layout.  "
+                          "   You either called GridSpec without the "
+                          " fig keyword, or you are using plt.subplot")
+            return
         if h_pad is None:
             h_pad = pad
         if w_pad is None:
