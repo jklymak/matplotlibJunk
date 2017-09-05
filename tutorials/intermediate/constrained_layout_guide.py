@@ -185,9 +185,6 @@ example_plot(ax3)
 example_plot(ax4)
 
 show()
-plt.show()
-layoutbox.print_tree(fig.layoutbox)
-plt.show()
 
 ###############################################################################
 # Caveats
