@@ -14,12 +14,16 @@ import matplotlib.gridspec as gridspec
 from matplotlib import ticker
 
 
-def example_plot(ax, fontsize=12):
+def example_plot(ax, fontsize=12, nodec=False):
     ax.plot([1, 2])
     ax.locator_params(nbins=3)
-    ax.set_xlabel('x-label', fontsize=fontsize)
-    ax.set_ylabel('y-label', fontsize=fontsize)
-    ax.set_title('Title', fontsize=fontsize)
+    if not nodec:
+        ax.set_xlabel('x-label', fontsize=fontsize)
+        ax.set_ylabel('y-label', fontsize=fontsize)
+        ax.set_title('Title', fontsize=fontsize)
+    else:
+        ax.set_xticklabels('')
+        ax.set_yticklabels('')
 
 
 def example_pcolor(ax, fontsize=12):
@@ -230,4 +234,24 @@ def test_constrained_layout11():
     ax = fig.add_subplot(gsl[0])
     example_plot(ax, fontsize=9)
 
-    fig.constrained_layout()
+
+@image_comparison(baseline_images=['constrained_layout12'])
+def test_constrained_layout12():
+    'Test that very unbalanced labeling still works.'
+    fig = plt.figure(constrained_layout=True)
+
+    gs0 = gridspec.GridSpec(6, 2, fig=fig)
+
+    ax1 = fig.add_subplot(gs0[:3, 1])
+    ax2 = fig.add_subplot(gs0[3:, 1])
+
+    example_plot(ax1, fontsize=24)
+    example_plot(ax2, fontsize=24)
+
+    ax = fig.add_subplot(gs0[0:2, 0])
+    example_plot(ax, nodec=True)
+    ax = fig.add_subplot(gs0[2:4, 0])
+    example_plot(ax, nodec=True)
+    ax = fig.add_subplot(gs0[4:, 0])
+    example_plot(ax, nodec=True)
+    ax.set_xlabel('x-label')

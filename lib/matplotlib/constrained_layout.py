@@ -46,6 +46,39 @@ def get_axall_tightbbox(ax, renderer):
         # add other children here....
     return bbox
 
+def insamecolumn(ss0, ssc):
+    nrows, ncols = ss0.get_gridspec().get_geometry()
+
+    if ss0.num2 is None:
+        ss0.num2 = ss0.num1
+    rowNum0min, colNum0min = divmod(ss0.num1, ncols)
+    rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+    if ssc.num2 is None:
+        ssc.num2 = ssc.num1
+    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+    if colNum0min >= colNumCmin and colNum0min <= colNumCmax:
+        return True
+    if colNum0max >= colNumCmin and colNum0max <= colNumCmax:
+        return True
+    return False
+
+def insamerow(ss0, ssc):
+    nrows, ncols = ss0.get_gridspec().get_geometry()
+
+    if ss0.num2 is None:
+        ss0.num2 = ss0.num1
+    rowNum0min, colNum0min = divmod(ss0.num1, ncols)
+    rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+    if ssc.num2 is None:
+        ssc.num2 = ssc.num1
+    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+    if rowNum0min >= rowNumCmin and rowNum0min <= rowNumCmax:
+        return True
+    if rowNum0max >= rowNumCmin and rowNum0max <= rowNumCmax:
+        return True
+    return False
 
 ######################################################
 def do_constrained_layout(fig, renderer, h_pad, w_pad):
@@ -71,7 +104,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     '''  Steps:
 
     1. get a list of unique gridspecs in this figure.  Each gridspec will be
-    constrained separately
+    constrained separately.
     2. Check for gaps in the gridspecs.  i.e. if not every axes slot in the
     gridspec has been filled.  If empty, add a ghost axis that is made so
     that it cannot be seen (though visible=True).  This is needed to make
@@ -82,8 +115,29 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     can include legends who overspill the axes boundaries.
     4. Constrain gridspec elements to line up:
         a) if colnum0 neq colnumC, the two subplotspecs are stacked next to
-        each other, width the appropriate order.
-        b) if colnum0 ==
+        each other, with the appropriate order.
+        b) if colnum0 == columnC line up the left or right side of the
+        poslayoutbox (depending if it is the min or max num that is equal).
+        c) do the same for rows...
+    5. The above doesn't constrain relative sizes of the poslayoutboxes at
+    all, and indeed zero-size is a solution that the solver often finds more
+    convenient than expanding the sizes.  Right now the solution is to compare
+    subplotspec sizes (i.e. drowsC and drows0) and constrain the larger
+    poslayoutbox to be larger than the ratio of the sizes.  i.e. if drows0 >
+    drowsC,  then ax.poslayoutbox > axc.poslayoutbox * drowsC / drows0. This
+    works fine *if* the decorations are similar between the axes.  If the
+    larger subplotspec has much larger axes decorations, then the constraint
+    above is incorrect.
+
+    We need the greater than in the above, in general, rather than an equals
+    sign.  Consider the case of the left column having 2 rows, and the right
+    column having 1 row.  We want the top and bottom of the poslayoutboxes to
+    line up. So that means if there are decorations on the left column axes
+    they will be smaller than half as large as the right hand axis.
+
+    This can break down if the decoration size for the right hand axis (the
+    margins) is very large.  There must be a math way to check for this case.
+
     '''
     invTransFig = fig.transFigure.inverted().transform_bbox
 
@@ -156,6 +210,10 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     ax.poslayoutbox.constrain_width_min(20., strength='weak')
                     ax.layoutbox.constrain_height_min(20., strength='weak')
                     ax.layoutbox.constrain_width_min(20., strength='weak')
+                    ax.poslayoutbox.constrain_top_margin(0., strength='weak')
+                    ax.poslayoutbox.constrain_bottom_margin(0., strength='weak')
+                    ax.poslayoutbox.constrain_right_margin(0., strength='weak')
+                    ax.poslayoutbox.constrain_left_margin(0., strength='weak')
 
         # constrain the layoutbox height....
         # not sure this will work in both directions.  This may need
@@ -295,8 +353,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 logging.debug(ax.poslayoutbox)
                                 logging.debug(axc.poslayoutbox)
 
-                                axc.poslayoutbox.constrain_height_min(
-                                   ax.poslayoutbox.height * drowsC / drows0)
+                                #axc.poslayoutbox.constrain_height_min(
+                                #   ax.poslayoutbox.height * drowsC / drows0)
+                                if insamecolumn(ss0, ssc):
+                                    axc.poslayoutbox.constrain_height_min(
+                                        ax.poslayoutbox.height *
+                                        drowsC / drows0)
                             elif drowsC < drows0:
                                 # ax height must be greater than 1.5 axc
                                 # but by eye, this isn't right.
@@ -307,20 +369,24 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 logging.debug(drows0 / drowsC)
                                 logging.debug(ax.poslayoutbox)
                                 logging.debug(axc.poslayoutbox)
-                                ax.poslayoutbox.constrain_height_min(
-                                    axc.poslayoutbox.height * drows0 / drowsC)
+                                if insamecolumn(ss0, ssc):
+                                    ax.poslayoutbox.constrain_height_min(
+                                        axc.poslayoutbox.height *
+                                        drows0 / drowsC)
                             else:
                                 ax.poslayoutbox.constrain_height(
                                                 axc.poslayoutbox.height)
                             # widths...
                             if dcolsC > dcols0:
-                                pass
-                                axc.layoutbox.constrain_width_min(
-                                    ax.poslayoutbox.width * dcolsC / dcols0)
+                                if insamerow(ss0, ssc):
+                                    axc.layoutbox.constrain_width_min(
+                                            ax.poslayoutbox.width *
+                                            dcolsC / dcols0)
                             elif dcolsC < dcols0:
-                                pass
-                                ax.layoutbox.constrain_width_min(
-                                    axc.poslayoutbox.width * dcols0 / dcolsC)
+                                if insamerow(ss0, ssc):
+                                    ax.layoutbox.constrain_width_min(
+                                            axc.poslayoutbox.width *
+                                            dcols0 / dcolsC)
                             else:
                                 ax.poslayoutbox.constrain_width(
                                     axc.poslayoutbox.width)

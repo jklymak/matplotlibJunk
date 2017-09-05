@@ -47,7 +47,7 @@ def example_plot(ax, fontsize=12, nodec=False):
 
 
 def show():
-    #    pass
+    #pass
     plt.show()
 
 plt.close('all')
@@ -185,6 +185,9 @@ example_plot(ax3)
 example_plot(ax4)
 
 show()
+plt.show()
+layoutbox.print_tree(fig.layoutbox)
+plt.show()
 
 ###############################################################################
 # Caveats
@@ -272,34 +275,6 @@ ax = fig.add_subplot(gs0[2:4, 0])
 example_plot(ax)
 ax = fig.add_subplot(gs0[4:, 0])
 example_plot(ax)
-
-show()
-
-############################################################################
-# Note that there is a bit of an obscure failure mode where if the
-# two columns have very diffeernt decoration sizes, the layouts don't
-# quite work properly.  This is a "bug", but if the visual elements of
-# the decorations are so different, then using two gridspecs for the layout
-# (see two examples up), makes more sense anyways.
-
-plt.close('all')
-fig = plt.figure(constrained_layout=True)
-
-gs0 = gridspec.GridSpec(6, 2, fig=fig)
-
-ax1 = fig.add_subplot(gs0[:3, 1])
-ax2 = fig.add_subplot(gs0[3:, 1])
-
-example_plot(ax1)
-example_plot(ax2)
-
-ax = fig.add_subplot(gs0[0:2, 0])
-example_plot(ax, nodec=True)
-ax = fig.add_subplot(gs0[2:4, 0])
-example_plot(ax, nodec=True)
-ax = fig.add_subplot(gs0[4:, 0])
-example_plot(ax, nodec=True)
-ax.set_xlabel('x-label')
 
 show()
 
