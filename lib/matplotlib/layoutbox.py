@@ -34,14 +34,12 @@ def get_renderer(fig):
             renderer = canvas.get_renderer()
         else:
             # not sure if this can happen
-            warnings.warn("tight_layout : falling back to Agg renderer")
+            warnings.warn("constrained_layout : falling back to Agg renderer")
             from matplotlib.backends.backend_agg import FigureCanvasAgg
             canvas = FigureCanvasAgg(fig)
             renderer = canvas.get_renderer()
 
     return renderer
-
-# plt.close('all')
 
 
 class LayoutBox(object):
@@ -688,6 +686,7 @@ def print_children(lb):
     for child in lb.children:
         print_children(child)
 
+
 def nonetree(lb):
     '''
     Make all elements in this tree none...  This signals not to do any more
@@ -695,17 +694,19 @@ def nonetree(lb):
     '''
     if lb is not None:
         if lb.parent is None:
-            # Clear the solver.  Hopefully this garbage collects.  
+            # Clear the solver. Hopefully this garbage collects.
             lb.solver.reset()
             nonechildren(lb)
         else:
             nonetree(lb.parent)
+
 
 def nonechildren(lb):
     for child in lb.children:
         nonechildren(child)
     lb.artist.layoutbox = None
     lb = None
+
 
 def print_tree(lb):
     '''

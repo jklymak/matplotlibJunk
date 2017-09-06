@@ -47,12 +47,14 @@ def test_constrained_layout1():
     ax = fig.add_subplot(111)
     example_plot(ax, fontsize=24)
 
+
 @image_comparison(baseline_images=['constrained_layout2'])
 def test_constrained_layout2():
     'Test constrained_layout for 2x2 subplots'
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
     for ax in axs.flatten():
         example_plot(ax, fontsize=24)
+
 
 @image_comparison(baseline_images=['constrained_layout3'])
 def test_constrained_layout3():
@@ -62,6 +64,7 @@ def test_constrained_layout3():
         pcm = example_pcolor(ax, fontsize=24)
         fig.colorbar(pcm, ax=ax, use_gridspec=False)
 
+
 @image_comparison(baseline_images=['constrained_layout4'])
 def test_constrained_layout4():
     'Test constrained_layout for a single colorbar with subplots'
@@ -69,6 +72,7 @@ def test_constrained_layout4():
     for ax in axs.flatten():
         pcm = example_pcolor(ax, fontsize=24)
     fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+
 
 @image_comparison(baseline_images=['constrained_layout5'])
 def test_constrained_layout5():
@@ -82,6 +86,7 @@ def test_constrained_layout5():
     fig.colorbar(pcm, ax=axs,
                  use_gridspec=False, pad=0.01, shrink=0.6,
                  location='bottom')
+
 
 @image_comparison(baseline_images=['constrained_layout6'])
 def test_constrained_layout6():
@@ -105,6 +110,7 @@ def test_constrained_layout6():
     fig.colorbar(pcm, ax=axsr, use_gridspec=False,
                  pad=0.01, shrink=0.99, location='bottom',
                  ticks=ticker.MaxNLocator(nbins=5))
+
 
 @image_comparison(baseline_images=['constrained_layout8'])
 def test_constrained_layout8():
@@ -138,6 +144,7 @@ def test_constrained_layout8():
 
     fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
 
+
 @image_comparison(baseline_images=['constrained_layout7'])
 def test_constrained_layout7():
     'Test for proper warning if fig not set in GridSpec'
@@ -160,6 +167,7 @@ def test_constrained_layout7():
     fig.colorbar(pcm, ax=axsr, use_gridspec=False, pad=0.01,
                  shrink=0.99, location='bottom',
                  ticks=ticker.MaxNLocator(nbins=5))
+
 
 @image_comparison(baseline_images=['constrained_layout8'])
 def test_constrained_layout8():
@@ -193,6 +201,7 @@ def test_constrained_layout8():
 
     fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
 
+
 @image_comparison(baseline_images=['constrained_layout9'])
 def test_constrained_layout9():
     'Test for handling suptitle and for sharex and sharey'
@@ -208,6 +217,7 @@ def test_constrained_layout9():
     fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
     fig.suptitle('Test Suptitle', fontsize=28)
 
+
 @image_comparison(baseline_images=['constrained_layout10'])
 def test_constrained_layout10():
     'Test for handling legend outside axis'
@@ -215,6 +225,7 @@ def test_constrained_layout10():
     for ax in axs.flatten():
         ax.plot(np.arange(12), label='This is a label')
     ax.legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
+
 
 @image_comparison(baseline_images=['constrained_layout11'])
 def test_constrained_layout11():
