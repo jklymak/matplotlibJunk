@@ -695,6 +695,8 @@ def nonetree(lb):
     '''
     if lb is not None:
         if lb.parent is None:
+            # Clear the solver.  Hopefully this garbage collects.  
+            lb.solver.reset()
             nonechildren(lb)
         else:
             nonetree(lb.parent)
