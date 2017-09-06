@@ -1468,6 +1468,31 @@ class Six(SetupPackage):
     def get_install_requires(self):
         return ['six>={0}'.format(self.min_version)]
 
+class Kiwisolver(SetupPackage):
+    name = "kiwisolver"
+    min_version = "1.0.0"
+
+    def check(self):
+        try:
+            import kiwisolver
+        except ImportError:
+            return (
+                "kiwisolver was not found."
+                "pip will attempt to install it "
+                "after matplotlib.")
+
+        if not is_min_version(kiwisolver.__version__, self.min_version):
+            return ("The installed version of kiwisolver is {inst_ver} but "
+                    "a the minimum required version is {min_ver}. "
+                    "pip/easy install will attempt to install a "
+                    "newer version."
+                    ).format(min_ver=self.min_version,
+                             inst_ver=kiwisolver.__version__)
+
+        return "using kiwisolver version %s" % kiwisolver.__version__
+
+    def get_install_requires(self):
+        return ['kiwisolver>={0}'.format(self.min_version)]
 
 class Pytz(SetupPackage):
     name = "pytz"
