@@ -619,8 +619,8 @@ def match_margins(boxes, levels=1):
 
 def arange_subplotspecs(gs):
     """
-    arange the subplotspec childgren of this gridspec, and then do
-    the same of any gridspec children of those gridspecs...
+    arange the subplotspec childgren of this gridspec, and then recursively
+    do the same of any gridspec children of those gridspecs...
     """
     sschildren = []
     for child in gs.children:
@@ -695,7 +695,7 @@ def nonetree(lb):
     '''
     if lb is not None:
         if lb.parent is None:
-            # Clear the solver.  Hopefully this garbage collects.  
+            # Clear the solver.  Hopefully this garbage collects.
             lb.solver.reset()
             nonechildren(lb)
         else:
