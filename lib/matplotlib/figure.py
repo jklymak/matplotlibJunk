@@ -2016,7 +2016,6 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-
     def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
                            w_pad=None):
         """

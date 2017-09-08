@@ -68,6 +68,7 @@ mpl_packages = [
     'Required dependencies and extensions',
     setupext.Numpy(),
     setupext.Six(),
+    setupext.Kiwisolver(),
     setupext.Dateutil(),
     setupext.BackportsFuncToolsLRUCache(),
     setupext.Subprocess32(),

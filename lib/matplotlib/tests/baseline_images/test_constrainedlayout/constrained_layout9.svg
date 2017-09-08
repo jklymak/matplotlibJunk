@@ -1319,7 +1319,7 @@ L 509.339756 239.257147
   </g>
   <g id="axes_5">
    <g id="patch_22">
-    <path clip-path="url(#p294e70a933)" d="M 524.894675 338.511337 
+    <path clip-path="url(#p2d18ba3eba)" d="M 524.894675 338.511337 
 L 524.894675 337.633764 
 L 524.894675 114.730298 
 L 524.894675 113.852726 
@@ -1821,7 +1821,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p294e70a933">
+  <clipPath id="p2d18ba3eba">
    <rect height="224.658611" width="14.977241" x="524.894675" y="113.852726"/>
   </clipPath>
  </defs>

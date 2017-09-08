@@ -1238,7 +1238,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                        [1., shrink], strength='strong')
                 layoutbox.align([axpos, lbpos], 'h_center')
                 # set the height of the pos box
-                lbpos.constraint_height(axpos.width * (aspect),
+                lbpos.constrain_height(axpos.width * (aspect),
                                         strength='medium')
         else:  # there is more than one parent, so lets use gridspec
             # the colorbar will be a sibling of this gridspec, so the

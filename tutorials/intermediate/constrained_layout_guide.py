@@ -1,7 +1,7 @@
 """
-==================
-Constrained Layout guide
-==================
+========================
+Constrained Layout Guide
+========================
 
 How to use constrained-layout to fit plots within your figure cleanly.
 

@@ -46,6 +46,7 @@ def get_axall_tightbbox(ax, renderer):
         # add other children here....
     return bbox
 
+
 def insamecolumn(ss0, ssc):
     nrows, ncols = ss0.get_gridspec().get_geometry()
 
@@ -63,6 +64,7 @@ def insamecolumn(ss0, ssc):
         return True
     return False
 
+
 def insamerow(ss0, ssc):
     nrows, ncols = ss0.get_gridspec().get_geometry()
 
@@ -79,6 +81,7 @@ def insamerow(ss0, ssc):
     if rowNum0max >= rowNumCmin and rowNum0max <= rowNumCmax:
         return True
     return False
+
 
 ######################################################
 def do_constrained_layout(fig, renderer, h_pad, w_pad):
@@ -214,7 +217,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     ax.layoutbox.constrain_height_min(20., strength='weak')
                     ax.layoutbox.constrain_width_min(20., strength='weak')
                     ax.poslayoutbox.constrain_top_margin(0., strength='weak')
-                    ax.poslayoutbox.constrain_bottom_margin(0., strength='weak')
+                    ax.poslayoutbox.constrain_bottom_margin(0.,
+                            strength='weak')
                     ax.poslayoutbox.constrain_right_margin(0., strength='weak')
                     ax.poslayoutbox.constrain_left_margin(0., strength='weak')
 
