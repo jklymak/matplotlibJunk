@@ -158,13 +158,13 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                       'Possibly did not call parent GridSpec with the fig= '
                       'keyword')
 
-    # check for unoccupied gridspec slots and make fake axes for thses
-    # slots...  Do for each gs separately.
-    #   This only needs to happen once.
 
     for boo in range(2):
-        # not sure this works properly for non-homogeneous gridspec
-
+        # check for unoccupied gridspec slots and make ghost axes for thses
+        # slots...  Do for each gs separately.  This is a pretty big kludge
+        # but shoudn't have too much ill effect.  The worst is that
+        # someone querrying the figure will wonder why there are more
+        # axes than they thought.
         if fig.layoutbox.constrained_layout_called < 1:
             for gs in gss:
                 nrows, ncols = gs.get_geometry()
@@ -181,6 +181,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     hassubplotspec[ss0.num1:ss0.num2+1] = 1.2
                 for nn, hss in enumerate(hassubplotspec):
                     if hss < 1:
+                        # this gridspec slot doesn't have an axis so we
+                        # make a "ghost".
                         ax = fig.add_subplot(gs[nn])
                         ax.set_frame_on(False)
                         ax.set_xticks([])
@@ -188,7 +190,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                         ax.set_facecolor((1., 0., 0., 0.))
 
         #  constrain the margins between poslayoutbox and the axis layoutbox.
-        # this has to happen every call to `figure.constrained_layout`
+        # this has to happen every call to `figure.constrained_layout` as the
+        # figure may have chnaged size.
         axes = fig.axes
         for ax in axes:
             if ax.layoutbox is not None:
@@ -219,9 +222,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     ax.poslayoutbox.constrain_right_margin(0., strength='weak')
                     ax.poslayoutbox.constrain_left_margin(0., strength='weak')
 
-        # constrain the layoutbox height....
-        # not sure this will work in both directions.  This may need
-        # to be an editable variable rather than a set value..
+        # do layout for suptitle.
         if fig._suptitle is not None:
             sup = fig._suptitle
             bbox = invTransFig(sup.get_window_extent(renderer=renderer))
@@ -241,14 +242,18 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
         # the ones that contain gridspecs are a set proportion of their
         # parent gridspec.  The ones that contain axes are not so constrained.
 
+        # check for childrent that contain subplotspecs...
         if fig.layoutbox.constrained_layout_called < 1:
             figlb = fig.layoutbox
             for child in figlb.children:
                 name = (child.name).split('.')[-1][:-3]
                 if name == 'gridspec':
+                    # farm the gridspec layout out.  Maybe bad organization
+                    # and this function should be here in constrained_layout
                     layoutbox.arange_subplotspecs(child)
 
         # this only needs to happen once:
+
         if fig.layoutbox.constrained_layout_called < 1:
             fig.layoutbox.constrained_layout_called += 1
             for gs in gss:
@@ -260,15 +265,17 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     if hasattr(ax, 'get_subplotspec'):
                         if ax.get_subplotspec().get_gridspec() == gs:
                             axs += [ax]
-                # check for unoccupied gridspec slots and make a fake
-                # subplotspec for the slot.  We only want to do this once,
-
                 for ax in axs:
                     axs = axs[1:]
                     # now compare ax to all the axs:
-
+                    # if a subplotspec is to the left of a subplotspec, then
+                    # hstack them vstack the otehr ones.  Note this doesn't
+                    # imply they are adjacent, and in some ways this introduces # a bunch of redundant constraints.
+                    #
+                    # If the subplotspecs have the same colNumXmax, then line
+                    # up their right sides.  If they have the same min, then
+                    # their left sides (and vertical equivalents).
                     ss0 = ax.get_subplotspec()
-
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
                     rowNum0min, colNum0min = divmod(ss0.num1, ncols)
@@ -286,6 +293,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
                             # OK, this tells us the relative layout of ax
                             # with axc
+                            # Horizontal alignment:
                             if colNum0max < colNumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
                                                   ssc.layoutbox])
@@ -299,11 +307,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                                  axc.poslayoutbox],
                                                 'left')
                             if colNum0max == colNumCmax:
+                                # line up right sides of poslayoutbox
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'right')
                             ####
-                            # vertical alignment
+                            # Vertical alignment:
                             if rowNum0max < rowNumCmin:
                                 logging.debug('rowNum0max < rowNumCmin')
                                 layoutbox.vstack([ss0.layoutbox,
@@ -313,14 +322,13 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 layoutbox.vstack([ssc.layoutbox,
                                                   ss0.layoutbox])
                             if rowNum0min == rowNumCmin:
+                                # line up top of poslayoutbox
                                 logging.debug('rowNum0min == rowNumCmin')
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'top')
-                                #layoutbox.align([ssc.layoutbox,
-                                #                 ss0.layoutbox],
-                                #                'top')
                             if rowNum0max == rowNumCmax:
+                                # line up bottom of poslayoutbox
                                 logging.debug('rowNum0max == rowNumCmax')
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
@@ -328,27 +336,25 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 #layoutbox.align([ssc.layoutbox,
                                 #                 ss0.layoutbox],
                                 #                'bottom')
-                            # make the widths similar...
+
+                            ###########
+                            # Now we make the widths and heights similar.
+                            # This allows vertically stacked subplots to have
+                            # different sizes if they occupy different ammounts
+                            # of the gridspec:  i.e.
+                            # gs = gridspec.GridSpec(3,1)
+                            # ax1 = gs[0,:]
+                            # ax2 = gs[1:,:]
+                            # then drows0 = 1, and drowsC = 2, and ax2
+                            # should be at least twice as large as ax1.
+                            # For height, this only needs to be done if the
+                            # subplots share a column.  For width if they
+                            # share a row.
+
                             drowsC = rowNumCmax - rowNumCmin + 1
                             drows0 = rowNum0max - rowNum0min + 1
                             dcolsC = colNumCmax - colNumCmin + 1
                             dcols0 = colNum0max - colNum0min + 1
-                            # this is close, but sometimes this constraint
-                            # isn't right.  The bigger cell can be
-                            # proportionally smaller
-                            # if it has bigger decorations than the smaller
-                            # cell.  So, this isn't a good strategy, though
-                            # it works if axes are similarly decorated..
-                            # we need *something like this to get across
-                            # the idea that some cells should be thicker
-                            # than others, otherwise the layout gives them the
-                            # same size.
-                            #
-                            # it should be true if similarly decorated...
-                            #
-                            # Possible fix: only do the less than greater than
-                            # for rows if they are in the same column and
-                            # vice versa... May still causes collapses to zero?
 
                             if drowsC > drows0:
                                 logging.debug('drowsC > drows0')
@@ -357,18 +363,11 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 logging.debug(ax.poslayoutbox)
                                 logging.debug(axc.poslayoutbox)
 
-                                #axc.poslayoutbox.constrain_height_min(
-                                #   ax.poslayoutbox.height * drowsC / drows0)
                                 if insamecolumn(ss0, ssc):
                                     axc.poslayoutbox.constrain_height_min(
                                         ax.poslayoutbox.height *
                                         drowsC / drows0)
                             elif drowsC < drows0:
-                                # ax height must be greater than 1.5 axc
-                                # but by eye, this isn't right.
-                                # Big ones are 0.39 .  This makes smaller
-                                # ones less than .26
-
                                 logging.debug('drowsC < drows0')
                                 logging.debug(drows0 / drowsC)
                                 logging.debug(ax.poslayoutbox)
