@@ -270,7 +270,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     # now compare ax to all the axs:
                     # if a subplotspec is to the left of a subplotspec, then
                     # hstack them vstack the otehr ones.  Note this doesn't
-                    # imply they are adjacent, and in some ways this introduces # a bunch of redundant constraints.
+                    # imply they are adjacent, and in some ways introduces
+                    # a bunch of redundant constraints.
                     #
                     # If the subplotspecs have the same colNumXmax, then line
                     # up their right sides.  If they have the same min, then
