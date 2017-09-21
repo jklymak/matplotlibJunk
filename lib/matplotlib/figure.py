@@ -604,8 +604,7 @@ class Figure(Artist):
             sup.remove()
         else:
             self._suptitle = sup
-
-        if self.layoutbox is not None:
+        if hasattr(self, 'layoutbox') and (self.layoutbox is not None):
             # assign a layout box to the suptitle...
             figlb = self.layoutbox
             self._suptitle.layoutbox = layoutbox.LayoutBox(
