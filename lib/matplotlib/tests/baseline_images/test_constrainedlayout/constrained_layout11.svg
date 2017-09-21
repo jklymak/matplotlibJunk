@@ -1850,7 +1850,7 @@ L 300.316034 122.827303
   </g>
   <g id="axes_6">
    <g id="patch_27">
-    <path clip-path="url(#pdb1fa39d3d)" d="M 319.047346 149.915243 
+    <path clip-path="url(#p609c0a429e)" d="M 319.047346 149.915243 
 L 319.047346 149.519478 
 L 319.047346 48.995054 
 L 319.047346 48.599288 
@@ -2339,7 +2339,7 @@ L 167.469416 14.827303
   <clipPath id="pc20ab211cb">
    <rect height="168.859925" width="307.686644" x="399.782772" y="14.827303"/>
   </clipPath>
-  <clipPath id="pdb1fa39d3d">
+  <clipPath id="p609c0a429e">
    <rect height="101.315955" width="4.824569" x="319.047346" y="48.599288"/>
   </clipPath>
   <clipPath id="p75a452cbd9">

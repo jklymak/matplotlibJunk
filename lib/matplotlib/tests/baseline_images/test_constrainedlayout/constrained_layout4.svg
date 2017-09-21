@@ -1625,7 +1625,7 @@ L 509.959194 242.224959
   </g>
   <g id="axes_5">
    <g id="patch_22">
-    <path clip-path="url(#pe7c6223b73)" d="M 525.514112 313.381024 
+    <path clip-path="url(#pd32f51c338)" d="M 525.514112 313.381024 
 L 525.514112 312.539747 
 L 525.514112 98.855253 
 L 525.514112 98.013976 
@@ -1840,7 +1840,7 @@ z
      </g>
      <g id="text_74">
       <!-- 0.0 -->
-      <g transform="translate(543.871916 210.256563)scale(0.12 -0.12)">
+      <g transform="translate(543.871916 210.256562)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-30"/>
        <use x="63.623047" xlink:href="#DejaVuSans-2e"/>
        <use x="95.410156" xlink:href="#DejaVuSans-30"/>
@@ -1926,7 +1926,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pe7c6223b73">
+  <clipPath id="pd32f51c338">
    <rect height="215.367049" width="14.357803" x="525.514112" y="98.013976"/>
   </clipPath>
  </defs>
