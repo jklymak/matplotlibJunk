@@ -698,6 +698,7 @@ def nonetree(lb):
         if lb.parent is None:
             # Clear the solver.  Hopefully this garbage collects.
             lb.solver.reset()
+            del(lb.solver)
             nonechildren(lb)
         else:
             nonetree(lb.parent)
@@ -706,8 +707,19 @@ def nonetree(lb):
 def nonechildren(lb):
     for child in lb.children:
         nonechildren(child)
-    lb.artist.layoutbox = None
-    lb = None
+    print(lb)
+    artist = lb.artist
+    try:
+        del(artist.layoutbox)
+        print('Deleted layoutbox')
+        del(artist.poslayoutbox)
+        print('Deleted poslayoutbox')
+        print(artist.layoutbox)
+        print('****')
+    except:
+        print('failed to delete artist lb')
+        pass
+
 
 
 def print_tree(lb):

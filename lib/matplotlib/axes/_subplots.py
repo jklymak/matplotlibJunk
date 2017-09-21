@@ -111,6 +111,12 @@ class SubplotBase(object):
              self.__getstate__()]
         return tuple(r)
 
+    def __getstate__(self):
+        print('Hello There')
+        state = super(Figure, self).__getstate__()
+        layoutbox.nonetree(self.layoutbox)
+        return state
+
     def get_geometry(self):
         """get the subplot geometry, e.g., 2,2,3"""
         rows, cols, num1, num2 = self.get_subplotspec().get_geometry()

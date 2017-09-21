@@ -585,6 +585,7 @@ class _AxesBase(martist.Artist):
         # that point.
         state = super(_AxesBase, self).__getstate__()
         state['_cachedRenderer'] = None
+        layoutbox.nontree(self.layoutbox)
         return state
 
     def __setstate__(self, state):
