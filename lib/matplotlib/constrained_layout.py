@@ -1,4 +1,3 @@
-
 """
 This module provides the routine to adjust subplot layouts so that there are
 no overlapping axes or axes decorations.  All axes decorations are dealt with
@@ -16,7 +15,8 @@ See Tutorial (TODO: link)
 
 """
 
-from __future__ import division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from matplotlib.legend import Legend
 import matplotlib.transforms as transforms

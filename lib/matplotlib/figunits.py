@@ -1,13 +1,9 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
 import six
-
 import warnings
-
 import numpy as np
 from matplotlib.layoutbox import get_renderer
-
 
 """
 Simple utility functions to parse and translate common
