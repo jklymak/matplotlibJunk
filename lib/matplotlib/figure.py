@@ -1675,7 +1675,8 @@ class Figure(Artist):
 
     def __getstate__(self):
         state = super(Figure, self).__getstate__()
-        print('Starting pickle')
+
+        # print('\n\n\nStarting pickle')
         # the axobservers cannot currently be pickled.
         # Additionally, the canvas cannot currently be pickled, but this has
         # the benefit of meaning that a figure can be detached from one canvas,
@@ -1700,13 +1701,6 @@ class Figure(Artist):
         # objects can't be pickeled, so we lose the layout options
         # at this point.
 
-        try:
-            lb = self.layoutbox
-            for child in lb.children:
-                layoutbox.nonetree(child)
-            del(lb)
-        except:
-            pass
         state.pop('layoutbox', None)
 
         return state

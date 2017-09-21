@@ -233,6 +233,14 @@ class GridSpec(GridSpecBase):
 
     _AllowedKeys = ["left", "bottom", "right", "top", "wspace", "hspace"]
 
+    def __getstate__(self):
+        state = self.__dict__
+        try:
+            state.pop('layoutbox')
+        except:
+            pass
+        return state
+
     def update(self, **kwargs):
         """
         Update the current values.  If any kwarg is None, default to
@@ -424,6 +432,14 @@ class SubplotSpec(object):
 
         else:
             self.layoutbox = None
+
+    def __getstate__(self):
+        state = self.__dict__
+        try:
+            state.pop('layoutbox')
+        except:
+            pass
+        return state
 
     def get_gridspec(self):
         return self._gridspec

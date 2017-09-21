@@ -578,14 +578,15 @@ class _AxesBase(martist.Artist):
             which='major')
 
         self.layoutbox = None
-        self.spinelayoutbox = None
+        self.poslayoutbox = None
 
     def __getstate__(self):
         # The renderer should be re-created by the figure, and then cached at
         # that point.
         state = super(_AxesBase, self).__getstate__()
         state['_cachedRenderer'] = None
-        layoutbox.nontree(self.layoutbox)
+        state.pop('layoutbox')
+        state.pop('poslayoutbox')
         return state
 
     def __setstate__(self, state):
