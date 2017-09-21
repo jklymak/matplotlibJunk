@@ -604,7 +604,7 @@ class Figure(Artist):
             sup.remove()
         else:
             self._suptitle = sup
-        if hasattr(self, 'layoutbox') and (self.layoutbox is not None):
+        if self.layoutbox is not None:
             # assign a layout box to the suptitle...
             figlb = self.layoutbox
             self._suptitle.layoutbox = layoutbox.LayoutBox(
@@ -1719,6 +1719,7 @@ class Figure(Artist):
         # re-initialise some of the unstored state information
         self._axobservers = []
         self.canvas = None
+        self.layoutbox = None
 
         if restore_to_pylab:
             # lazy import to avoid circularity

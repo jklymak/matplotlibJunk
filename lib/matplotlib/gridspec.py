@@ -241,6 +241,11 @@ class GridSpec(GridSpecBase):
             pass
         return state
 
+    def __setstate__(self, state):
+        self.__dict__ = state
+        # layoutboxes don't survive pickling...
+        self.layoutbox = None
+
     def update(self, **kwargs):
         """
         Update the current values.  If any kwarg is None, default to
@@ -440,6 +445,11 @@ class SubplotSpec(object):
         except:
             pass
         return state
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        # layoutboxes don't survive pickling...
+        self.layoutbox = None
 
     def get_gridspec(self):
         return self._gridspec

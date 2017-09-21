@@ -598,6 +598,9 @@ class _AxesBase(martist.Artist):
             for artist in container:
                 artist._remove_method = container.remove
         self._stale = True
+        self.layoutbox = None
+        self.poslayoutbox = None
+
 
     def get_window_extent(self, *args, **kwargs):
         """
