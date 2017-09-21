@@ -1684,26 +1684,19 @@ class RendererPdf(RendererBase):
         return not rcParams['image.composite_image']
 
     def draw_image(self, gc, x, y, im, transform=None):
-        print('drawing image', x, y)
-        print(transform)
         h, w = im.shape[:2]
         if w == 0 or h == 0:
             return
-        print('drawing image wh', w, h)
 
         if transform is None:
             # If there's no transform, alpha has already been applied
             gc.set_alpha(1.0)
 
         self.check_gc(gc)
-        print('dpi image', self.image_dpi)
-        #print('dpi fig', self.dpi)
-        print('drawing image dpi wh', w, h, x, y)
-        x =  x * self.image_dpi / 72.0
-        y =  y * self.image_dpi / 72.0
-        w =  w  / 2.0
-        h =  h  / 2.0
-        print('drawing image dpi wh', w, h, x, y)
+
+        w = 72.0 * w / self.image_dpi
+        h = 72.0 * h / self.image_dpi
+
         imob = self.file.imageObject(im)
 
         if transform is None:
@@ -2582,7 +2575,7 @@ class FigureCanvasPdf(FigureCanvasBase):
         return 'pdf'
 
     def print_pdf(self, filename, **kwargs):
-        image_dpi = kwargs.get('dpi', self.figure.dpi)  # dpi to use for images
+        image_dpi = kwargs.get('dpi', 72)  # dpi to use for images
         self.figure.set_dpi(72)            # there are 72 pdf points to an inch
         width, height = self.figure.get_size_inches()
         if isinstance(filename, PdfPages):

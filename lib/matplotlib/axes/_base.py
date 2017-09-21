@@ -601,6 +601,7 @@ class _AxesBase(martist.Artist):
         self.layoutbox = None
         self.poslayoutbox = None
 
+
     def get_window_extent(self, *args, **kwargs):
         """
         get the axes bounding box in display space; *args* and
