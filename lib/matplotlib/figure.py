@@ -1695,6 +1695,11 @@ class Figure(Artist):
                     matplotlib._pylab_helpers.Gcf.figs)):
                 state['_restore_to_pylab'] = True
 
+        # set all the layoutbox information to None.  kiwisolver
+        # objects can't be pickeled, so we lose the layout options
+        # at this point.
+        layoutbox.nonetree(fig.layoutbox)
+
         return state
 
     def __setstate__(self, state):
