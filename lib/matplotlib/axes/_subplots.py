@@ -61,7 +61,7 @@ class SubplotBase(object):
                 num = [int(n) for n in num]
                 self._subplotspec = GridSpec(
                         rows, cols,
-                        fig=self.figure)[num[0] - 1:num[1]]
+                        fig=self.figure)[num[0] - 1 : num[1]]
             else:
                 if num < 1 or num > rows*cols:
                     raise ValueError(

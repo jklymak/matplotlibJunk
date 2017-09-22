@@ -35,12 +35,12 @@ def tofig(lenstr, fig, dir):
 
     """
 
-    if type(lenstr) == int or type(lenstr) == float:
+    if is_numlike(lenstr):
         return lenstr
     units = lenstr[-2:]
     try:
         val = float(lenstr[:-2])
-    except:
+    except ValueError:
         raise Exception("Couldn't convert value %s to a float" % str[:-2])
     if units not in suffixes:
         raise Exception("Unit %s is not in list of acceptable units" % unit)

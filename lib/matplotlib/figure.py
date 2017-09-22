@@ -476,7 +476,7 @@ class Figure(Artist):
         Set whether :meth:`constrained_layout` is used upon drawing.
         """
         if constrained is None:
-            constrained = not(self.get_tight_layout)
+            constrained = not(self.get_tight_layout())
         self._constrained = bool(constrained)
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
