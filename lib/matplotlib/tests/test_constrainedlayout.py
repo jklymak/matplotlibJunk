@@ -227,7 +227,8 @@ def test_constrained_layout10():
     ax.legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 
 
-@image_comparison(baseline_images=['constrained_layout11'])
+@image_comparison(baseline_images=['constrained_layout11'],
+        extensions=['png', 'pdf'])
 def test_constrained_layout11():
     'Test for multiple nested gridspecs '
     fig = plt.figure(constrained_layout=True, figsize=(10, 3))
@@ -246,7 +247,8 @@ def test_constrained_layout11():
     example_plot(ax, fontsize=9)
 
 
-@image_comparison(baseline_images=['constrained_layout12'])
+@image_comparison(baseline_images=['constrained_layout12'],
+        extensions=['png', 'pdf'])
 def test_constrained_layout12():
     'Test that very unbalanced labeling still works.'
     fig = plt.figure(constrained_layout=True)
@@ -267,6 +269,7 @@ def test_constrained_layout12():
     example_plot(ax, nodec=True)
     ax.set_xlabel('x-label')
 
+
 @image_comparison(baseline_images=['constrained_layout13'])
 def test_constrained_layout13():
     'Test that padding works.'
@@ -274,6 +277,7 @@ def test_constrained_layout13():
     for ax in axs.flatten():
         example_plot(ax, fontsize=12)
     fig.set_constrained_layout_pads(w_pad=14./72., h_pad=24./72.)
+
 
 @image_comparison(baseline_images=['constrained_layout14'])
 def test_constrained_layout14():
