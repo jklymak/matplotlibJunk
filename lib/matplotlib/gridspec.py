@@ -217,9 +217,9 @@ class GridSpec(GridSpecBase):
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
 
-        if self.figure is None:
-            warnings.warn("GridSpec must be called with the fig keyword "
-                          "if constrained_layout is used")
+        if (self.figure is None) or not(self.figure.get_constrained_layout()):
+            # warnings.warn("GridSpec must be called with the fig keyword "
+            #              "if constrained_layout is used")
             self.layoutbox = None
         else:
             self.figure.init_layoutbox()
@@ -434,7 +434,6 @@ class SubplotSpec(object):
                     parent=glb,
                     name=glb.name + '.ss' + layoutbox.randid(),
                     artist=self)
-
         else:
             self.layoutbox = None
 

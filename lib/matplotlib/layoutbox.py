@@ -26,7 +26,6 @@ import warnings
 
 # renderers can be complicated
 def get_renderer(fig):
-    print('Calling get_renderer\n\n')
     if fig._cachedRenderer:
         renderer = fig._cachedRenderer
     else:

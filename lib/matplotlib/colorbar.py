@@ -1402,8 +1402,8 @@ def make_axes_gridspec(parent, **kw):
     # hierarchy w/o a seg fault.
     gs = parent.get_subplotspec().get_gridspec()
     layoutbox.nonetree(gs.layoutbox)
-    warnings.warn("colorbar called with use_gridspec=True. Disabling "
-                  "constrained_layout.")
+    #warnings.warn("colorbar called with use_gridspec=True. Disabling "
+    #              "constrained_layout.")
     gs_from_subplotspec = gridspec.GridSpecFromSubplotSpec
     if orientation == 'vertical':
         pad = kw.pop('pad', 0.05)

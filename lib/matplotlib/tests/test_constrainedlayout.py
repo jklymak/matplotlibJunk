@@ -231,7 +231,7 @@ def test_constrained_layout10():
 def test_constrained_layout11():
     'Test for multiple nested gridspecs '
     fig = plt.figure(constrained_layout=True, figsize=(10, 3))
-    gs0 = gridspec.GridSpec(1, 2, fig=fig)
+    gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[3., 2.])
     gsl = gridspec.GridSpecFromSubplotSpec(1, 2, gs0[0])
     gsl0 = gridspec.GridSpecFromSubplotSpec(2, 2, gsl[1])
     ax = fig.add_subplot(gs0[1])

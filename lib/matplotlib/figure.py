@@ -476,7 +476,7 @@ class Figure(Artist):
         Set whether :meth:`constrained_layout` is used upon drawing.
         """
         if constrained is None:
-            constrained = not(self.get_tight_layout())
+            constrained = False
         self._constrained = bool(constrained)
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
@@ -1095,7 +1095,6 @@ class Figure(Artist):
                     self._axstack.remove(ax)
 
             a = subplot_class_factory(projection_class)(self, *args, **kwargs)
-
         self._axstack.add(key, a)
         self.sca(a)
         a._remove_method = self.__remove_ax
@@ -1193,7 +1192,11 @@ class Figure(Artist):
         if gridspec_kw is None:
             gridspec_kw = {}
 
-        gs = GridSpec(nrows, ncols, fig=self, **gridspec_kw)
+        if self.get_constrained_layout():
+            gs = GridSpec(nrows, ncols, fig=self, **gridspec_kw)
+        else:
+            # this should turn constrained_layout off if we don't want it
+            gs = GridSpec(nrows, ncols, fig=None, **gridspec_kw)
 
         # Create array to hold all axes.
         axarr = np.empty((nrows, ncols), dtype=object)
