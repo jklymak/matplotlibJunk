@@ -365,10 +365,14 @@ class Figure(Artist):
             subplotpars = SubplotParams()
 
         self.subplotpars = subplotpars
+        # constrained_layout:
         self.layoutbox = None
+        # set in set_constrained_layout_pads()
+        self._constrained_layout_w_pad = None
+        self._constrained_layout_h_pad = None
+        self.set_constrained_layout(constrained_layout)
 
         self.set_tight_layout(tight_layout)
-        self.set_constrained_layout(constrained_layout)
 
         self._axstack = AxesStack()  # track all figure axes and current axes
         self.clf()
@@ -478,6 +482,38 @@ class Figure(Artist):
         if constrained is None:
             constrained = False
         self._constrained = bool(constrained)
+
+    def set_constrained_layout_pads(self, w_pad=None, h_pad=None, pads=None):
+        """
+        Set padding for ``constrained_layout``.
+
+        Parameter:
+        ----------
+
+        pad : iterable with two scalars, or a scalar
+            The padding in inches between layout elements when
+            ``constrained_layout=True``.  A two-element iterable of
+            the form (w_pad, h_pad), i.e. the width- and height-padding.
+            If just one scalar is given, then w_pad = h_pad.
+        """
+
+        if w_pad is None:
+            w_pad = pads
+        if h_pad is None:
+            h_pad = pads
+
+        if (w_pad is not None) and (cbook.is_numlike(w_pad)):
+            self._constrained_layout_w_pad = w_pad
+        if (h_pad is not None) and (cbook.is_numlike(h_pad)):
+            self._constrained_layout_h_pad = h_pad
+
+    def get_constrained_layout_pads(self):
+        """
+        Get padding for ``constrained_layout``.
+
+        Returns a list of [w_pad, h_pad] in inches.
+        """
+        return self._constrained_layout_w_pad, self._constrained_layout_h_pad
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
         """
@@ -1313,7 +1349,7 @@ class Figure(Artist):
             renderer.open_group('figure')
             if self.get_constrained_layout() and self.axes:
                 if True:
-                    self.constrained_layout(renderer)
+                    self._execute_constrained_layout(renderer)
                 else:
                     pass
             if self.get_tight_layout() and self.axes:
@@ -2027,8 +2063,8 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-    def constrained_layout(self, renderer=None, pad=0.0415, h_pad=None,
-                           w_pad=None):
+    def _execute_constrained_layout(self, renderer=None,
+            pad=0.0415, h_pad=None, w_pad=None):
         """
         Use ``layoutbox`` to determine pos positions within axes.
 
@@ -2040,6 +2076,8 @@ class Figure(Artist):
         h_pad, w_pad : float
           padding (height/width) as above but for the vertical or
           horizontal padding.  If provided, override the value in `pad`.
+
+        See also set_constrained_layout_pads
         """
 
         from .constrained_layout import (do_constrained_layout)
@@ -2052,6 +2090,7 @@ class Figure(Artist):
                           "or you need to call figure or subplots"
                           "with the constrained_layout=True kwarg.")
             return
+        w_pad, h_pad = self.get_constrained_layout_pads()
         if h_pad is None:
             h_pad = pad
         if w_pad is None:

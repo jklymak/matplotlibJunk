@@ -35,7 +35,7 @@ def get_renderer(fig):
         else:
             # not sure if this can happen
             # seems to with PDF...
-            warnings.warn("constrained_layout : falling back to Agg renderer")
+            #warnings.warn("constrained_layout : falling back to Agg renderer")
             from matplotlib.backends.backend_agg import FigureCanvasAgg
             canvas = FigureCanvasAgg(fig)
             renderer = canvas.get_renderer()

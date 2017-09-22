@@ -70,37 +70,33 @@ example_plot(ax, fontsize=24)
 
 plt.close('all')
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-example_plot(ax4)
-
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    example_plot(ax)
 show()
 ###############################################################################
 # Specifying `constrained_layout=True` in the call to `plt.subplots`
 # causes the layout to be properly constrained.
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2,
-                                             constrained_layout=True)
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-example_plot(ax4)
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    example_plot(ax)
 show()
 ###############################################################################
-# :func:`~matplotlib.figure.constrained_layout` can take keyword arguments of
-# *pad*, *w_pad* and *h_pad*. These control the extra padding around the
-# figure border and between subplots. The padding can be a float (figure-
-# relative units), or a float followed by "pt" for points, "in" for inches,
-# "mm", and "cm".
+# If you want to change the spacing around objects, then
+# :func:`~matplotlib.figure.set_constrained_layout_pads` can take keyword
+# arguments of *pads*, *w_pad*, or *h_pad*. These control the extra padding
+# around the figure border and between subplots.
+# The paddings are a float in inches.
+# Below we make the *w_pad* 24 pts and the *h_pad* 8 points.  (Sometimes
+# points are easier to think about spacing relative to fontsizes).
+# *pads* is only used if either of *h_pad* or *w_pad* are not specified (or
+# None).
 
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-example_plot(ax4)
-fig.constrained_layout(w_pad='24pt', h_pad='8pt')
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    example_plot(ax)
+fig.set_constrained_layout_pads(w_pad=24./72., h_pad=8./72.)
 show()
 ###############################################################################
 # :func:`~matplotlib.figure.constrained_layout` will not work on subplots

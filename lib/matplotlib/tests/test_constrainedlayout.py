@@ -266,3 +266,19 @@ def test_constrained_layout12():
     ax = fig.add_subplot(gs0[4:, 0])
     example_plot(ax, nodec=True)
     ax.set_xlabel('x-label')
+
+@image_comparison(baseline_images=['constrained_layout13'])
+def test_constrained_layout13():
+    'Test that padding works.'
+    fig, axs = plt.subplots(2, 2, constrained_layout=True)
+    for ax in axs.flatten():
+        example_plot(ax, fontsize=12)
+    fig.set_constrained_layout_pads(w_pad=14./72., h_pad=24./72.)
+
+@image_comparison(baseline_images=['constrained_layout14'])
+def test_constrained_layout14():
+    'Test that padding works.'
+    fig, axs = plt.subplots(2, 2, constrained_layout=True)
+    for ax in axs.flatten():
+        example_plot(ax, fontsize=12)
+    fig.set_constrained_layout_pads(pads=34./72.)
