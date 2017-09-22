@@ -522,7 +522,7 @@ class ColorbarBase(cm.ScalarMappable):
         self.ax._hold = True
         col = self.ax.pcolormesh(*args, **kw)
         self.ax._hold = _hold
-        # self.add_observer(col) # We should observe, not be observed...
+        #self.add_observer(col) # We should observe, not be observed...
 
         if self.solids is not None:
             self.solids.remove()
@@ -644,8 +644,8 @@ class ColorbarBase(cm.ScalarMappable):
         if b is not None:
             self._boundaries = np.asarray(b, dtype=float)
             if self.values is None:
-                self._values = 0.5 * (self._boundaries[:-1] +
-                                      self._boundaries[1:])
+                self._values = 0.5 * (self._boundaries[:-1]
+                                      + self._boundaries[1:])
                 if isinstance(self.norm, colors.NoNorm):
                     self._values = (self._values + 0.00001).astype(np.int16)
                 return
@@ -929,7 +929,7 @@ class Colorbar(ColorbarBase):
             kw['boundaries'] = CS._levels
             kw['values'] = CS.cvalues
             kw['extend'] = CS.extend
-            # kw['ticks'] = CS._levels
+            #kw['ticks'] = CS._levels
             kw.setdefault('ticks', ticker.FixedLocator(CS.levels, nbins=10))
             kw['filled'] = CS.filled
             ColorbarBase.__init__(self, ax, **kw)
@@ -973,9 +973,9 @@ class Colorbar(ColorbarBase):
         # but more work is needed: specifically, a careful
         # look at event sequences, and at how
         # to make one object track another automatically.
-        # tcolors = [col.get_colors()[0] for col in CS.collections]
-        # tlinewidths = [col.get_linewidth()[0] for lw in CS.collections]
-        # print 'tlinewidths:', tlinewidths
+        #tcolors = [col.get_colors()[0] for col in CS.collections]
+        #tlinewidths = [col.get_linewidth()[0] for lw in CS.collections]
+        #print 'tlinewidths:', tlinewidths
         ColorbarBase.add_lines(self, CS.levels, tcolors, tlinewidths,
                                erase=erase)
 
@@ -1021,11 +1021,11 @@ class Colorbar(ColorbarBase):
             CS = self.mappable
             if not CS.filled:
                 self.add_lines(CS)
-            # if self.lines is not None:
+            #if self.lines is not None:
             #    tcolors = [c[0] for c in CS.tcolors]
             #    self.lines.set_color(tcolors)
-        # Fixme? Recalculate boundaries, ticks if vmin, vmax have changed.
-        # Fixme: Some refactoring may be needed; we should not
+        #Fixme? Recalculate boundaries, ticks if vmin, vmax have changed.
+        #Fixme: Some refactoring may be needed; we should not
         # be recalculating everything if there was a simple alpha
         # change.
 
@@ -1177,7 +1177,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
     # OK, now make a layoutbox for the cb axis.  Later, we will use this
     # to make the colorbar fit nicely.
 
-    # this si the layoutbox for the gridspec that parent[0]
+    # this is the layoutbox for the gridspec that parent[0]
     # belongs to.
     gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
 
@@ -1275,12 +1275,12 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                     subspec = ax.get_subplotspec()
                     nrows, ncols = subspec.get_gridspec().get_geometry()
                     for num in [subspec.num1, subspec.num2]:
-                        rowNum1, colNum1 = divmod(subspec.num1, ncols)
-                        if rowNum1 > maxrow:
-                            maxrow = rowNum1
+                        rownum1, colnum1 = divmod(subspec.num1, ncols)
+                        if rownum1 > maxrow:
+                            maxrow = rownum1
                             maxax = ax
-                        if rowNum1 < minrow:
-                            minrow = rowNum1
+                        if rownum1 < minrow:
+                            minrow = rownum1
                             minax = ax
                 # invert the order so these are bottom to top:
                 maxposlb = minax.poslayoutbox
@@ -1291,19 +1291,17 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 #     b             t
                 # h = (top-bottom)*shrink
                 # b = bottom + (top-bottom - h) / 2.
-                if 1:
-                    lbpos.constrain_height(
-                            (maxposlb.top - minposlb.bottom) *
-                            shrink, strength='strong')
-                    lbpos.constrain_bottom(
-                            (maxposlb.top - minposlb.bottom) *
-                            (1. - shrink)/2. + minposlb.bottom,
-                            strength='strong')
+                lbpos.constrain_height(
+                        (maxposlb.top - minposlb.bottom) *
+                        shrink, strength='strong')
+                lbpos.constrain_bottom(
+                        (maxposlb.top - minposlb.bottom) *
+                        (1. - shrink)/2. + minposlb.bottom,
+                        strength='strong')
 
                 # set the width of the pos box
-                if 1:
-                    lbpos.constrain_width(lbpos.height * (1./aspect),
-                                          strength='strong')
+                lbpos.constrain_width(lbpos.height * (1./aspect),
+                                      strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(
                         parent=lb,
@@ -1327,12 +1325,12 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                     subspec = ax.get_subplotspec()
                     nrows, ncols = subspec.get_gridspec().get_geometry()
                     for num in [subspec.num1, subspec.num2]:
-                        rowNum1, colNum1 = divmod(subspec.num1, ncols)
-                        if colNum1 > maxcol:
-                            maxcol = colNum1
+                        rownum1, colnum1 = divmod(subspec.num1, ncols)
+                        if colnum1 > maxcol:
+                            maxcol = colnum1
                             maxax = ax
-                        if rowNum1 < mincol:
-                            mincol = colNum1
+                        if rownum1 < mincol:
+                            mincol = colnum1
                             minax = ax
                 maxposlb = maxax.poslayoutbox
                 minposlb = minax.poslayoutbox
@@ -1346,7 +1344,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                        strength='medium')
 
     cax.set_layoutbox(lb)
-    cax.set_layoutboxpos(lbpos)
+    cax.set_poslayoutbox(lbpos)
 
     return cax, kw
 
@@ -1542,8 +1540,8 @@ def colorbar_factory(cax, mappable, **kwargs):
     """
     # if the given mappable is a contourset with any hatching, use
     # ColorbarPatch else use Colorbar
-    if (isinstance(mappable, contour.ContourSet) and
-            any([hatch is not None for hatch in mappable.hatches])):
+    if (isinstance(mappable, contour.ContourSet)
+            and any([hatch is not None for hatch in mappable.hatches])):
         cb = ColorbarPatch(cax, mappable, **kwargs)
     else:
         cb = Colorbar(cax, mappable, **kwargs)

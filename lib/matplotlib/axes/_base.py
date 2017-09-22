@@ -1272,8 +1272,8 @@ class _AxesBase(martist.Artist):
           etc.
           =====   =====================
         """
-        if (isinstance(aspect, six.string_types) and
-                aspect in ('equal', 'auto')):
+        if (isinstance(aspect, six.string_types)
+                and aspect in ('equal', 'auto')):
             self._aspect = aspect
         else:
             self._aspect = float(aspect)  # raise ValueError if necessary
@@ -2445,7 +2445,7 @@ class _AxesBase(martist.Artist):
         """
         self.layoutbox = layoutbox
 
-    def set_layoutboxpos(self, layoutbox):
+    def set_poslayoutbox(self, layoutbox):
         """
         Set the spinelayoutbox for this axis...
         """
