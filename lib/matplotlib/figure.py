@@ -2024,31 +2024,21 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-    def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
+    def constrained_layout(self, renderer=None, pad=0.0415, h_pad=None,
                            w_pad=None):
         """
         Use ``layoutbox`` to determine pos positions within axes.
 
-        pad : string or float
+        pad : float
             The padding aorund a subplot.  i.e. half the distance between
             subplot decorations, or the distance to the edge of the figure.
+            Units are inches.  Default is 3/72.272 inches (or 3 points).
 
-            String is a float followed by 'px' (pixesl), 'pt' (points),
-            'in' (inches), 'cm' (centimeters), 'mm' (millimeters)
-            or 'fg' (figure-normalized units.).  i.e. pad='7.5mm'.
-            Default is '10.0pt';  Note units assume a dots per inch
-            given by `figure.canvas.get_renderer().dpi`.
-
-            If a float is provided, it is in figure relative units.
-            i.e. `pad=0.01` means that the padding will be 1 percent of
-            the figure width or height.
-
-        h_pad, w_pad : string or float
+        h_pad, w_pad : float
           padding (height/width) as above but for the vertical or
           horizontal padding.  If provided, override the value in `pad`.
         """
 
-        import matplotlib.figunits as figunits
         from .constrained_layout import (do_constrained_layout)
 
         if self.layoutbox is None:
@@ -2062,11 +2052,16 @@ class Figure(Artist):
         if w_pad is None:
             w_pad = pad
         # convert to unit-relative lengths
-        w_pad = figunits.tofigw(w_pad, self)
-        h_pad = figunits.tofigh(h_pad, self)
 
         fig = self
+        # OK, to avoid goofiness with PDF backend means we need to
+        # fallback on Agg which is what this call will do:
+        renderer0 = layoutbox.get_renderer(fig)
+        dpi = renderer0.dpi
+        w_pad = w_pad * dpi / renderer0.width
+        h_pad = h_pad * dpi / renderer0.height
 
+        # but here we need the real renderer...
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
         do_constrained_layout(fig, renderer, h_pad, w_pad)
