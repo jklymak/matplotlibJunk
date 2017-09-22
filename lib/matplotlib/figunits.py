@@ -4,6 +4,7 @@ import six
 import warnings
 import numpy as np
 from matplotlib.layoutbox import get_renderer
+import matplotlib.cbook as cbook
 
 """
 Simple utility functions to parse and translate common
@@ -35,7 +36,7 @@ def tofig(lenstr, fig, dir):
 
     """
 
-    if is_numlike(lenstr):
+    if cbook.is_numlike(lenstr):
         return lenstr
     units = lenstr[-2:]
     try:
