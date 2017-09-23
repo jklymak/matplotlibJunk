@@ -661,7 +661,7 @@ class Figure(Artist):
                     w_pad, h_pad = self.get_constrained_layout_pads(
                             relative=True)
                     layoutbox.vstack([self._suptitle.layoutbox, child],
-                                     padding=h_pad, strength='required')
+                                     padding=h_pad*2., strength='required')
         self.stale = True
         return self._suptitle
 

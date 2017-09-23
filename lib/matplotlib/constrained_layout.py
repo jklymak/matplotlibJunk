@@ -226,7 +226,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             sup = fig._suptitle
             bbox = invTransFig(sup.get_window_extent(renderer=renderer))
             height = bbox.y1 - bbox.y0
-            sup.layoutbox.edit_height(height)
+            sup.layoutbox.edit_height(height+h_pad)
 
         # OK, the above lines up ax.poslayoutbox with ax.layoutbox
         # now we need to
