@@ -62,7 +62,7 @@ def test_constrained_layout3():
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
     for ax in axs.flatten():
         pcm = example_pcolor(ax, fontsize=24)
-        fig.colorbar(pcm, ax=ax, use_gridspec=False)
+        fig.colorbar(pcm, ax=ax)
 
 
 @image_comparison(baseline_images=['constrained_layout4'])
@@ -71,7 +71,7 @@ def test_constrained_layout4():
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
     for ax in axs.flatten():
         pcm = example_pcolor(ax, fontsize=24)
-    fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+    fig.colorbar(pcm, ax=axs, pad=0.01, shrink=0.6)
 
 
 @image_comparison(baseline_images=['constrained_layout5'])
@@ -107,7 +107,7 @@ def test_constrained_layout6():
         axsr += [ax]
         pcm = example_pcolor(ax, fontsize=12)
 
-    fig.colorbar(pcm, ax=axsr, use_gridspec=False,
+    fig.colorbar(pcm, ax=axsr,
                  pad=0.01, shrink=0.99, location='bottom',
                  ticks=ticker.MaxNLocator(nbins=5))
 
@@ -142,7 +142,7 @@ def test_constrained_layout8():
     axs += [ax]
     pcm = example_pcolor(ax, fontsize=10)
 
-    fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+    fig.colorbar(pcm, ax=axs, pad=0.01, shrink=0.6)
 
 
 @image_comparison(baseline_images=['constrained_layout7'])
@@ -164,7 +164,7 @@ def test_constrained_layout7():
         axsr += [ax]
         pcm = example_pcolor(ax, fontsize=12)
 
-    fig.colorbar(pcm, ax=axsr, use_gridspec=False, pad=0.01,
+    fig.colorbar(pcm, ax=axsr, pad=0.01,
                  shrink=0.99, location='bottom',
                  ticks=ticker.MaxNLocator(nbins=5))
 
@@ -199,7 +199,7 @@ def test_constrained_layout8():
     axs += [ax]
     pcm = example_pcolor(ax, fontsize=9)
 
-    fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+    fig.colorbar(pcm, ax=axs, pad=0.01, shrink=0.6)
 
 
 @image_comparison(baseline_images=['constrained_layout9'])
@@ -214,7 +214,7 @@ def test_constrained_layout9():
         ax.set_xlabel('')
         ax.set_ylabel('')
     ax.set_aspect(2.)
-    fig.colorbar(pcm, ax=axs, use_gridspec=False, pad=0.01, shrink=0.6)
+    fig.colorbar(pcm, ax=axs, pad=0.01, shrink=0.6)
     fig.suptitle('Test Suptitle', fontsize=28)
 
 

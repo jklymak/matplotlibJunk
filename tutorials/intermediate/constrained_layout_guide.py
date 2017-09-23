@@ -277,15 +277,16 @@ show()
 # =========
 #
 # If you create a colorbar with the :func:`~matplotlib.pyplot.colorbar`
-# command you need to make room for it.  ``constrained_layout`` does not work
-# with ``use_gridspec=True`` which is now the default so we explicitly
-# set ``use_gridspec=False``.
+# command you need to make room for it.  ``constrained_layout`` does this
+# automatically.  Note that if you specify ``use_gridspec=True`` it will be
+# ignored because this option is made for improving the layout via
+# ``tight_layout``.
 
 plt.close('all')
 arr = np.arange(100).reshape((10, 10))
 fig = plt.figure(figsize=(4, 4), constrained_layout=True)
 im = plt.imshow(arr, interpolation="none")
-fig.colorbar(im, use_gridspec=False)
+fig.colorbar(im)
 show()
 
 ############################################################################
@@ -298,7 +299,7 @@ arr = np.arange(100).reshape((10, 10))
 fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
 for ax in axs.flatten():
     im = ax.imshow(arr, interpolation="none")
-fig.colorbar(im, ax=axs, use_gridspec=False)
+fig.colorbar(im, ax=axs)
 show()
 
 ############################################################################
@@ -324,7 +325,7 @@ for gs in gsr:
     ax.set_title('title')
 
     axs += [ax]
-fig.colorbar(pcm, ax=axs, use_gridspec=False)
+fig.colorbar(pcm, ax=axs)
 show()
 
 ####################################################
