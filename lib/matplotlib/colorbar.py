@@ -522,6 +522,7 @@ class ColorbarBase(cm.ScalarMappable):
         self.ax._hold = True
         col = self.ax.pcolormesh(*args, **kw)
         self.ax._hold = _hold
+        #self.add_observer(col) # We should observe, not be observed...
 
         if self.solids is not None:
             self.solids.remove()
@@ -643,8 +644,8 @@ class ColorbarBase(cm.ScalarMappable):
         if b is not None:
             self._boundaries = np.asarray(b, dtype=float)
             if self.values is None:
-                self._values = 0.5 * (self._boundaries[:-1] +
-                                      self._boundaries[1:])
+                self._values = 0.5 * (self._boundaries[:-1]
+                                      + self._boundaries[1:])
                 if isinstance(self.norm, colors.NoNorm):
                     self._values = (self._values + 0.00001).astype(np.int16)
                 return
@@ -928,7 +929,7 @@ class Colorbar(ColorbarBase):
             kw['boundaries'] = CS._levels
             kw['values'] = CS.cvalues
             kw['extend'] = CS.extend
-            # kw['ticks'] = CS._levels
+            #kw['ticks'] = CS._levels
             kw.setdefault('ticks', ticker.FixedLocator(CS.levels, nbins=10))
             kw['filled'] = CS.filled
             ColorbarBase.__init__(self, ax, **kw)
@@ -1021,10 +1022,10 @@ class Colorbar(ColorbarBase):
             if not CS.filled:
                 self.add_lines(CS)
             #if self.lines is not None:
-            #   tcolors = [c[0] for c in CS.tcolors]
-            #   self.lines.set_color(tcolors)
-        # Fixme? Recalculate boundaries, ticks if vmin, vmax have changed.
-        # Fixme: Some refactoring may be needed; we should not
+            #    tcolors = [c[0] for c in CS.tcolors]
+            #    self.lines.set_color(tcolors)
+        #Fixme? Recalculate boundaries, ticks if vmin, vmax have changed.
+        #Fixme: Some refactoring may be needed; we should not
         # be recalculating everything if there was a simple alpha
         # change.
 
@@ -1274,12 +1275,12 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                     subspec = ax.get_subplotspec()
                     nrows, ncols = subspec.get_gridspec().get_geometry()
                     for num in [subspec.num1, subspec.num2]:
-                        rowNum1, colNum1 = divmod(subspec.num1, ncols)
-                        if rowNum1 > maxrow:
-                            maxrow = rowNum1
+                        rownum1, colnum1 = divmod(subspec.num1, ncols)
+                        if rownum1 > maxrow:
+                            maxrow = rownum1
                             maxax = ax
-                        if rowNum1 < minrow:
-                            minrow = rowNum1
+                        if rownum1 < minrow:
+                            minrow = rownum1
                             minax = ax
                 # invert the order so these are bottom to top:
                 maxposlb = minax.poslayoutbox
@@ -1300,7 +1301,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
                 # set the width of the pos box
                 lbpos.constrain_width(lbpos.height * (1./aspect),
-                        strength='strong')
+                                      strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(
                         parent=lb,
@@ -1401,8 +1402,8 @@ def make_axes_gridspec(parent, **kw):
     # hierarchy w/o a seg fault.
     gs = parent.get_subplotspec().get_gridspec()
     layoutbox.nonetree(gs.layoutbox)
-    warnings.warn("colorbar called with use_gridspec=True. Disabling "
-                  "constrained_layout.")
+    #warnings.warn("colorbar called with use_gridspec=True. Disabling "
+    #              "constrained_layout.")
     gs_from_subplotspec = gridspec.GridSpecFromSubplotSpec
     if orientation == 'vertical':
         pad = kw.pop('pad', 0.05)

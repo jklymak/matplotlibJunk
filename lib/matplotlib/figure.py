@@ -365,10 +365,14 @@ class Figure(Artist):
             subplotpars = SubplotParams()
 
         self.subplotpars = subplotpars
+        # constrained_layout:
         self.layoutbox = None
+        # set in set_constrained_layout_pads()
+        self._constrained_layout_w_pad = None
+        self._constrained_layout_h_pad = None
+        self.set_constrained_layout(constrained_layout)
 
         self.set_tight_layout(tight_layout)
-        self.set_constrained_layout(constrained_layout)
 
         self._axstack = AxesStack()  # track all figure axes and current axes
         self.clf()
@@ -476,8 +480,40 @@ class Figure(Artist):
         Set whether :meth:`constrained_layout` is used upon drawing.
         """
         if constrained is None:
-            constrained = not(self.get_tight_layout())
+            constrained = False
         self._constrained = bool(constrained)
+
+    def set_constrained_layout_pads(self, w_pad=None, h_pad=None, pads=None):
+        """
+        Set padding for ``constrained_layout``.
+
+        Parameter:
+        ----------
+
+        pad : iterable with two scalars, or a scalar
+            The padding in inches between layout elements when
+            ``constrained_layout=True``.  A two-element iterable of
+            the form (w_pad, h_pad), i.e. the width- and height-padding.
+            If just one scalar is given, then w_pad = h_pad.
+        """
+
+        if w_pad is None:
+            w_pad = pads
+        if h_pad is None:
+            h_pad = pads
+
+        if (w_pad is not None) and (cbook.is_numlike(w_pad)):
+            self._constrained_layout_w_pad = w_pad
+        if (h_pad is not None) and (cbook.is_numlike(h_pad)):
+            self._constrained_layout_h_pad = h_pad
+
+    def get_constrained_layout_pads(self):
+        """
+        Get padding for ``constrained_layout``.
+
+        Returns a list of [w_pad, h_pad] in inches.
+        """
+        return self._constrained_layout_w_pad, self._constrained_layout_h_pad
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
         """
@@ -1095,7 +1131,6 @@ class Figure(Artist):
                     self._axstack.remove(ax)
 
             a = subplot_class_factory(projection_class)(self, *args, **kwargs)
-
         self._axstack.add(key, a)
         self.sca(a)
         a._remove_method = self.__remove_ax
@@ -1193,7 +1228,11 @@ class Figure(Artist):
         if gridspec_kw is None:
             gridspec_kw = {}
 
-        gs = GridSpec(nrows, ncols, fig=self, **gridspec_kw)
+        if self.get_constrained_layout():
+            gs = GridSpec(nrows, ncols, fig=self, **gridspec_kw)
+        else:
+            # this should turn constrained_layout off if we don't want it
+            gs = GridSpec(nrows, ncols, fig=None, **gridspec_kw)
 
         # Create array to hold all axes.
         axarr = np.empty((nrows, ncols), dtype=object)
@@ -1310,7 +1349,7 @@ class Figure(Artist):
             renderer.open_group('figure')
             if self.get_constrained_layout() and self.axes:
                 if True:
-                    self.constrained_layout(renderer)
+                    self._execute_constrained_layout(renderer)
                 else:
                     pass
             if self.get_tight_layout() and self.axes:
@@ -2024,49 +2063,49 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-    def constrained_layout(self, renderer=None, pad='3pt', h_pad=None,
-                           w_pad=None):
+    def _execute_constrained_layout(self, renderer=None,
+            pad=0.0415, h_pad=None, w_pad=None):
         """
         Use ``layoutbox`` to determine pos positions within axes.
 
-        pad : string or float
+        pad : float
             The padding aorund a subplot.  i.e. half the distance between
             subplot decorations, or the distance to the edge of the figure.
+            Units are inches.  Default is 3/72.272 inches (or 3 points).
 
-            String is a float followed by 'px' (pixesl), 'pt' (points),
-            'in' (inches), 'cm' (centimeters), 'mm' (millimeters)
-            or 'fg' (figure-normalized units.).  i.e. pad='7.5mm'.
-            Default is '10.0pt';  Note units assume a dots per inch
-            given by `figure.canvas.get_renderer().dpi`.
-
-            If a float is provided, it is in figure relative units.
-            i.e. `pad=0.01` means that the padding will be 1 percent of
-            the figure width or height.
-
-        h_pad, w_pad : string or float
+        h_pad, w_pad : float
           padding (height/width) as above but for the vertical or
           horizontal padding.  If provided, override the value in `pad`.
+
+        See also set_constrained_layout_pads
         """
 
-        import matplotlib.figunits as figunits
         from .constrained_layout import (do_constrained_layout)
 
         if self.layoutbox is None:
             warnings.warn("Calling figure.constrained_layout, but figure "
                           "not setup to do constrained layout.  "
                           "   You either called GridSpec without the "
-                          " fig keyword, or you are using plt.subplot")
+                          "fig keyword, you are using plt.subplot, "
+                          "or you need to call figure or subplots"
+                          "with the constrained_layout=True kwarg.")
             return
+        w_pad, h_pad = self.get_constrained_layout_pads()
         if h_pad is None:
             h_pad = pad
         if w_pad is None:
             w_pad = pad
         # convert to unit-relative lengths
-        w_pad = figunits.tofigw(w_pad, self)
-        h_pad = figunits.tofigh(h_pad, self)
 
         fig = self
+        # OK, to avoid goofiness with PDF backend means we need to
+        # fallback on Agg which is what this call will do:
+        renderer0 = layoutbox.get_renderer(fig)
+        dpi = renderer0.dpi
+        w_pad = w_pad * dpi / renderer0.width
+        h_pad = h_pad * dpi / renderer0.height
 
+        # but here we need the real renderer...
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
         do_constrained_layout(fig, renderer, h_pad, w_pad)

@@ -30,12 +30,12 @@ def get_renderer(fig):
         renderer = fig._cachedRenderer
     else:
         canvas = fig.canvas
-
         if canvas and hasattr(canvas, "get_renderer"):
             renderer = canvas.get_renderer()
         else:
             # not sure if this can happen
-            warnings.warn("constrained_layout : falling back to Agg renderer")
+            # seems to with PDF...
+            #warnings.warn("constrained_layout : falling back to Agg renderer")
             from matplotlib.backends.backend_agg import FigureCanvasAgg
             canvas = FigureCanvasAgg(fig)
             renderer = canvas.get_renderer()

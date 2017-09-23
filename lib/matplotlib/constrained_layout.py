@@ -158,7 +158,6 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                       'Possibly did not call parent GridSpec with the fig= '
                       'keyword')
 
-
     for boo in range(2):
         # check for unoccupied gridspec slots and make ghost axes for thses
         # slots...  Do for each gs separately.  This is a pretty big kludge

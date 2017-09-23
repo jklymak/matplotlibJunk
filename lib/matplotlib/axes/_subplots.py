@@ -61,7 +61,7 @@ class SubplotBase(object):
                 num = [int(n) for n in num]
                 self._subplotspec = GridSpec(
                         rows, cols,
-                        fig=self.figure)[num[0] - 1 : num[1]]
+                        fig=self.figure)[(num[0] - 1):num[1]]
             else:
                 if num < 1 or num > rows*cols:
                     raise ValueError(
@@ -69,8 +69,7 @@ class SubplotBase(object):
                             "num must be 1 <= num <= {maxn}, not {num}"
                         ).format(maxn=rows*cols, num=num))
                 self._subplotspec = GridSpec(
-                        rows, cols,
-                        fig=self.figure)[int(num) - 1]
+                        rows, cols, fig=self.figure)[int(num) - 1]
                 # num - 1 for converting from MATLAB to python indexing
         else:
             raise ValueError('Illegal argument(s) to subplot: %s' % (args,))
@@ -119,6 +118,10 @@ class SubplotBase(object):
     # COVERAGE NOTE: Never used internally or from examples
     def change_geometry(self, numrows, numcols, num):
         """change subplot geometry, e.g., from 1,1,1 to 2,2,3"""
+        if self.figure.get_constrained_layout():
+            gridspecfig = fig
+        else:
+            gridspecfig = None
         self._subplotspec = GridSpec(numrows, numcols,
                                      fig=self.figure)[num - 1]
         self.update_params()
