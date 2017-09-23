@@ -86,7 +86,7 @@ class SubplotBase(object):
             self.poslayoutbox = None
         else:
             name = self._subplotspec.layoutbox.name + '.ax'
-            name = name + layoutbox.randid()
+            name = name + layoutbox.seq_id()
             self.layoutbox = layoutbox.LayoutBox(
                     parent=self._subplotspec.layoutbox,
                     name=name,

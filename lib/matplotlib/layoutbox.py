@@ -667,9 +667,9 @@ def arange_subplotspecs(gs):
 layoutboxobjnum = 0
 
 
-def randid():
+def seq_id():
     '''
-    Generate a short uuid for layoutbox objects...
+    Generate a short sequential id for layoutbox objects...
     '''
 
     global layoutboxobjnum
