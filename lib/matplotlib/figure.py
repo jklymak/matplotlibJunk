@@ -314,6 +314,14 @@ class Figure(Artist):
             and `rect`, the default :meth:`tight_layout` paddings will be
             overridden.
             Defaults to rc ``figure.autolayout``.
+
+        *constrained_layout*
+            If *True* use constrained layout to adjust positioning of plot
+            elements.  Like ``tight_layout``, but designed to be more
+            flexible.  See
+            :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
+            for examples.  (Note: does not work with :meth:`subplot` or
+            :meth:`subplot2grid`.)
         """
         Artist.__init__(self)
         # remove the non-figure artist _axes property
@@ -471,13 +479,18 @@ class Figure(Artist):
 
     def get_constrained_layout(self):
         """
-        Return the Boolean flag, True to use :meth:`tight_layout` when drawing.
+        Return the Boolean flag, True to use ``constrained_layout``
+        when drawing.
+
+        See :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
         return self._constrained
 
     def set_constrained_layout(self, constrained):
         """
-        Set whether :meth:`constrained_layout` is used upon drawing.
+        Set whether ``constrained_layout`` is used upon drawing.
+
+        See :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
         if constrained is None:
             constrained = False
@@ -487,9 +500,23 @@ class Figure(Artist):
         """
         Set padding for ``constrained_layout``.
 
-        Parameter:
-        ----------
+        Parameters:
+        -----------
 
+        w_pad : scalar
+            Width padding in inches.  This is the pad around individual
+            plot elements, so the distance between elements will be
+            twice this value.  If `None` and `pads` is not `None` then
+            will be set to the value in `pads`
+
+        h_pad : scalar
+            Height padding in inches.
+
+        pads : scalar
+            Padding in inches for both `h_pad` and `w_pad` if they are not
+            specified.
+
+        See (:ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`)
         """
 
         if w_pad is None:
@@ -506,18 +533,20 @@ class Figure(Artist):
         """
         Get padding for ``constrained_layout``.
 
-        Returns a list of [w_pad, h_pad] in inches.
+        Returns a list of `w_pad, h_pad` in inches.
 
         Parameter:
         -----------
 
-        relative: boolean
-            if true then convert from inches to figure relative.
+        relative : boolean
+            If `True`, then convert from inches to figure relative.
+
+        See: :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
         w_pad = self._constrained_layout_w_pad
         h_pad = self._constrained_layout_h_pad
 
-        if relative and ((not w_pad is None) or (not h_pad is None)):
+        if relative and ((w_pad is not None) or (h_pad is not None)):
             renderer0 = layoutbox.get_renderer(self)
             dpi = renderer0.dpi
             w_pad = w_pad * dpi / renderer0.width

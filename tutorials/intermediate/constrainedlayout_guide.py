@@ -306,6 +306,8 @@ show()
 # subplots to be the same size you only needed one gridspec.
 
 plt.close('all')
+
+
 def docomplicated(suptitle=None):
     fig = plt.figure(constrained_layout=True)
     gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[1., 2.])
