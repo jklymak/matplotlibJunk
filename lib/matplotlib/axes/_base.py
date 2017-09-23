@@ -587,6 +587,7 @@ class _AxesBase(martist.Artist):
         state['_cachedRenderer'] = None
         state.pop('layoutbox')
         state.pop('poslayoutbox')
+
         return state
 
     def __setstate__(self, state):

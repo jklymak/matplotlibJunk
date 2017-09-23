@@ -400,3 +400,33 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()
                 ax.set_position(newpos)
+
+# Development Notes:
+
+# What gets a layoutbox:
+#  - figure
+#    - gridspec
+#      - subplotspec
+#        EITHER:
+#         - axes + pos for the axes (i.e. the total area taken by axis and
+#            the actual "position" argument that needs to be sent to
+#             ax.set_position.)
+#           - The axes layout box will also encomapss the legend, and that is
+#             how legends get included (axes legeneds, not figure legends)
+#         - colorbars are sibblings of the axes if they are single-axes
+#           colorbars
+#        OR:
+#         - a gridspec can be inside a subplotspec.
+#           - subplotspec
+#           EITHER:
+#            - axes...
+#           OR:
+#            - gridspec... with arbitrary nesting...
+#      - colorbars are siblings of the subplotspecs if they are multi-axes
+#        colorbars.
+#   - suptitle:
+#      - right now suptitles are just stacked atop everything else in figure.
+#        Could imagine suptitles being gridspec suptitles, but not implimented
+#
+#   Todo:    AnchoredOffsetbox connected to gridspecs or axes.  This would
+#        be more general way to add extra-axes annotations.  

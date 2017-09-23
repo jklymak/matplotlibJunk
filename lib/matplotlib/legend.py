@@ -47,8 +47,6 @@ from matplotlib.transforms import BboxTransformTo, BboxTransformFrom
 from matplotlib.offsetbox import HPacker, VPacker, TextArea, DrawingArea
 from matplotlib.offsetbox import DraggableOffsetBox
 
-import matplotlib.layoutbox as layoutbox
-
 from matplotlib.container import ErrorbarContainer, BarContainer, StemContainer
 from . import legend_handler
 

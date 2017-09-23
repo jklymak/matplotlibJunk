@@ -1779,8 +1779,10 @@ class Figure(Artist):
         # set all the layoutbox information to None.  kiwisolver
         # objects can't be pickeled, so we lose the layout options
         # at this point.
-
         state.pop('layoutbox', None)
+        # suptitle:
+        if self._suptitle is not None:
+            self._suptitle.layoutbox = None
 
         return state
 
