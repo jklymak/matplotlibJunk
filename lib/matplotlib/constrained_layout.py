@@ -47,38 +47,38 @@ def get_axall_tightbbox(ax, renderer):
     return bbox
 
 
-def insamecolumn(ss0, ssc):
+def in_same_column(ss0, ssc):
     nrows, ncols = ss0.get_gridspec().get_geometry()
 
     if ss0.num2 is None:
         ss0.num2 = ss0.num1
-    rowNum0min, colNum0min = divmod(ss0.num1, ncols)
-    rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+    rownum0min, colnum0min = divmod(ss0.num1, ncols)
+    rownum0max, colnum0max = divmod(ss0.num2, ncols)
     if ssc.num2 is None:
         ssc.num2 = ssc.num1
-    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
-    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
-    if colNum0min >= colNumCmin and colNum0min <= colNumCmax:
+    rownumCmin, colnumCmin = divmod(ssc.num1, ncols)
+    rownumCmax, colnumCmax = divmod(ssc.num2, ncols)
+    if colnum0min >= colnumCmin and colnum0min <= colnumCmax:
         return True
-    if colNum0max >= colNumCmin and colNum0max <= colNumCmax:
+    if colnum0max >= colnumCmin and colnum0max <= colnumCmax:
         return True
     return False
 
 
-def insamerow(ss0, ssc):
+def in_same_row(ss0, ssc):
     nrows, ncols = ss0.get_gridspec().get_geometry()
 
     if ss0.num2 is None:
         ss0.num2 = ss0.num1
-    rowNum0min, colNum0min = divmod(ss0.num1, ncols)
-    rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+    rownum0min, colnum0min = divmod(ss0.num1, ncols)
+    rownum0max, colnum0max = divmod(ss0.num2, ncols)
     if ssc.num2 is None:
         ssc.num2 = ssc.num1
-    rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
-    rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
-    if rowNum0min >= rowNumCmin and rowNum0min <= rowNumCmax:
+    rownumCmin, colnumCmin = divmod(ssc.num1, ncols)
+    rownumCmax, colnumCmax = divmod(ssc.num2, ncols)
+    if rownum0min >= rownumCmin and rownum0min <= rownumCmax:
         return True
-    if rowNum0max >= rowNumCmin and rowNum0max <= rowNumCmax:
+    if rownum0max >= rownumCmin and rownum0max <= rownumCmax:
         return True
     return False
 
@@ -272,64 +272,64 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                     # imply they are adjacent, and in some ways introduces
                     # a bunch of redundant constraints.
                     #
-                    # If the subplotspecs have the same colNumXmax, then line
+                    # If the subplotspecs have the same colnumXmax, then line
                     # up their right sides.  If they have the same min, then
                     # their left sides (and vertical equivalents).
                     ss0 = ax.get_subplotspec()
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
-                    rowNum0min, colNum0min = divmod(ss0.num1, ncols)
-                    rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+                    rownum0min, colnum0min = divmod(ss0.num1, ncols)
+                    rownum0max, colnum0max = divmod(ss0.num2, ncols)
                     for axc in axs:
                         if ax == axc:
                             pass
                         else:
                             ssc = axc.get_subplotspec()
-                            # get the rowNums and colNums
-                            rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+                            # get the rownums and colnums
+                            rownumCmin, colnumCmin = divmod(ssc.num1, ncols)
                             if ssc.num2 is None:
                                 ssc.num2 = ssc.num1
-                            rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+                            rownumCmax, colnumCmax = divmod(ssc.num2, ncols)
 
                             # OK, this tells us the relative layout of ax
                             # with axc
                             # Horizontal alignment:
-                            if colNum0max < colNumCmin:
+                            if colnum0max < colnumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
                                                   ssc.layoutbox])
-                            if colNumCmax < colNum0min:
+                            if colnumCmax < colnum0min:
                                 layoutbox.hstack([ssc.layoutbox,
                                                   ss0.layoutbox])
-                            if colNum0min == colNumCmin:
+                            if colnum0min == colnumCmin:
                                 # we want the poslayoutboxes to line up on left
                                 # side of the axes spines...
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'left')
-                            if colNum0max == colNumCmax:
+                            if colnum0max == colnumCmax:
                                 # line up right sides of poslayoutbox
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'right')
                             ####
                             # Vertical alignment:
-                            if rowNum0max < rowNumCmin:
-                                logging.debug('rowNum0max < rowNumCmin')
+                            if rownum0max < rownumCmin:
+                                logging.debug('rownum0max < rownumCmin')
                                 layoutbox.vstack([ss0.layoutbox,
                                                   ssc.layoutbox])
-                            if rowNumCmax < rowNum0min:
-                                logging.debug('rowNumCmax < rowNum0min')
+                            if rownumCmax < rownum0min:
+                                logging.debug('rownumCmax < rownum0min')
                                 layoutbox.vstack([ssc.layoutbox,
                                                   ss0.layoutbox])
-                            if rowNum0min == rowNumCmin:
+                            if rownum0min == rownumCmin:
                                 # line up top of poslayoutbox
-                                logging.debug('rowNum0min == rowNumCmin')
+                                logging.debug('rownum0min == rownumCmin')
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'top')
-                            if rowNum0max == rowNumCmax:
+                            if rownum0max == rownumCmax:
                                 # line up bottom of poslayoutbox
-                                logging.debug('rowNum0max == rowNumCmax')
+                                logging.debug('rownum0max == rownumCmax')
                                 layoutbox.align([ax.poslayoutbox,
                                                  axc.poslayoutbox],
                                                 'bottom')
@@ -351,10 +351,10 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                             # subplots share a column.  For width if they
                             # share a row.
 
-                            drowsC = rowNumCmax - rowNumCmin + 1
-                            drows0 = rowNum0max - rowNum0min + 1
-                            dcolsC = colNumCmax - colNumCmin + 1
-                            dcols0 = colNum0max - colNum0min + 1
+                            drowsC = rownumCmax - rownumCmin + 1
+                            drows0 = rownum0max - rownum0min + 1
+                            dcolsC = colnumCmax - colnumCmin + 1
+                            dcols0 = colnum0max - colnum0min + 1
 
                             if drowsC > drows0:
                                 logging.debug('drowsC > drows0')
@@ -363,7 +363,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 logging.debug(ax.poslayoutbox)
                                 logging.debug(axc.poslayoutbox)
 
-                                if insamecolumn(ss0, ssc):
+                                if in_same_column(ss0, ssc):
                                     axc.poslayoutbox.constrain_height_min(
                                         ax.poslayoutbox.height *
                                         drowsC / drows0)
@@ -372,7 +372,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                 logging.debug(drows0 / drowsC)
                                 logging.debug(ax.poslayoutbox)
                                 logging.debug(axc.poslayoutbox)
-                                if insamecolumn(ss0, ssc):
+                                if in_same_column(ss0, ssc):
                                     ax.poslayoutbox.constrain_height_min(
                                         axc.poslayoutbox.height *
                                         drows0 / drowsC)
@@ -381,12 +381,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                                                 axc.poslayoutbox.height)
                             # widths...
                             if dcolsC > dcols0:
-                                if insamerow(ss0, ssc):
+                                if in_same_row(ss0, ssc):
                                     axc.layoutbox.constrain_width_min(
                                             ax.poslayoutbox.width *
                                             dcolsC / dcols0)
                             elif dcolsC < dcols0:
-                                if insamerow(ss0, ssc):
+                                if in_same_row(ss0, ssc):
                                     ax.layoutbox.constrain_width_min(
                                             axc.poslayoutbox.width *
                                             dcols0 / dcolsC)
