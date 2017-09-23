@@ -121,10 +121,6 @@ show()
 ###############################################################################
 # Of course that layout is possible using a gridspec:
 
-# This one fails because there is nothing to enforce that the ax.layoutbox
-# must fill the ss box....
-
-
 import matplotlib.gridspec as gridspec
 
 plt.close('all')
@@ -144,7 +140,7 @@ show()
 ###############################################################################
 # Similarly,
 # :func:`~matplotlib.pyplot.subplot2grid` doesn't work for the same reason:
-# each call creates a differnt parent gridspec.
+# each call creates a different parent gridspec.
 
 plt.close('all')
 fig = plt.figure(constrained_layout=True)
@@ -186,7 +182,7 @@ show()
 # Caveats
 # =======
 #
-#  * :func:`~matplotlib.figure.constrain_layout` only considers ticklabels,
+#  * ``constrained_layout`` only considers ticklabels,
 #    axis labels, titles, and legends.  Thus, other artists may be clipped
 #    and also may overlap.
 #
@@ -197,7 +193,7 @@ show()
 #  * As above, layouts are carried out in each "parent" gridspec
 #    independently.  That means that some ``pyplot`` convenience wrappers
 #    like :func:`~matplotlib.pyplot.subplot` and
-#    :func:`~matplotlib.figure.subplot2grid` don't work.  ``tight_layout``
+#    :func:`~matplotlib.pyplot.subplot2grid` don't work.  ``tight_layout``
 #    *does* work with those functions, but doesn't work with nested
 #    ``gridspec`` constructs.
 #
@@ -248,25 +244,27 @@ show()
 # plt.show()
 
 ############################################################################
-# If we want the top and bottom of the two grids to line up then they need
-# to be in the same gridspec.
+# Note that in the above the left and columns don't have the same vertical
+# extent.  If we want the top and bottom of the two grids to line up then
+# they need to be in the same gridspec:
+
 plt.close('all')
 
 fig = plt.figure(constrained_layout=True)
 
 gs0 = gridspec.GridSpec(6, 2, fig=fig)
 
-ax1 = fig.add_subplot(gs0[:3, 1])
-ax2 = fig.add_subplot(gs0[3:, 1])
+ax1 = fig.add_subplot(gs0[:3, 0])
+ax2 = fig.add_subplot(gs0[3:, 0])
 
 example_plot(ax1)
 example_plot(ax2)
 
-ax = fig.add_subplot(gs0[0:2, 0])
+ax = fig.add_subplot(gs0[0:2, 1])
 example_plot(ax)
-ax = fig.add_subplot(gs0[2:4, 0])
+ax = fig.add_subplot(gs0[2:4, 1])
 example_plot(ax)
-ax = fig.add_subplot(gs0[4:, 0])
+ax = fig.add_subplot(gs0[4:, 1])
 example_plot(ax)
 
 show()
@@ -284,9 +282,9 @@ show()
 
 plt.close('all')
 arr = np.arange(100).reshape((10, 10))
-fig = plt.figure(figsize=(4, 4), constrained_layout=True)
-im = plt.imshow(arr, interpolation="none")
-fig.colorbar(im)
+fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
+im = ax.pcolormesh(arr, rasterized=True)
+fig.colorbar(im, ax=ax, shrink=0.6)
 show()
 
 ############################################################################
@@ -295,38 +293,50 @@ show()
 # gridspec.
 
 plt.close('all')
-arr = np.arange(100).reshape((10, 10))
 fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
 for ax in axs.flatten():
     im = ax.imshow(arr, interpolation="none")
-fig.colorbar(im, ax=axs)
+fig.colorbar(im, ax=axs, shrink=0.6)
 show()
 
 ############################################################################
 # This example uses two gridspecs to have the colorbar only pertain to
-# one set of pcolors.  Note how the left column is slightly wider than the
-# two right-hand columns because of this.
+# one set of pcolors.  Note how the left column is wider than the
+# two right-hand columns because of this.  Of course, if you wanted the
+# subplots to be the same size you only needed one gridspec.
 
 plt.close('all')
-fig = plt.figure(constrained_layout=True)
-gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[1., 2.])
-gsl = gridspec.GridSpecFromSubplotSpec(2, 1, gs0[0])
-gsr = gridspec.GridSpecFromSubplotSpec(2, 2, gs0[1])
+def docomplicated(suptitle=None):
+    fig = plt.figure(constrained_layout=True)
+    gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[1., 2.])
+    gsl = gridspec.GridSpecFromSubplotSpec(2, 1, gs0[0])
+    gsr = gridspec.GridSpecFromSubplotSpec(2, 2, gs0[1])
 
-for gs in gsl:
-    ax = fig.add_subplot(gs)
-    example_plot(ax)
-axs = []
-for gs in gsr:
-    ax = fig.add_subplot(gs)
-    pcm = ax.pcolormesh(arr, rasterized=True)
-    ax.set_xlabel('x-label')
-    ax.set_ylabel('y-label')
-    ax.set_title('title')
+    for gs in gsl:
+        ax = fig.add_subplot(gs)
+        example_plot(ax)
+    axs = []
+    for gs in gsr:
+        ax = fig.add_subplot(gs)
+        pcm = ax.pcolormesh(arr, rasterized=True)
+        ax.set_xlabel('x-label')
+        ax.set_ylabel('y-label')
+        ax.set_title('title')
 
-    axs += [ax]
-fig.colorbar(pcm, ax=axs)
-show()
+        axs += [ax]
+    fig.colorbar(pcm, ax=axs)
+    if suptitle is not None:
+        fig.suptitle(suptitle)
+
+docomplicated()
+
+####################################################
+# Suptitle
+# =========
+#
+# ``constrained_layout`` can also make room for ``suptitle``.
+
+docomplicated(suptitle='Big Suptitle')
 
 ####################################################
 # Legends
@@ -335,7 +345,7 @@ show()
 # Legends can be placed outside
 # of their parent axis.  Constrained-layout is designed to handle this.
 # However, constrained-layout does *not* handle legends being created via
-# ``fig.legend()``.
+# ``fig.legend()`` (yet).
 
 plt.close('all')
 fig, ax = plt.subplots(constrained_layout=True)

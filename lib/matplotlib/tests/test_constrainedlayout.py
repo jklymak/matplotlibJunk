@@ -210,7 +210,6 @@ def test_constrained_layout9():
     # ax = fig.add_subplot(111)
     for ax in axs.flatten():
         pcm = example_pcolor(ax, fontsize=24)
-        ax.set_title('')
         ax.set_xlabel('')
         ax.set_ylabel('')
     ax.set_aspect(2.)

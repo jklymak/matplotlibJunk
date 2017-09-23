@@ -368,8 +368,8 @@ class Figure(Artist):
         # constrained_layout:
         self.layoutbox = None
         # set in set_constrained_layout_pads()
-        self._constrained_layout_w_pad = None
-        self._constrained_layout_h_pad = None
+        self._constrained_layout_w_pad = 0.04167
+        self._constrained_layout_h_pad = 0.04167
         self.set_constrained_layout(constrained_layout)
 
         self.set_tight_layout(tight_layout)
@@ -490,11 +490,6 @@ class Figure(Artist):
         Parameter:
         ----------
 
-        pad : iterable with two scalars, or a scalar
-            The padding in inches between layout elements when
-            ``constrained_layout=True``.  A two-element iterable of
-            the form (w_pad, h_pad), i.e. the width- and height-padding.
-            If just one scalar is given, then w_pad = h_pad.
         """
 
         if w_pad is None:
@@ -507,13 +502,28 @@ class Figure(Artist):
         if (h_pad is not None) and (cbook.is_numlike(h_pad)):
             self._constrained_layout_h_pad = h_pad
 
-    def get_constrained_layout_pads(self):
+    def get_constrained_layout_pads(self, relative=False):
         """
         Get padding for ``constrained_layout``.
 
         Returns a list of [w_pad, h_pad] in inches.
+
+        Parameter:
+        -----------
+
+        relative: boolean
+            if true then convert from inches to figure relative.
         """
-        return self._constrained_layout_w_pad, self._constrained_layout_h_pad
+        w_pad = self._constrained_layout_w_pad
+        h_pad = self._constrained_layout_h_pad
+
+        if relative and ((not w_pad is None) or (not h_pad is None)):
+            renderer0 = layoutbox.get_renderer(self)
+            dpi = renderer0.dpi
+            w_pad = w_pad * dpi / renderer0.width
+            h_pad = h_pad * dpi / renderer0.height
+
+        return w_pad, h_pad
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
         """
@@ -648,8 +658,10 @@ class Figure(Artist):
                                             name=figlb.name+'.suptitle')
             for child in figlb.children:
                 if not (child == self._suptitle.layoutbox):
+                    w_pad, h_pad = self.get_constrained_layout_pads(
+                            relative=True)
                     layoutbox.vstack([self._suptitle.layoutbox, child],
-                                     padding=0.01, strength='required')
+                                     padding=h_pad, strength='required')
         self.stale = True
         return self._suptitle
 
@@ -2064,19 +2076,9 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-    def _execute_constrained_layout(self, renderer=None,
-            pad=0.0415, h_pad=None, w_pad=None):
+    def _execute_constrained_layout(self, renderer=None):
         """
         Use ``layoutbox`` to determine pos positions within axes.
-
-        pad : float
-            The padding aorund a subplot.  i.e. half the distance between
-            subplot decorations, or the distance to the edge of the figure.
-            Units are inches.  Default is 3/72.272 inches (or 3 points).
-
-        h_pad, w_pad : float
-          padding (height/width) as above but for the vertical or
-          horizontal padding.  If provided, override the value in `pad`.
 
         See also set_constrained_layout_pads
         """
@@ -2092,10 +2094,7 @@ class Figure(Artist):
                           "with the constrained_layout=True kwarg.")
             return
         w_pad, h_pad = self.get_constrained_layout_pads()
-        if h_pad is None:
-            h_pad = pad
-        if w_pad is None:
-            w_pad = pad
+        print("pads", w_pad, h_pad)
         # convert to unit-relative lengths
 
         fig = self
