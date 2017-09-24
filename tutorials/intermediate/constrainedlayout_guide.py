@@ -302,6 +302,7 @@ fig.colorbar(im, ax=axs, shrink=0.6)
 # two right-hand columns because of this.  Of course, if you wanted the
 # subplots to be the same size you only needed one gridspec.
 
+
 def docomplicated(suptitle=None):
     fig = plt.figure(constrained_layout=True)
     gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[1., 2.])
