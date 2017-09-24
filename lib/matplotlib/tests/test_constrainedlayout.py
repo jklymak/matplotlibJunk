@@ -286,10 +286,11 @@ def test_constrained_layout14():
         example_plot(ax, fontsize=12)
     fig.set_constrained_layout_pads(pads=34./72.)
 
+
 @image_comparison(baseline_images=['constrained_layout15'])
 def test_constrained_layout15():
     'Test that rcparams work.'
-    rcParams['figure.constrainedlayout'] = dict({'pads':34./72.})
+    rcParams['figure.constrainedlayout'] = True
     fig, axs = plt.subplots(2, 2)
     for ax in axs.flatten():
         example_plot(ax, fontsize=12)

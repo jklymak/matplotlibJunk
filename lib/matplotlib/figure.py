@@ -283,7 +283,7 @@ class Figure(Artist):
                  frameon=None,  # whether or not to draw the figure frame
                  subplotpars=None,  # default to rc
                  tight_layout=None,  # default to rc figure.autolayout
-                 constrained_layout=None, # default to rc
+                 constrained_layout=None,  # default to rc
                                           #figure.constrainedlayout
                  ):
         """

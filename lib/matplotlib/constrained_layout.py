@@ -429,4 +429,4 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 #        Could imagine suptitles being gridspec suptitles, but not implimented
 #
 #   Todo:    AnchoredOffsetbox connected to gridspecs or axes.  This would
-#        be more general way to add extra-axes annotations.  
+#        be more general way to add extra-axes annotations.

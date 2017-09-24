@@ -49,7 +49,6 @@ def example_plot(ax, fontsize=12, nodec=False):
         ax.set_yticklabels('')
 
 
-
 fig, ax = plt.subplots()
 example_plot(ax, fontsize=24)
 
@@ -98,7 +97,7 @@ fig.set_constrained_layout_pads(w_pad=24./72., h_pad=8./72.)
 #####################
 # The same effects can be had by providing a dictionary to the
 # ``constrained_layout`` *kwarg*
-constrainedargs = dict({'w_pad':24./72., 'h_pad':8./72.})
+constrainedargs = dict({'w_pad': 24./72., 'h_pad': 8./72.})
 fig, axs = plt.subplots(2, 2, constrained_layout=constrainedargs)
 for ax in axs.flatten():
     example_plot(ax)
@@ -139,13 +138,10 @@ example_plot(ax1)
 example_plot(ax2)
 example_plot(ax3)
 
-
-
 ###############################################################################
 # Of course that layout is possible using a gridspec:
 
 import matplotlib.gridspec as gridspec
-
 
 fig = plt.figure(constrained_layout=True)
 gs = gridspec.GridSpec(2, 2, fig=fig)
@@ -158,13 +154,10 @@ example_plot(ax1)
 example_plot(ax2)
 example_plot(ax3)
 
-
-
 ###############################################################################
 # Similarly,
 # :func:`~matplotlib.pyplot.subplot2grid` doesn't work for the same reason:
 # each call creates a different parent gridspec.
-
 
 fig = plt.figure(constrained_layout=True)
 
@@ -178,13 +171,9 @@ example_plot(ax2)
 example_plot(ax3)
 example_plot(ax4)
 
-
-
-
 ###############################################################################
 # The way to make this plot compatible with ``constrained_layout`` is again
 # to use ``gridspec`` directly
-
 
 fig = plt.figure(constrained_layout=True)
 gs = gridspec.GridSpec(3, 3, fig=fig)
@@ -198,8 +187,6 @@ example_plot(ax1)
 example_plot(ax2)
 example_plot(ax3)
 example_plot(ax4)
-
-
 
 ###############################################################################
 # Caveats
@@ -229,7 +216,6 @@ example_plot(ax4)
 # :func:`~matplotlib.gridspec.GridSpec` and
 # :func:`~matplotlib.figure.Figure.add_subplot`.
 
-
 fig = plt.figure(constrained_layout=True)
 
 gs1 = gridspec.GridSpec(2, 1, fig=fig)
@@ -241,7 +227,6 @@ example_plot(ax2)
 
 ###############################################################################
 # More complicated gridspec layouts are possible...
-
 
 fig = plt.figure(constrained_layout=True)
 
@@ -264,13 +249,10 @@ for ss in gs2:
 
 ax.set_xlabel("x-label", fontsize=12)
 
-
 ############################################################################
 # Note that in the above the left and columns don't have the same vertical
 # extent.  If we want the top and bottom of the two grids to line up then
 # they need to be in the same gridspec:
-
-
 
 fig = plt.figure(constrained_layout=True)
 
@@ -289,9 +271,6 @@ example_plot(ax)
 ax = fig.add_subplot(gs0[4:, 1])
 example_plot(ax)
 
-
-
-
 ###############################################################################
 # Colorbars
 # =========
@@ -302,33 +281,26 @@ example_plot(ax)
 # ignored because this option is made for improving the layout via
 # ``tight_layout``.
 
-
 arr = np.arange(100).reshape((10, 10))
 fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
 im = ax.pcolormesh(arr, rasterized=True)
 fig.colorbar(im, ax=ax, shrink=0.6)
-
 
 ############################################################################
 # If you specify multiple axes to the ``ax`` argument of ``colorbar``,
 # constrained_layout will take space from all axes that share the same
 # gridspec.
 
-
 fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
 for ax in axs.flatten():
     im = ax.imshow(arr, interpolation="none")
 fig.colorbar(im, ax=axs, shrink=0.6)
-
 
 ############################################################################
 # This example uses two gridspecs to have the colorbar only pertain to
 # one set of pcolors.  Note how the left column is wider than the
 # two right-hand columns because of this.  Of course, if you wanted the
 # subplots to be the same size you only needed one gridspec.
-
-
-
 
 def docomplicated(suptitle=None):
     fig = plt.figure(constrained_layout=True)
@@ -381,13 +353,11 @@ plt.show()
 #############################################
 # However, this will steal space from a subplot layout:
 
-
 fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten()[:-1]:
     ax.plot(np.arange(10))
 axs[1, 1].plot(np.arange(10), label='This is a plot')
 axs[1, 1].legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
-
 
 ###########################################################
 # Debugging
@@ -404,7 +374,6 @@ axs[1, 1].legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
 #      https://github.com/matplotlib/matplotlib/issues.
 #
 # As an example of 1:
-
 
 fig, axs = plt.subplots(2, 6, figsize=(2, 2), constrained_layout=True)
 for ax in axs.flatten():
