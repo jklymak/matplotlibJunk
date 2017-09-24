@@ -283,7 +283,8 @@ class Figure(Artist):
                  frameon=None,  # whether or not to draw the figure frame
                  subplotpars=None,  # default to rc
                  tight_layout=None,  # default to rc figure.autolayout
-                 constrained_layout=None,
+                 constrained_layout=None, # default to rc
+                                          #figure.constrainedlayout
                  ):
         """
         *figsize*
@@ -322,6 +323,7 @@ class Figure(Artist):
             :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
             for examples.  (Note: does not work with :meth:`subplot` or
             :meth:`subplot2grid`.)
+            Defaults to rc ``figure.constrainedlayout``.
         """
         Artist.__init__(self)
         # remove the non-figure artist _axes property
@@ -488,13 +490,29 @@ class Figure(Artist):
 
     def set_constrained_layout(self, constrained):
         """
-        Set whether ``constrained_layout`` is used upon drawing.
+        Set whether ``constrained_layout`` is used upon drawing. If None,
+        the rcParams['figure.constrainedlayout'] value will be set.
+
+        When providing a dict containing the keys `w_pad`, `h_pad`
+        the default ``constrained_layout`` paddings will be
+        overridden.  These pads are in inches and default to 3.0/72.0.
+        ``w_pad`` is the width padding and ``h_pad`` is the height padding.
+
+        ACCEPTS: [True | False | dict | None ]
 
         See :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
         if constrained is None:
-            constrained = False
+            constrained = rcParams['figure.constrainedlayout']
         self._constrained = bool(constrained)
+        if isinstance(constrained, dict):
+            if ('w_pad' in constrained) and ('h_pad' in constrained):
+                self.set_constrained_layout_pads(w_pad=constrained['w_pad'],
+                                             h_pad=constrained['h_pad'])
+            else:
+                raise ValueError("dict passed to constrained_layout "
+                                 "kwarg must have keys `h_pad` and `w_pad`")
+        self.stale = True
 
     def set_constrained_layout_pads(self, w_pad=None, h_pad=None, pads=None):
         """
@@ -2125,7 +2143,6 @@ class Figure(Artist):
                           "with the constrained_layout=True kwarg.")
             return
         w_pad, h_pad = self.get_constrained_layout_pads()
-        print("pads", w_pad, h_pad)
         # convert to unit-relative lengths
 
         fig = self

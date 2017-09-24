@@ -1,7 +1,7 @@
 """
-========================
+================================
 Constrained Layout Guide
-========================
+================================
 
 How to use constrained-layout to fit plots within your figure cleanly.
 
@@ -22,6 +22,8 @@ clipped.
 
 """
 
+# sphinx_gallery_thumbnail_number = 18
+
 #import matplotlib
 #matplotlib.use('Qt5Agg')
 
@@ -31,6 +33,7 @@ import numpy as np
 import matplotlib.layoutbox as layoutbox
 
 plt.rcParams['savefig.facecolor'] = "0.8"
+plt.rcParams['figure.figsize'] = 4.5, 4.
 
 
 def example_plot(ax, fontsize=12, nodec=False):
@@ -46,20 +49,15 @@ def example_plot(ax, fontsize=12, nodec=False):
         ax.set_yticklabels('')
 
 
-def show():
-    #pass
-    plt.show()
 
-plt.close('all')
 fig, ax = plt.subplots()
 example_plot(ax, fontsize=24)
 
 ###############################################################################
 # To prevent this, the location of axes needs to be adjusted. For
 # subplots, this can be done by adjusting the subplot params
-# (:ref:`howto-subplots-adjust`). Matplotlib v1.1 introduces a new
-# command :func:`~matplotlib.pyplot.tight_layout` that does this
-# automatically for you.
+# (:ref:`howto-subplots-adjust`). However, specifying your figure with the
+# ``constrained_layout=True`` kwarg will do the adjusting automatically.
 
 fig, ax = plt.subplots(constrained_layout=True)
 example_plot(ax, fontsize=24)
@@ -68,12 +66,10 @@ example_plot(ax, fontsize=24)
 # When you have multiple subplots, often you see labels of different
 # axes overlapping each other.
 
-plt.close('all')
-
 fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten():
     example_plot(ax)
-show()
+
 ###############################################################################
 # Specifying `constrained_layout=True` in the call to `plt.subplots`
 # causes the layout to be properly constrained.
@@ -81,7 +77,7 @@ show()
 fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten():
     example_plot(ax)
-show()
+
 ###############################################################################
 # If you want to change the spacing around objects, then
 # :func:`~matplotlib.figure.set_constrained_layout_pads` can take keyword
@@ -97,15 +93,42 @@ fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten():
     example_plot(ax)
 fig.set_constrained_layout_pads(w_pad=24./72., h_pad=8./72.)
-show()
+
+
+#####################
+# The same effects can be had by providing a dictionary to the
+# ``constrained_layout`` *kwarg*
+constrainedargs = dict({'w_pad':24./72., 'h_pad':8./72.})
+fig, axs = plt.subplots(2, 2, constrained_layout=constrainedargs)
+for ax in axs.flatten():
+    example_plot(ax)
+
+
+##########################################
+# rcParams:
+# -----------
+#
+# We can also set the ``constrained_layout`` argument in the ``.matplotlibrc``
+# configuration file, or in a script, but only the boolean value, not the
+# dictionary:
+
+plt.rcParams['figure.constrainedlayout'] = True
+fig, axs = plt.subplots(2, 2, figsize=(3, 3))
+for ax in axs.flatten():
+    example_plot(ax)
+
+
 ###############################################################################
-# :func:`~matplotlib.figure.constrained_layout` will not work on subplots
+# Incompatible Functions:
+# -----------------------
+#
+# ``constrained_layout`` will not work on subplots
 # created via the `subplot` command.  The reason is that each of these
 # commands creates a separate `GridSpec` instance and `constrained_layout`
 # uses (nested) gridspecs to carry out the layout.  So the following fails
 # to yield a nice layout:
 
-plt.close('all')
+
 fig = plt.figure(constrained_layout=True)
 
 ax1 = plt.subplot(221)
@@ -116,14 +139,14 @@ example_plot(ax1)
 example_plot(ax2)
 example_plot(ax3)
 
-show()
+
 
 ###############################################################################
 # Of course that layout is possible using a gridspec:
 
 import matplotlib.gridspec as gridspec
 
-plt.close('all')
+
 fig = plt.figure(constrained_layout=True)
 gs = gridspec.GridSpec(2, 2, fig=fig)
 
@@ -135,14 +158,14 @@ example_plot(ax1)
 example_plot(ax2)
 example_plot(ax3)
 
-show()
+
 
 ###############################################################################
 # Similarly,
 # :func:`~matplotlib.pyplot.subplot2grid` doesn't work for the same reason:
 # each call creates a different parent gridspec.
 
-plt.close('all')
+
 fig = plt.figure(constrained_layout=True)
 
 ax1 = plt.subplot2grid((3, 3), (0, 0))
@@ -155,14 +178,14 @@ example_plot(ax2)
 example_plot(ax3)
 example_plot(ax4)
 
-show()
+
 
 
 ###############################################################################
 # The way to make this plot compatible with ``constrained_layout`` is again
 # to use ``gridspec`` directly
 
-plt.close('all')
+
 fig = plt.figure(constrained_layout=True)
 gs = gridspec.GridSpec(3, 3, fig=fig)
 
@@ -176,7 +199,7 @@ example_plot(ax2)
 example_plot(ax3)
 example_plot(ax4)
 
-show()
+
 
 ###############################################################################
 # Caveats
@@ -202,11 +225,11 @@ show()
 # =================
 #
 # As the examples above make clear, ``constrained_layout`` is meant to be used
-# with :func:`~matplotlib.figure.subplots` or
+# with :func:`~matplotlib.figure.Figure.subplots` or
 # :func:`~matplotlib.gridspec.GridSpec` and
-# :func:`~matplotlib.figure.add_subplot`.
+# :func:`~matplotlib.figure.Figure.add_subplot`.
 
-plt.close('all')
+
 fig = plt.figure(constrained_layout=True)
 
 gs1 = gridspec.GridSpec(2, 1, fig=fig)
@@ -218,7 +241,7 @@ example_plot(ax2)
 
 ###############################################################################
 # More complicated gridspec layouts are possible...
-plt.close('all')
+
 
 fig = plt.figure(constrained_layout=True)
 
@@ -240,15 +263,14 @@ for ss in gs2:
     ax.set_xlabel("")
 
 ax.set_xlabel("x-label", fontsize=12)
-show()
-# plt.show()
+
 
 ############################################################################
 # Note that in the above the left and columns don't have the same vertical
 # extent.  If we want the top and bottom of the two grids to line up then
 # they need to be in the same gridspec:
 
-plt.close('all')
+
 
 fig = plt.figure(constrained_layout=True)
 
@@ -267,7 +289,7 @@ example_plot(ax)
 ax = fig.add_subplot(gs0[4:, 1])
 example_plot(ax)
 
-show()
+
 
 
 ###############################################################################
@@ -280,24 +302,24 @@ show()
 # ignored because this option is made for improving the layout via
 # ``tight_layout``.
 
-plt.close('all')
+
 arr = np.arange(100).reshape((10, 10))
 fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
 im = ax.pcolormesh(arr, rasterized=True)
 fig.colorbar(im, ax=ax, shrink=0.6)
-show()
+
 
 ############################################################################
 # If you specify multiple axes to the ``ax`` argument of ``colorbar``,
 # constrained_layout will take space from all axes that share the same
 # gridspec.
 
-plt.close('all')
+
 fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
 for ax in axs.flatten():
     im = ax.imshow(arr, interpolation="none")
 fig.colorbar(im, ax=axs, shrink=0.6)
-show()
+
 
 ############################################################################
 # This example uses two gridspecs to have the colorbar only pertain to
@@ -305,7 +327,7 @@ show()
 # two right-hand columns because of this.  Of course, if you wanted the
 # subplots to be the same size you only needed one gridspec.
 
-plt.close('all')
+
 
 
 def docomplicated(suptitle=None):
@@ -349,22 +371,23 @@ docomplicated(suptitle='Big Suptitle')
 # However, constrained-layout does *not* handle legends being created via
 # ``fig.legend()`` (yet).
 
-plt.close('all')
+
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(np.arange(10), label='This is a plot')
 ax.legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
-show()
+
+plt.show()
 
 #############################################
 # However, this will steal space from a subplot layout:
 
-plt.close('all')
+
 fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten()[:-1]:
     ax.plot(np.arange(10))
 axs[1, 1].plot(np.arange(10), label='This is a plot')
 axs[1, 1].legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
-show()
+
 
 ###########################################################
 # Debugging
@@ -382,12 +405,12 @@ show()
 #
 # As an example of 1:
 
-plt.close('all')
+
 fig, axs = plt.subplots(2, 6, figsize=(2, 2), constrained_layout=True)
 for ax in axs.flatten():
     ax.plot(np.arange(10))
-show()
 
+###################################################################
 # This is easily fixed by making the figure large enough.
 #
 # If there is a bug, please report with a self-contained example that does

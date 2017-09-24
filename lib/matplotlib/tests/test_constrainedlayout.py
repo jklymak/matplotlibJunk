@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredOffsetbox, DrawingArea
 from matplotlib.patches import Rectangle
 import matplotlib.gridspec as gridspec
-from matplotlib import ticker
+from matplotlib import ticker, rcParams
 
 
 def example_plot(ax, fontsize=12, nodec=False):
@@ -285,3 +285,12 @@ def test_constrained_layout14():
     for ax in axs.flatten():
         example_plot(ax, fontsize=12)
     fig.set_constrained_layout_pads(pads=34./72.)
+
+@image_comparison(baseline_images=['constrained_layout15'])
+def test_constrained_layout15():
+    'Test that rcparams work.'
+    rcParams['figure.constrainedlayout'] = dict({'pads':34./72.})
+    fig, axs = plt.subplots(2, 2)
+    for ax in axs.flatten():
+        example_plot(ax, fontsize=12)
+    # fig.set_constrained_layout_pads(pads=34./72.)
