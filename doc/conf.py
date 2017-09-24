@@ -38,7 +38,6 @@ extensions = ['matplotlib.sphinxext.mathmpl', 'sphinxext.math_symbol_table',
               'numpydoc']
 
 exclude_patterns = ['api/api_changes/*', 'users/whats_new/*']
-exclude_patterns = ['api/*', 'users/*', 'gallery/*']
 
 
 def _check_deps():
