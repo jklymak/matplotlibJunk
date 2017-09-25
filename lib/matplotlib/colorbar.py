@@ -1218,7 +1218,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                 layoutbox.match_heights([axpos, lbpos], [1., shrink])
                 layoutbox.align([axpos, lbpos], 'v_center')
                 # set the width of the pos box
-                lbpos.constrain_width(axpos.height * (1./aspect),
+                lbpos.constrain_width(shrink * axpos.height * (1./aspect),
                                       strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(
@@ -1238,7 +1238,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                                        [1., shrink], strength='strong')
                 layoutbox.align([axpos, lbpos], 'h_center')
                 # set the height of the pos box
-                lbpos.constrain_height(axpos.width * (aspect),
+                lbpos.constrain_height(axpos.width * aspect * shrink,
                                         strength='medium')
         else:  # there is more than one parent, so lets use gridspec
             # the colorbar will be a sibling of this gridspec, so the
@@ -1300,7 +1300,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                         strength='strong')
 
                 # set the width of the pos box
-                lbpos.constrain_width(lbpos.height * (1./aspect),
+                lbpos.constrain_width(lbpos.height * (shrink / aspect),
                                       strength='strong')
             elif location in ('bottom', 'top'):
                 lbpos = layoutbox.LayoutBox(
@@ -1340,7 +1340,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                         (maxposlb.right - minposlb.left) *
                         (1.-shrink)/2. + minposlb.left)
                 # set the height of the pos box
-                lbpos.constrain_height(lbpos.width * (aspect),
+                lbpos.constrain_height(lbpos.width * shrink / aspect,
                                        strength='medium')
 
     cax.set_layoutbox(lb)
