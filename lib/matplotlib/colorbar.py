@@ -1340,7 +1340,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
                         (maxposlb.right - minposlb.left) *
                         (1.-shrink)/2. + minposlb.left)
                 # set the height of the pos box
-                lbpos.constrain_height(lbpos.width * shrink / aspect,
+                lbpos.constrain_height(lbpos.width * shrink * aspect,
                                        strength='medium')
 
     cax.set_layoutbox(lb)

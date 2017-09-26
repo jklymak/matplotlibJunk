@@ -2146,14 +2146,10 @@ class Figure(Artist):
         # convert to unit-relative lengths
 
         fig = self
-        # OK, to avoid goofiness with PDF backend means we need to
-        # fallback on Agg which is what this call will do:
-        renderer0 = layoutbox.get_renderer(fig)
-        dpi = renderer0.dpi
-        w_pad = w_pad * dpi / renderer0.width
-        h_pad = h_pad * dpi / renderer0.height
+        width, height = fig.get_size_inches()
+        w_pad = w_pad / width
+        h_pad = h_pad / height
 
-        # but here we need the real renderer...
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
         do_constrained_layout(fig, renderer, h_pad, w_pad)
