@@ -426,10 +426,10 @@ def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
 
         if location == 'right':
             # arrange to right of parent axis
-            layoutbox.hstack([axlb, lb], padding=0.01,
+            layoutbox.hstack([axlb, lb], padding=pad * axlb.width,
                              strength='strong')
         else:
-            layoutbox.hstack([lb, axlb], padding=0.01)
+            layoutbox.hstack([lb, axlb], padding=pad * axlb.width)
         # constrain the height and center...
         layoutbox.match_heights([axpos, lbpos], [1., shrink])
         layoutbox.align([axpos, lbpos], 'v_center')
@@ -446,9 +446,9 @@ def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
                 artist=cax)
 
         if location == 'bottom':
-            layoutbox.vstack([axlb, lb], padding=0.01)
+            layoutbox.vstack([axlb, lb], padding=pad * axlb.height)
         else:
-            layoutbox.vstack([lb, axlb], padding=0.01)
+            layoutbox.vstack([lb, axlb], padding=pad * axlb.height)
         # constrain the height and center...
         layoutbox.match_widths([axpos, lbpos],
                                [1., shrink], strength='strong')

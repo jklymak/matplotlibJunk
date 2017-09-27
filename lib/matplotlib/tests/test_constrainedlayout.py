@@ -60,9 +60,13 @@ def test_constrained_layout2():
 def test_constrained_layout3():
     'Test constrained_layout for colorbars with subplots'
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
-    for ax in axs.flatten():
+    for nn,ax in enumerate(axs.flatten()):
         pcm = example_pcolor(ax, fontsize=24)
-        fig.colorbar(pcm, ax=ax)
+        if nn == 3:
+            pad = 0.08
+        else:
+            pad = 0.02 # default
+        fig.colorbar(pcm, ax=ax, pad=pad)
 
 
 @image_comparison(baseline_images=['constrained_layout4'])
