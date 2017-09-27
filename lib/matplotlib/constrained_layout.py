@@ -401,6 +401,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                 newpos = ax.poslayoutbox.get_rect()
                 ax.set_position(newpos)
 
+
 def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
     """
     Do the layout for a colorbar, to not oeverly pollute colorbar.py
