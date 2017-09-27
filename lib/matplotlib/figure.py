@@ -325,6 +325,7 @@ class Figure(Artist):
             :meth:`subplot2grid`.)
             Defaults to rc ``figure.constrainedlayout``.
         """
+        print('constrainedlayout', constrained_layout)
         Artist.__init__(self)
         # remove the non-figure artist _axes property
         # as it makes no sense for a figure to be _in_ an axes

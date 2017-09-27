@@ -84,7 +84,8 @@ def in_same_row(ss0, ssc):
 
 
 ######################################################
-def do_constrained_layout(fig, renderer, h_pad, w_pad):
+def do_constrained_layout(fig, renderer, h_pad, w_pad,
+        hspace=None, wspace=None):
 
     """
     Do the constrained_layout.  Called at draw time in
@@ -99,8 +100,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     renderer: Renderer
       the renderer to use.
 
-     h_pad, v_pad : float
-       are in figure-normalized units.
+     h_pad, w_pad : float
+       are in figure-normalized units, and are a padding around the axes
+       elements.
+
+     hspace, wspace : float
+        are in fractions of the subplot sizes.
 
     """
 
@@ -145,7 +150,6 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     invTransFig = fig.transFigure.inverted().transform_bbox
 
     axes = fig.axes
-
     # list of unique gridspecs that contain child axes:
     gss = set([])
     for ax in axes:
@@ -294,12 +298,17 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                             # OK, this tells us the relative layout of ax
                             # with axc
                             # Horizontal alignment:
+                            thepad = (ss0.layoutbox.width +
+                                      ssc.layoutbox.width) * hspace / 2.
+
                             if colnum0max < colnumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
-                                                  ssc.layoutbox])
+                                                  ssc.layoutbox],
+                                                  padding=thepad)
                             if colnumCmax < colnum0min:
                                 layoutbox.hstack([ssc.layoutbox,
-                                                  ss0.layoutbox])
+                                                  ss0.layoutbox],
+                                                  padding=thepad)
                             if colnum0min == colnumCmin:
                                 # we want the poslayoutboxes to line up on left
                                 # side of the axes spines...
