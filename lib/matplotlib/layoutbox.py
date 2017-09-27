@@ -469,7 +469,8 @@ class LayoutBox(object):
 # Utility functions that act on layoutboxes...
 def hstack(boxes, padding=0, strength='strong'):
     '''
-    Stack LayoutBox instances from left to right
+    Stack LayoutBox instances from left to right.
+    `padding` is in figure-relative units.
     '''
 
     for i in range(1, len(boxes)):
