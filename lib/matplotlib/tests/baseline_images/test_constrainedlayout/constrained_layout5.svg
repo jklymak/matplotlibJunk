@@ -1012,7 +1012,7 @@ L 278.330775 227.760318
      </g>
      <g id="text_35">
       <!-- −3 -->
-      <g transform="translate(44.073053 365.372842)scale(0.12 -0.12)">
+      <g transform="translate(44.073052 365.372842)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-2212"/>
        <use x="83.789062" xlink:href="#DejaVuSans-33"/>
       </g>
@@ -1625,7 +1625,7 @@ L 569.18226 227.760318
   </g>
   <g id="axes_5">
    <g id="patch_22">
-    <path clip-path="url(#p0831f8f97f)" d="M 156.171144 413.38601 
+    <path clip-path="url(#p1ea1f60162)" d="M 156.171144 413.38601 
 L 157.381138 413.38601 
 L 464.719487 413.38601 
 L 465.929481 413.38601 
@@ -1926,7 +1926,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p0831f8f97f">
+  <clipPath id="p1ea1f60162">
    <rect height="6.969563" width="309.758337" x="156.171144" y="406.416447"/>
   </clipPath>
  </defs>

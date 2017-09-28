@@ -886,6 +886,19 @@ class _AxesBase(martist.Artist):
             ==========   ====================
 
         """
+        self._set_position(pos, which='both')
+        # because this is being called esternally to the library we
+        # zero the constrained layout parts.
+        self.layoutbox = None
+        self.poslayoutbox = None
+
+    def _set_position(self, pos, which='both'):
+        """
+        private version of set_position.  Call this internally
+        to get the same functionality of `get_position`, but not
+        to take the axis out of the constrained_layout
+        hierarchy.
+        """
         if not isinstance(pos, mtransforms.BboxBase):
             pos = mtransforms.Bbox.from_bounds(*pos)
         if which in ('both', 'active'):
@@ -897,7 +910,7 @@ class _AxesBase(martist.Artist):
     def reset_position(self):
         """Make the original position the active position"""
         pos = self.get_position(original=True)
-        self.set_position(pos, which='active')
+        self._set_position(pos, which='active')
 
     def set_axes_locator(self, locator):
         """
@@ -1388,7 +1401,7 @@ class _AxesBase(martist.Artist):
             aspect_scale_mode = "linear"
 
         if aspect == 'auto':
-            self.set_position(position, which='active')
+            self._set_position(position, which='active')
             return
 
         if aspect == 'equal':
@@ -1413,12 +1426,12 @@ class _AxesBase(martist.Artist):
                 box_aspect = A * self.get_data_ratio()
             pb = position.frozen()
             pb1 = pb.shrunk_to_aspect(box_aspect, pb, fig_aspect)
-            self.set_position(pb1.anchored(self.get_anchor(), pb), 'active')
+            self._set_position(pb1.anchored(self.get_anchor(), pb), 'active')
             return
 
         # reset active to original in case it had been changed
         # by prior use of 'box'
-        self.set_position(position, which='active')
+        self._set_position(position, which='active')
 
         xmin, xmax = self.get_xbound()
         ymin, ymax = self.get_ybound()

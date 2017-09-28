@@ -174,9 +174,10 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                 hassubplotspec = np.zeros(nrows * ncols)
                 axs = []
                 for ax in axes:
-                    if hasattr(ax, 'get_subplotspec'):
-                        if ax.get_subplotspec().get_gridspec() == gs:
-                            axs += [ax]
+                    if (hasattr(ax, 'get_subplotspec')
+                            and ax.layoutbox is not None
+                            and ax.get_subplotspec().get_gridspec() == gs):
+                        axs += [ax]
                 for ax in axs:
                     ss0 = ax.get_subplotspec()
                     if ss0.num2 is None:
@@ -273,7 +274,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
 
                 # get axes in this gridspec....
                 for ax in axes:
-                    if hasattr(ax, 'get_subplotspec'):
+                    if (hasattr(ax, 'get_subplotspec')
+                            and ax.layoutbox is not None):
                         if ax.get_subplotspec().get_gridspec() == gs:
                             axs += [ax]
                 for ax in axs:
@@ -422,7 +424,11 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
         for ax in axes:
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()
-                ax.set_position(newpos)
+                # Now set the new position.
+                # ax.set_position will zero out the layout for
+                # this axis, allowing users to hard-code the position,
+                # so this does the same w/o zeroing layout.
+                ax._set_position(newpos)
 
 
 def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):

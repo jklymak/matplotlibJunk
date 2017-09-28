@@ -327,6 +327,39 @@ def docomplicated(suptitle=None):
 docomplicated()
 
 ###############################################################################
+# Manually setting axes positions
+# ================================
+#
+# There can be good reasons to manually set an axes position.  A manual call
+# to `ax.set_position()` will set the axes so constrained_layout has no
+# effect on it anymore.  (Note that constrained_layout still leaves the space
+# for the axes that is moved).
+
+fig, axs = plt.subplots(1, 2, constrained_layout=True)
+example_plot(axs[0], fontsize=12)
+axs[1].set_position([0.2, 0.2, 0.4, 0.4])
+
+###############################################################################
+# If you want an inset axes in data-space, you need to manually execute the
+# layout using `fig.execute_constrained_layout()` call.  The inset figure
+# will then be properly positioned.  However, it will not be properly
+# positioned if the size of the figure is subsequently changed.  Similarly,
+# if the figure is printed to another backend, there may be slight changes
+# of location due to small differences in how the backends render fonts.
+
+from matplotlib.transforms import Bbox
+
+fig, axs = plt.subplots(1, 2, constrained_layout=True)
+example_plot(axs[0], fontsize=12)
+fig.execute_constrained_layout()
+# put into data-space:
+bb_data_ax2 = Bbox.from_bounds(0.5, 1., 0.2, 0.4)
+disp_coords = axs[0].transData.transform(bb_data_ax2)
+fig_coords_ax2 = fig.transFigure.inverted().transform(disp_coords)
+bb_ax2 = Bbox(fig_coords_ax2)
+ax2 = fig.add_axes(bb_ax2)
+
+###############################################################################
 # Limitations
 # ========================
 #
@@ -399,8 +432,8 @@ example_plot(ax3)
 example_plot(ax4)
 
 ###############################################################################
-# Caveats
-# --------
+# Other Caveats
+# -------------
 #
 #  * ``constrained_layout`` only considers ticklabels,
 #    axis labels, titles, and legends.  Thus, other artists may be clipped
@@ -410,13 +443,8 @@ example_plot(ax4)
 #    and titles is independent of original location of axes. This is
 #    often true, but there are rare cases where it is not.
 #
-#  * As above, layouts are carried out in each "parent" gridspec
-#    independently.  That means that some ``pyplot`` convenience wrappers
-#    like :func:`~matplotlib.pyplot.subplot` and
-#    :func:`~matplotlib.pyplot.subplot2grid` don't work.  ``tight_layout``
-#    *does* work with those functions, but doesn't work with nested
-#    ``gridspec`` constructs.
-#
+#  * There are small differences in how the backends handle rendering fonts,
+#    so the results will not be pixel-identical.
 
 ###########################################################
 # Debugging

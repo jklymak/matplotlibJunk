@@ -1430,7 +1430,7 @@ class Figure(Artist):
             renderer.open_group('figure')
             if self.get_constrained_layout() and self.axes:
                 if True:
-                    self._execute_constrained_layout(renderer)
+                    self.execute_constrained_layout(renderer)
                 else:
                     pass
             if self.get_tight_layout() and self.axes:
@@ -2147,7 +2147,7 @@ class Figure(Artist):
                                      artist=self)
             self.layoutbox.constrain_geometry(0., 0., 1., 1.)
 
-    def _execute_constrained_layout(self, renderer=None):
+    def execute_constrained_layout(self, renderer=None):
         """
         Use ``layoutbox`` to determine pos positions within axes.
 
