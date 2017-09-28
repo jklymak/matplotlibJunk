@@ -29,6 +29,7 @@ clipped.
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.gridspec as gridspec
 
 import matplotlib.layoutbox as layoutbox
 
@@ -65,7 +66,7 @@ example_plot(ax, fontsize=24)
 # When you have multiple subplots, often you see labels of different
 # axes overlapping each other.
 
-fig, axs = plt.subplots(2, 2, constrained_layout=True)
+fig, axs = plt.subplots(2, 2, constrained_layout=False)
 for ax in axs.flatten():
     example_plot(ax)
 
@@ -78,140 +79,165 @@ for ax in axs.flatten():
     example_plot(ax)
 
 ###############################################################################
-# If you want to change the spacing around objects, then
-# :func:`~matplotlib.figure.set_constrained_layout_pads` can take keyword
-# arguments of *pads*, *w_pad*, or *h_pad*. These control the extra padding
-# around the figure border and between subplots.
-# The paddings are a float in inches.
-# Below we make the *w_pad* 24 pts and the *h_pad* 8 points.  (Sometimes
-# points are easier to think about spacing relative to fontsizes).
-# *pads* is only used if either of *h_pad* or *w_pad* are not specified (or
-# None).
+# Colorbars
+# =========
+#
+# If you create a colorbar with the :func:`~matplotlib.pyplot.colorbar`
+# command you need to make room for it.  ``constrained_layout`` does this
+# automatically.  Note that if you specify ``use_gridspec=True`` it will be
+# ignored because this option is made for improving the layout via
+# ``tight_layout``.
+
+arr = np.arange(100).reshape((10, 10))
+fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
+im = ax.pcolormesh(arr, rasterized=True)
+fig.colorbar(im, ax=ax, shrink=0.6)
+
+############################################################################
+# If you specify multiple axes to the ``ax`` argument of ``colorbar``,
+# constrained_layout will take space from all axes that share the same
+# gridspec.
+
+fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
+for ax in axs.flatten():
+    im = ax.pcolormesh(arr, rasterized=True)
+fig.colorbar(im, ax=axs, shrink=0.6)
+
+####################################################
+# Suptitle
+# =========
+#
+# ``constrained_layout`` can also make room for ``suptitle``.
+
+fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
+for ax in axs.flatten():
+    im = ax.pcolormesh(arr, rasterized=True)
+fig.colorbar(im, ax=axs, shrink=0.6)
+fig.suptitle('Big Suptitle')
+
+####################################################
+# Legends
+# =======
+#
+# Legends can be placed outside
+# of their parent axis.  Constrained-layout is designed to handle this.
+# However, constrained-layout does *not* handle legends being created via
+# ``fig.legend()`` (yet).
+
+
+fig, ax = plt.subplots(constrained_layout=True)
+ax.plot(np.arange(10), label='This is a plot')
+ax.legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
+
+plt.show()
+
+#############################################
+# However, this will steal space from a subplot layout:
+
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten()[:-1]:
+    ax.plot(np.arange(10))
+axs[1, 1].plot(np.arange(10), label='This is a plot')
+axs[1, 1].legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
+
+###############################################################################
+# Padding and Spacing
+# ===================
+#
+# For constrained_layout, we have implimented a padding around the edge of
+# each axes.  This padding sets the distance from the edge of the plot,
+# and the minimum distance between adjacent plots.  It is specified in
+# inches by the keyword arguments `w_pad` and `h_pad` to the function
+# `fig.set_constrained_layout_pads`:
 
 fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten():
-    example_plot(ax)
-fig.set_constrained_layout_pads(w_pad=24./72., h_pad=8./72.)
+    example_plot(ax, nodec=True)
+    ax.set_xticklabels('')
+    ax.set_yticklabels('')
+fig.set_constrained_layout_pads(w_pad=4./72., h_pad=4./72.,
+        hspace=0., wspace=0.)
 
-
-#####################
-# The same effects can be had by providing a dictionary to the
-# ``constrained_layout`` *kwarg*
-constrainedargs = dict({'w_pad': 24./72., 'h_pad': 8./72.})
-fig, axs = plt.subplots(2, 2, constrained_layout=constrainedargs)
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
 for ax in axs.flatten():
-    example_plot(ax)
+    example_plot(ax, nodec=True)
+    ax.set_xticklabels('')
+    ax.set_yticklabels('')
+fig.set_constrained_layout_pads(w_pad=2./72., h_pad=2./72.,
+        hspace=0., wspace=0.)
+
+##########################################
+# Spacing between subplots is set by `wspace` and `hspace`.  There are
+# specified as a fraction of the size of the subplot group as a whole.
+# If the size of the figure is changed, then these spaces change in
+# proportion.  Note in the blow how the space at the edges doesn't change from
+# the above, but the space between subplots does.
+
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    example_plot(ax, nodec=True)
+    ax.set_xticklabels('')
+    ax.set_yticklabels('')
+fig.set_constrained_layout_pads(w_pad=2./72., h_pad=2./72.,
+        hspace=0.2, wspace=0.2)
+
+
+##########################################
+# Spacing with colorbars
+# -----------------------
+#
+# Colorbars still respect the `w_pad` and `h_pad` values.  However they will
+# be `wspace` and `hsapce` apart from other subplots.  Note the use of a `pad`
+# kwarg here in the `colorbar` call.  It defaults to 0.02 of the size of the
+# axis it is attached to.
+
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    pc = ax.pcolormesh(arr, rasterized=True)
+    fig.colorbar(im, ax=ax, shrink=0.6, pad=0)
+    ax.set_xticklabels('')
+    ax.set_yticklabels('')
+fig.set_constrained_layout_pads(w_pad=2./72., h_pad=2./72.,
+        hspace=0.2, wspace=0.2)
+
+##########################################
+# In the above example, the colorbar will not ever be closer than 2 pts to
+# the plot, but if we want it a bit further away, we can specify its value
+# for `pad` to be non-zero.
+
+fig, axs = plt.subplots(2, 2, constrained_layout=True)
+for ax in axs.flatten():
+    pc = ax.pcolormesh(arr, rasterized=True)
+    fig.colorbar(im, ax=ax, shrink=0.6, pad=0.05)
+    ax.set_xticklabels('')
+    ax.set_yticklabels('')
+fig.set_constrained_layout_pads(w_pad=2./72., h_pad=2./72.,
+        hspace=0.2, wspace=0.2)
+
 
 
 ##########################################
 # rcParams:
 # -----------
 #
-# We can also set the ``constrained_layout`` argument in the ``.matplotlibrc``
-# configuration file, or in a script, but only the boolean value, not the
-# dictionary:
+# There are four `rcParams` that can be set, either in a script
+# or in the `matplotlibrc` file.  They all have the prefix
+# `figure.constrainedlayout`:
+#
+#  - `do`: Whether to do constrained_layout. Default is False
+#  - `w_pad`, `h_pad`    Padding around axes objects.  Float representing inches.  Default is 3./72. inches (3 pts)
+#  - `wspace`, `hspace`  Space between subplot groups.  Float representing a fraction of the suplot widths being separated.  Default is 0.02.
 
-plt.rcParams['figure.constrainedlayout'] = True
+plt.rcParams['figure.constrainedlayout.do'] = True
 fig, axs = plt.subplots(2, 2, figsize=(3, 3))
 for ax in axs.flatten():
     example_plot(ax)
 
-
-###############################################################################
-# Incompatible Functions:
-# -----------------------
-#
-# ``constrained_layout`` will not work on subplots
-# created via the `subplot` command.  The reason is that each of these
-# commands creates a separate `GridSpec` instance and `constrained_layout`
-# uses (nested) gridspecs to carry out the layout.  So the following fails
-# to yield a nice layout:
-
-
-fig = plt.figure(constrained_layout=True)
-
-ax1 = plt.subplot(221)
-ax2 = plt.subplot(223)
-ax3 = plt.subplot(122)
-
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-
-###############################################################################
-# Of course that layout is possible using a gridspec:
-
-import matplotlib.gridspec as gridspec
-
-fig = plt.figure(constrained_layout=True)
-gs = gridspec.GridSpec(2, 2, fig=fig)
-
-ax1 = fig.add_subplot(gs[0, 0])
-ax2 = fig.add_subplot(gs[1, 0])
-ax3 = fig.add_subplot(gs[:, 1])
-
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-
-###############################################################################
-# Similarly,
-# :func:`~matplotlib.pyplot.subplot2grid` doesn't work for the same reason:
-# each call creates a different parent gridspec.
-
-fig = plt.figure(constrained_layout=True)
-
-ax1 = plt.subplot2grid((3, 3), (0, 0))
-ax2 = plt.subplot2grid((3, 3), (0, 1), colspan=2)
-ax3 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
-ax4 = plt.subplot2grid((3, 3), (1, 2), rowspan=2)
-
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-example_plot(ax4)
-
-###############################################################################
-# The way to make this plot compatible with ``constrained_layout`` is again
-# to use ``gridspec`` directly
-
-fig = plt.figure(constrained_layout=True)
-gs = gridspec.GridSpec(3, 3, fig=fig)
-
-ax1 = fig.add_subplot(gs[0, 0])
-ax2 = fig.add_subplot(gs[0, 1:])
-ax3 = fig.add_subplot(gs[1:, 0:2])
-ax4 = fig.add_subplot(gs[1:, -1])
-
-example_plot(ax1)
-example_plot(ax2)
-example_plot(ax3)
-example_plot(ax4)
-
-###############################################################################
-# Caveats
-# =======
-#
-#  * ``constrained_layout`` only considers ticklabels,
-#    axis labels, titles, and legends.  Thus, other artists may be clipped
-#    and also may overlap.
-#
-#  * It assumes that the extra space needed for ticklabels, axis labels,
-#    and titles is independent of original location of axes. This is
-#    often true, but there are rare cases where it is not.
-#
-#  * As above, layouts are carried out in each "parent" gridspec
-#    independently.  That means that some ``pyplot`` convenience wrappers
-#    like :func:`~matplotlib.pyplot.subplot` and
-#    :func:`~matplotlib.pyplot.subplot2grid` don't work.  ``tight_layout``
-#    *does* work with those functions, but doesn't work with nested
-#    ``gridspec`` constructs.
-#
-#
+#############################
 # Use with GridSpec
 # =================
 #
-# As the examples above make clear, ``constrained_layout`` is meant to be used
+# constrained_layout is meant to be used
 # with :func:`~matplotlib.figure.Figure.subplots` or
 # :func:`~matplotlib.gridspec.GridSpec` and
 # :func:`~matplotlib.figure.Figure.add_subplot`.
@@ -271,31 +297,6 @@ example_plot(ax)
 ax = fig.add_subplot(gs0[4:, 1])
 example_plot(ax)
 
-###############################################################################
-# Colorbars
-# =========
-#
-# If you create a colorbar with the :func:`~matplotlib.pyplot.colorbar`
-# command you need to make room for it.  ``constrained_layout`` does this
-# automatically.  Note that if you specify ``use_gridspec=True`` it will be
-# ignored because this option is made for improving the layout via
-# ``tight_layout``.
-
-arr = np.arange(100).reshape((10, 10))
-fig, ax = plt.subplots(figsize=(4, 4), constrained_layout=True)
-im = ax.pcolormesh(arr, rasterized=True)
-fig.colorbar(im, ax=ax, shrink=0.6)
-
-############################################################################
-# If you specify multiple axes to the ``ax`` argument of ``colorbar``,
-# constrained_layout will take space from all axes that share the same
-# gridspec.
-
-fig, axs = plt.subplots(2, 2, figsize=(4, 4), constrained_layout=True)
-for ax in axs.flatten():
-    im = ax.imshow(arr, interpolation="none")
-fig.colorbar(im, ax=axs, shrink=0.6)
-
 ############################################################################
 # This example uses two gridspecs to have the colorbar only pertain to
 # one set of pcolors.  Note how the left column is wider than the
@@ -327,38 +328,97 @@ def docomplicated(suptitle=None):
 
 docomplicated()
 
-####################################################
-# Suptitle
-# =========
+###############################################################################
+# Limitations
+# ========================
 #
-# ``constrained_layout`` can also make room for ``suptitle``.
-
-docomplicated(suptitle='Big Suptitle')
-
-####################################################
-# Legends
-# =======
+# Incompatible functions
+# ----------------------
 #
-# Legends can be placed outside
-# of their parent axis.  Constrained-layout is designed to handle this.
-# However, constrained-layout does *not* handle legends being created via
-# ``fig.legend()`` (yet).
+# ``constrained_layout`` will not work on subplots
+# created via the `subplot` command.  The reason is that each of these
+# commands creates a separate `GridSpec` instance and `constrained_layout`
+# uses (nested) gridspecs to carry out the layout.  So the following fails
+# to yield a nice layout:
 
 
-fig, ax = plt.subplots(constrained_layout=True)
-ax.plot(np.arange(10), label='This is a plot')
-ax.legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
+fig = plt.figure(constrained_layout=True)
 
-plt.show()
+ax1 = plt.subplot(221)
+ax2 = plt.subplot(223)
+ax3 = plt.subplot(122)
 
-#############################################
-# However, this will steal space from a subplot layout:
+example_plot(ax1)
+example_plot(ax2)
+example_plot(ax3)
 
-fig, axs = plt.subplots(2, 2, constrained_layout=True)
-for ax in axs.flatten()[:-1]:
-    ax.plot(np.arange(10))
-axs[1, 1].plot(np.arange(10), label='This is a plot')
-axs[1, 1].legend(loc='center left', bbox_to_anchor=(0.9, 0.5))
+###############################################################################
+# Of course that layout is possible using a gridspec:
+
+fig = plt.figure(constrained_layout=True)
+gs = gridspec.GridSpec(2, 2, fig=fig)
+
+ax1 = fig.add_subplot(gs[0, 0])
+ax2 = fig.add_subplot(gs[1, 0])
+ax3 = fig.add_subplot(gs[:, 1])
+
+example_plot(ax1)
+example_plot(ax2)
+example_plot(ax3)
+
+###############################################################################
+# Similarly,
+# :func:`~matplotlib.pyplot.subplot2grid` doesn't work for the same reason:
+# each call creates a different parent gridspec.
+
+fig = plt.figure(constrained_layout=True)
+
+ax1 = plt.subplot2grid((3, 3), (0, 0))
+ax2 = plt.subplot2grid((3, 3), (0, 1), colspan=2)
+ax3 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
+ax4 = plt.subplot2grid((3, 3), (1, 2), rowspan=2)
+
+example_plot(ax1)
+example_plot(ax2)
+example_plot(ax3)
+example_plot(ax4)
+
+###############################################################################
+# The way to make this plot compatible with ``constrained_layout`` is again
+# to use ``gridspec`` directly
+
+fig = plt.figure(constrained_layout=True)
+gs = gridspec.GridSpec(3, 3, fig=fig)
+
+ax1 = fig.add_subplot(gs[0, 0])
+ax2 = fig.add_subplot(gs[0, 1:])
+ax3 = fig.add_subplot(gs[1:, 0:2])
+ax4 = fig.add_subplot(gs[1:, -1])
+
+example_plot(ax1)
+example_plot(ax2)
+example_plot(ax3)
+example_plot(ax4)
+
+###############################################################################
+# Caveats
+# --------
+#
+#  * ``constrained_layout`` only considers ticklabels,
+#    axis labels, titles, and legends.  Thus, other artists may be clipped
+#    and also may overlap.
+#
+#  * It assumes that the extra space needed for ticklabels, axis labels,
+#    and titles is independent of original location of axes. This is
+#    often true, but there are rare cases where it is not.
+#
+#  * As above, layouts are carried out in each "parent" gridspec
+#    independently.  That means that some ``pyplot`` convenience wrappers
+#    like :func:`~matplotlib.pyplot.subplot` and
+#    :func:`~matplotlib.pyplot.subplot2grid` don't work.  ``tight_layout``
+#    *does* work with those functions, but doesn't work with nested
+#    ``gridspec`` constructs.
+#
 
 ###########################################################
 # Debugging

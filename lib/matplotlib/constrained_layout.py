@@ -307,7 +307,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                             # with axc
                             # Horizontal alignment:
                             thepad = (ss0.layoutbox.width +
-                                      ssc.layoutbox.width) * hspace / 2.
+                                      ssc.layoutbox.width) * wspace / 2.
 
                             if colnum0max < colnumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
@@ -330,14 +330,19 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                                                 'right')
                             ####
                             # Vertical alignment:
+                            thepad = (ss0.layoutbox.height +
+                                      ssc.layoutbox.height) * hspace / 2.
+
                             if rownum0max < rownumCmin:
                                 logging.debug('rownum0max < rownumCmin')
                                 layoutbox.vstack([ss0.layoutbox,
-                                                  ssc.layoutbox])
+                                                  ssc.layoutbox],
+                                                  padding=thepad)
                             if rownumCmax < rownum0min:
                                 logging.debug('rownumCmax < rownum0min')
                                 layoutbox.vstack([ssc.layoutbox,
-                                                  ss0.layoutbox])
+                                                  ss0.layoutbox],
+                                                  padding=thepad)
                             if rownum0min == rownumCmin:
                                 # line up top of poslayoutbox
                                 logging.debug('rownum0min == rownumCmin')
@@ -413,7 +418,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
-        layoutbox.print_tree(fig.layoutbox)
+        #layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()

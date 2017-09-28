@@ -323,9 +323,8 @@ class Figure(Artist):
             :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
             for examples.  (Note: does not work with :meth:`subplot` or
             :meth:`subplot2grid`.)
-            Defaults to rc ``figure.constrainedlayout``.
+            Defaults to rc ``figure.constrainedlayout.do``.
         """
-        print('constrainedlayout', constrained_layout)
         Artist.__init__(self)
         # remove the non-figure artist _axes property
         # as it makes no sense for a figure to be _in_ an axes
@@ -379,10 +378,14 @@ class Figure(Artist):
         # constrained_layout:
         self.layoutbox = None
         # set in set_constrained_layout_pads()
-        self._constrained_layout_w_pad = 0.04167
-        self._constrained_layout_h_pad = 0.04167
+        self._constrained_layout_pads = dict()
+        self._constrained_layout_pads['w_pad'] = None
+        self._constrained_layout_pads['h_pad'] = None
+        self._constrained_layout_pads['wspace'] = None
+        self._constrained_layout_pads['hspace'] = None
         self.set_constrained_layout(constrained_layout)
 
+        #
         self.set_tight_layout(tight_layout)
 
         self._axstack = AxesStack()  # track all figure axes and current axes
@@ -504,18 +507,16 @@ class Figure(Artist):
         See :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
         if constrained is None:
-            constrained = rcParams['figure.constrainedlayout']
+            constrained = rcParams['figure.constrainedlayout.do']
         self._constrained = bool(constrained)
         if isinstance(constrained, dict):
-            if ('w_pad' in constrained) and ('h_pad' in constrained):
-                self.set_constrained_layout_pads(w_pad=constrained['w_pad'],
-                                             h_pad=constrained['h_pad'])
-            else:
-                raise ValueError("dict passed to constrained_layout "
-                                 "kwarg must have keys `h_pad` and `w_pad`")
+            self.set_constrained_layout_pads(padd=constrained)
+        else:
+            self.set_constrained_layout_pads()
+
         self.stale = True
 
-    def set_constrained_layout_pads(self, w_pad=None, h_pad=None, pads=None):
+    def set_constrained_layout_pads(self, **kwargs):
         """
         Set padding for ``constrained_layout``.
 
@@ -523,36 +524,53 @@ class Figure(Artist):
         -----------
 
         w_pad : scalar
-            Width padding in inches.  This is the pad around individual
-            plot elements, so the distance between elements will be
-            twice this value.  If `None` and `pads` is not `None` then
-            will be set to the value in `pads`
+            Width padding in inches.  This is the pad around axes
+            and is meant to make sure there is enough room for fonts to
+            look good.  Defaults to 3 pts = 0.04167 inches
 
         h_pad : scalar
-            Height padding in inches.
+            Height padding in inches. Defaults to 3 pts.
 
-        pads : scalar
-            Padding in inches for both `h_pad` and `w_pad` if they are not
-            specified.
+        wspace: scalar
+            Width padding between subplots, expressed as a fraction of the
+            subplot width.  The total padding ends up being w_pad + wspace.
+
+        hspace: scalar
+            Height padding between subplots, expressed as a fraction of the
+            subplot width. The total padding ends up being h_pad + hspace.
+
+        padd : dict
+            Dictionary with possible keywords as the above.  If a keyword
+            is specified then it takes precedence over the dictionary.
 
         See (:ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`)
         """
 
-        if w_pad is None:
-            w_pad = pads
-        if h_pad is None:
-            h_pad = pads
+        todo = ['w_pad', 'h_pad', 'wspace', 'hspace']
 
-        if (w_pad is not None) and (cbook.is_numlike(w_pad)):
-            self._constrained_layout_w_pad = w_pad
-        if (h_pad is not None) and (cbook.is_numlike(h_pad)):
-            self._constrained_layout_h_pad = h_pad
+        if 'padd' in kwargs:
+            padd = kwargs['padd']
+        else:
+            padd = None
+
+        for td in todo:
+            # default:
+            pad = rcParams['figure.constrainedlayout.' + td]
+            if padd is not None and td in padd:
+                if padd[td] is not None:
+                    pad = padd[td]
+            if td in kwargs:
+                # kw arg override padd or rcParam
+                if kwargs[td] is not None:
+                    pad = kwargs[td]
+            self._constrained_layout_pads[td] = pad
 
     def get_constrained_layout_pads(self, relative=False):
         """
         Get padding for ``constrained_layout``.
 
-        Returns a list of `w_pad, h_pad` in inches.
+        Returns a list of `w_pad, h_pad` in inches and
+        `wspace` and `hspace` as fractions of the subplot.
 
         Parameter:
         -----------
@@ -562,8 +580,10 @@ class Figure(Artist):
 
         See: :ref:`sphx_glr_tutorials_intermediate_constrainedlayout_guide.py`
         """
-        w_pad = self._constrained_layout_w_pad
-        h_pad = self._constrained_layout_h_pad
+        w_pad = self._constrained_layout_pads['w_pad']
+        h_pad = self._constrained_layout_pads['h_pad']
+        wspace = self._constrained_layout_pads['wspace']
+        hspace = self._constrained_layout_pads['hspace']
 
         if relative and ((w_pad is not None) or (h_pad is not None)):
             renderer0 = layoutbox.get_renderer(self)
@@ -571,7 +591,7 @@ class Figure(Artist):
             w_pad = w_pad * dpi / renderer0.width
             h_pad = h_pad * dpi / renderer0.height
 
-        return w_pad, h_pad
+        return w_pad, h_pad, wspace, hspace
 
     def autofmt_xdate(self, bottom=0.2, rotation=30, ha='right', which=None):
         """
@@ -706,8 +726,9 @@ class Figure(Artist):
                                             name=figlb.name+'.suptitle')
             for child in figlb.children:
                 if not (child == self._suptitle.layoutbox):
-                    w_pad, h_pad = self.get_constrained_layout_pads(
-                            relative=True)
+                    w_pad, h_pad, wspace, hspace =  \
+                            self.get_constrained_layout_pads(
+                                    relative=True)
                     layoutbox.vstack([self._suptitle.layoutbox, child],
                                      padding=h_pad*2., strength='required')
         self.stale = True
@@ -2143,17 +2164,16 @@ class Figure(Artist):
                           "or you need to call figure or subplots"
                           "with the constrained_layout=True kwarg.")
             return
-        w_pad, h_pad = self.get_constrained_layout_pads()
+        w_pad, h_pad, wspace, hspace = self.get_constrained_layout_pads()
         # convert to unit-relative lengths
 
         fig = self
         width, height = fig.get_size_inches()
         w_pad = w_pad / width
         h_pad = h_pad / height
-        print('w_pad', w_pad)
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
-        do_constrained_layout(fig, renderer, h_pad, w_pad)
+        do_constrained_layout(fig, renderer, h_pad, w_pad, hspace, wspace)
 
     def tight_layout(self, renderer=None, pad=1.08, h_pad=None, w_pad=None,
                      rect=None):
