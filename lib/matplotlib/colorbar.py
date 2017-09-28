@@ -41,7 +41,7 @@ import matplotlib.path as mpath
 import matplotlib.ticker as ticker
 import matplotlib.transforms as mtransforms
 import matplotlib.layoutbox as layoutbox
-
+import matplotlib.constrained_layout as constrained_layout
 from matplotlib import docstring
 
 make_axes_kw_doc = '''
@@ -1127,12 +1127,20 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     anchor = kw.pop('anchor', loc_settings['anchor'])
     parent_anchor = kw.pop('panchor', loc_settings['panchor'])
-    pad = kw.pop('pad', loc_settings['pad'])
 
     # turn parents into a list if it is not already. We do this w/ np
     # because `plt.subplots` can return an ndarray and is natural to
     # pass to `colorbar`.
     parents = np.atleast_1d(parents).ravel()
+
+    # check if using constrained_layout:
+    gs = parents[0].get_subplotspec().get_gridspec()
+    using_constrained_layout = (gs.layoutbox is not None)
+    # defaults are not appropriate for constrained_layout:
+    pad0 = loc_settings['pad']
+    if using_constrained_layout:
+        pad0 = 0.02
+    pad = kw.pop('pad', pad0)
 
     fig = parents[0].get_figure()
     if not all(fig is ax.get_figure() for ax in parents):
@@ -1176,12 +1184,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     # OK, now make a layoutbox for the cb axis.  Later, we will use this
     # to make the colorbar fit nicely.
-
-    # this is the layoutbox for the gridspec that parent[0]
-    # belongs to.
-    gslb = parents[0].get_subplotspec().get_gridspec().layoutbox
-
-    if gslb is None:
+    if not using_constrained_layout:
         # no layout boxes:
         lb = None
         lbpos = None
@@ -1191,157 +1194,15 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
         if len(parents) == 1:
             # this is a single axis...
             ax = parents[0]
-            axlb = ax.layoutbox
-            axpos = ax.poslayoutbox
-            axsslb = ax.get_subplotspec().layoutbox
-            lb = layoutbox.LayoutBox(
-                    parent=axsslb,
-                    name=axsslb.name + '.cbar',
-                    artist=cax)
-
-            if location in ('left', 'right'):
-                lbpos = layoutbox.LayoutBox(
-                        parent=lb,
-                        name=lb.name + '.pos',
-                        tightwidth=False,
-                        pos=True,
-                        subplot=False,
-                        artist=cax)
-
-                if location == 'right':
-                    # arrange to right of parent axis
-                    layoutbox.hstack([axlb, lb], padding=0.01,
-                                     strength='strong')
-                else:
-                    layoutbox.hstack([lb, axlb], padding=0.01)
-                # constrain the height and center...
-                layoutbox.match_heights([axpos, lbpos], [1., shrink])
-                layoutbox.align([axpos, lbpos], 'v_center')
-                # set the width of the pos box
-                lbpos.constrain_width(shrink * axpos.height * (1./aspect),
-                                      strength='strong')
-            elif location in ('bottom', 'top'):
-                lbpos = layoutbox.LayoutBox(
-                        parent=lb,
-                        name=lb.name + '.pos',
-                        tightheight=True,
-                        pos=True,
-                        subplot=False,
-                        artist=cax)
-
-                if location == 'bottom':
-                    layoutbox.vstack([axlb, lb], padding=0.01)
-                else:
-                    layoutbox.vstack([lb, axlb], padding=0.01)
-                # constrain the height and center...
-                layoutbox.match_widths([axpos, lbpos],
-                                       [1., shrink], strength='strong')
-                layoutbox.align([axpos, lbpos], 'h_center')
-                # set the height of the pos box
-                lbpos.constrain_height(axpos.width * aspect * shrink,
-                                        strength='medium')
+            lb, lbpos = constrained_layout.layoutcolorbarsingle(
+                    ax, cax, shrink, aspect, location, pad=pad)
         else:  # there is more than one parent, so lets use gridspec
             # the colorbar will be a sibling of this gridspec, so the
             # parent is the same parent as the gridspec.  Either the figure,
             # or a subplotspec.
-            lb = layoutbox.LayoutBox(parent=gslb.parent,
-                                     name=gslb.parent.name + '.cbar',
-                                     artist=cax)
-            if location in ('left', 'right'):
-                lbpos = layoutbox.LayoutBox(
-                        parent=lb,
-                        name=lb.name + '.pos',
-                        tightwidth=False,
-                        pos=True,
-                        subplot=False,
-                        artist=cax)
 
-                if location == 'right':
-                    # arrange to right of the gridpec sibbling
-                    layoutbox.hstack([gslb, lb], padding=0.01,
-                                     strength='strong')
-                else:
-                    layoutbox.hstack([lb, gslb], padding=0.01)
-                # constrain the height and center...
-                # This isn't quite right.  We'd like the colorbar
-                # pos to line up w/ the axes poss, not the size of the
-                # gs.
-                maxrow = -100000
-                minrow = 1000000
-                maxax = None
-                minax = None
-
-                for ax in parents:
-                    subspec = ax.get_subplotspec()
-                    nrows, ncols = subspec.get_gridspec().get_geometry()
-                    for num in [subspec.num1, subspec.num2]:
-                        rownum1, colnum1 = divmod(subspec.num1, ncols)
-                        if rownum1 > maxrow:
-                            maxrow = rownum1
-                            maxax = ax
-                        if rownum1 < minrow:
-                            minrow = rownum1
-                            minax = ax
-                # invert the order so these are bottom to top:
-                maxposlb = minax.poslayoutbox
-                minposlb = maxax.poslayoutbox
-                # now we want the height of the colorbar pos to be
-                # set by the top and bottom of these poss
-                # bottom              top
-                #     b             t
-                # h = (top-bottom)*shrink
-                # b = bottom + (top-bottom - h) / 2.
-                lbpos.constrain_height(
-                        (maxposlb.top - minposlb.bottom) *
-                        shrink, strength='strong')
-                lbpos.constrain_bottom(
-                        (maxposlb.top - minposlb.bottom) *
-                        (1. - shrink)/2. + minposlb.bottom,
-                        strength='strong')
-
-                # set the width of the pos box
-                lbpos.constrain_width(lbpos.height * (shrink / aspect),
-                                      strength='strong')
-            elif location in ('bottom', 'top'):
-                lbpos = layoutbox.LayoutBox(
-                        parent=lb,
-                        name=lb.name + '.pos',
-                        tightheight=True,
-                        pos=True,
-                        subplot=False,
-                        artist=cax)
-
-                if location == 'bottom':
-                    layoutbox.vstack([gslb, lb], padding=0.01)
-                else:
-                    layoutbox.vstack([lb, gslb], padding=0.01)
-
-                maxcol = -100000
-                mincol = 1000000
-                maxax = None
-                minax = None
-
-                for ax in parents:
-                    subspec = ax.get_subplotspec()
-                    nrows, ncols = subspec.get_gridspec().get_geometry()
-                    for num in [subspec.num1, subspec.num2]:
-                        rownum1, colnum1 = divmod(subspec.num1, ncols)
-                        if colnum1 > maxcol:
-                            maxcol = colnum1
-                            maxax = ax
-                        if rownum1 < mincol:
-                            mincol = colnum1
-                            minax = ax
-                maxposlb = maxax.poslayoutbox
-                minposlb = minax.poslayoutbox
-                lbpos.constrain_width((maxposlb.right - minposlb.left) *
-                                      shrink)
-                lbpos.constrain_left(
-                        (maxposlb.right - minposlb.left) *
-                        (1.-shrink)/2. + minposlb.left)
-                # set the height of the pos box
-                lbpos.constrain_height(lbpos.width * shrink * aspect,
-                                       strength='medium')
+            lb, lbpos = constrained_layout.layoutcolorbargridspec(
+                    parents, cax, shrink, aspect, location, pad)
 
     cax.set_layoutbox(lb)
     cax.set_poslayoutbox(lbpos)

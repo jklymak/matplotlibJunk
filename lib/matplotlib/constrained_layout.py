@@ -84,7 +84,8 @@ def in_same_row(ss0, ssc):
 
 
 ######################################################
-def do_constrained_layout(fig, renderer, h_pad, w_pad):
+def do_constrained_layout(fig, renderer, h_pad, w_pad,
+        hspace=None, wspace=None):
 
     """
     Do the constrained_layout.  Called at draw time in
@@ -99,8 +100,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     renderer: Renderer
       the renderer to use.
 
-     h_pad, v_pad : float
-       are in figure-normalized units.
+     h_pad, w_pad : float
+       are in figure-normalized units, and are a padding around the axes
+       elements.
+
+     hspace, wspace : float
+        are in fractions of the subplot sizes.
 
     """
 
@@ -145,7 +150,6 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
     invTransFig = fig.transFigure.inverted().transform_bbox
 
     axes = fig.axes
-
     # list of unique gridspecs that contain child axes:
     gss = set([])
     for ax in axes:
@@ -302,12 +306,17 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                             # OK, this tells us the relative layout of ax
                             # with axc
                             # Horizontal alignment:
+                            thepad = (ss0.layoutbox.width +
+                                      ssc.layoutbox.width) * hspace / 2.
+
                             if colnum0max < colnumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
-                                                  ssc.layoutbox])
+                                                  ssc.layoutbox],
+                                                  padding=thepad)
                             if colnumCmax < colnum0min:
                                 layoutbox.hstack([ssc.layoutbox,
-                                                  ss0.layoutbox])
+                                                  ss0.layoutbox],
+                                                  padding=thepad)
                             if colnum0min == colnumCmin:
                                 # we want the poslayoutboxes to line up on left
                                 # side of the axes spines...
@@ -409,6 +418,180 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()
                 ax.set_position(newpos)
+
+
+def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
+    """
+    Do the layout for a colorbar, to not oeverly pollute colorbar.py
+
+    `pad` is in fraction of the original axis size.
+    """
+    axlb = ax.layoutbox
+    axpos = ax.poslayoutbox
+    axsslb = ax.get_subplotspec().layoutbox
+    lb = layoutbox.LayoutBox(
+            parent=axsslb,
+            name=axsslb.name + '.cbar',
+            artist=cax)
+
+    if location in ('left', 'right'):
+        lbpos = layoutbox.LayoutBox(
+                parent=lb,
+                name=lb.name + '.pos',
+                tightwidth=False,
+                pos=True,
+                subplot=False,
+                artist=cax)
+
+        if location == 'right':
+            # arrange to right of parent axis
+            layoutbox.hstack([axlb, lb], padding=pad * axlb.width,
+                             strength='strong')
+        else:
+            layoutbox.hstack([lb, axlb], padding=pad * axlb.width)
+        # constrain the height and center...
+        layoutbox.match_heights([axpos, lbpos], [1., shrink])
+        layoutbox.align([axpos, lbpos], 'v_center')
+        # set the width of the pos box
+        lbpos.constrain_width(shrink * axpos.height * (1./aspect),
+                              strength='strong')
+    elif location in ('bottom', 'top'):
+        lbpos = layoutbox.LayoutBox(
+                parent=lb,
+                name=lb.name + '.pos',
+                tightheight=True,
+                pos=True,
+                subplot=False,
+                artist=cax)
+
+        if location == 'bottom':
+            layoutbox.vstack([axlb, lb], padding=pad * axlb.height)
+        else:
+            layoutbox.vstack([lb, axlb], padding=pad * axlb.height)
+        # constrain the height and center...
+        layoutbox.match_widths([axpos, lbpos],
+                               [1., shrink], strength='strong')
+        layoutbox.align([axpos, lbpos], 'h_center')
+        # set the height of the pos box
+        lbpos.constrain_height(axpos.width * aspect * shrink,
+                                strength='medium')
+
+    return lb, lbpos
+
+
+def layoutcolorbargridspec(parents, cax, shrink, aspect, location, pad=0.05):
+    """
+    Do the layout for a colorbar, to not oeverly pollute colorbar.py
+
+    `pad` is in fraction of the original axis size.
+    """
+
+    gs = parents[0].get_subplotspec().get_gridspec()
+    # parent layout box....
+    gslb = gs.layoutbox
+
+    lb = layoutbox.LayoutBox(parent=gslb.parent,
+                             name=gslb.parent.name + '.cbar',
+                             artist=cax)
+    if location in ('left', 'right'):
+        lbpos = layoutbox.LayoutBox(
+                parent=lb,
+                name=lb.name + '.pos',
+                tightwidth=False,
+                pos=True,
+                subplot=False,
+                artist=cax)
+
+        if location == 'right':
+            # arrange to right of the gridpec sibbling
+            layoutbox.hstack([gslb, lb], padding=pad * gslb.width,
+                             strength='strong')
+        else:
+            layoutbox.hstack([lb, gslb], padding=pad * gslb.width)
+        # constrain the height and center...
+        # This isn't quite right.  We'd like the colorbar
+        # pos to line up w/ the axes poss, not the size of the
+        # gs.
+        maxrow = -100000
+        minrow = 1000000
+        maxax = None
+        minax = None
+
+        for ax in parents:
+            subspec = ax.get_subplotspec()
+            nrows, ncols = subspec.get_gridspec().get_geometry()
+            for num in [subspec.num1, subspec.num2]:
+                rownum1, colnum1 = divmod(subspec.num1, ncols)
+                if rownum1 > maxrow:
+                    maxrow = rownum1
+                    maxax = ax
+                if rownum1 < minrow:
+                    minrow = rownum1
+                    minax = ax
+        # invert the order so these are bottom to top:
+        maxposlb = minax.poslayoutbox
+        minposlb = maxax.poslayoutbox
+        # now we want the height of the colorbar pos to be
+        # set by the top and bottom of these poss
+        # bottom              top
+        #     b             t
+        # h = (top-bottom)*shrink
+        # b = bottom + (top-bottom - h) / 2.
+        lbpos.constrain_height(
+                (maxposlb.top - minposlb.bottom) *
+                shrink, strength='strong')
+        lbpos.constrain_bottom(
+                (maxposlb.top - minposlb.bottom) *
+                (1. - shrink)/2. + minposlb.bottom,
+                strength='strong')
+
+        # set the width of the pos box
+        lbpos.constrain_width(lbpos.height * (shrink / aspect),
+                              strength='strong')
+    elif location in ('bottom', 'top'):
+        lbpos = layoutbox.LayoutBox(
+                parent=lb,
+                name=lb.name + '.pos',
+                tightheight=True,
+                pos=True,
+                subplot=False,
+                artist=cax)
+
+        if location == 'bottom':
+            layoutbox.vstack([gslb, lb], padding=pad * gslb.width)
+        else:
+            layoutbox.vstack([lb, gslb], padding=pad * gslb.width)
+
+        maxcol = -100000
+        mincol = 1000000
+        maxax = None
+        minax = None
+
+        for ax in parents:
+            subspec = ax.get_subplotspec()
+            nrows, ncols = subspec.get_gridspec().get_geometry()
+            for num in [subspec.num1, subspec.num2]:
+                rownum1, colnum1 = divmod(subspec.num1, ncols)
+                if colnum1 > maxcol:
+                    maxcol = colnum1
+                    maxax = ax
+                if rownum1 < mincol:
+                    mincol = colnum1
+                    minax = ax
+        maxposlb = maxax.poslayoutbox
+        minposlb = minax.poslayoutbox
+        lbpos.constrain_width((maxposlb.right - minposlb.left) *
+                              shrink)
+        lbpos.constrain_left(
+                (maxposlb.right - minposlb.left) *
+                (1.-shrink)/2. + minposlb.left)
+        # set the height of the pos box
+        lbpos.constrain_height(lbpos.width * shrink * aspect,
+                               strength='medium')
+
+    return lb, lbpos
+
+
 
 # Development Notes:
 
