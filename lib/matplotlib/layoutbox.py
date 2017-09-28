@@ -51,7 +51,7 @@ class LayoutBox(object):
     def __init__(self, parent=None, name='', tightwidth=False,
                  tightheight=False, artist=None,
                  lower_left=(0, 0), upper_right=(1, 1), pos=False,
-                 subplot=False):
+                 subplot=False, h_pad=None, w_pad=None):
         Variable = kiwi.Variable
         self.parent = parent
         self.name = name
@@ -109,10 +109,13 @@ class LayoutBox(object):
         self.subplotspec = None
         if self.pos:
             self.constrain_margins()
+        self.h_pad = h_pad
+        self.w_pad = w_pad
+
 
     def constrain_margins(self):
         """
-        Only do this for poss.  This sets a variable distance
+        Only do this for pos.  This sets a variable distance
         margin between the position of the axes and the outer edge of
         the axes.
 
@@ -458,11 +461,9 @@ class LayoutBox(object):
 
     def __repr__(self):
         args = (self.name, self.left.value(), self.bottom.value(),
-                self.right.value(), self.top.value(), self.pref_height.value(),
-                self.artist, self.pos)
-        str = ('LayoutBox: %40s, (left: %1.2f) (bot: %1.2f) '
-               '(right: %1.2f)  (top: %1.2f) (pref_width: %1.2f) '
-               '(artist: %s) (pos?: %s)') % args
+                self.right.value(), self.top.value())
+        str = ('LayoutBox: %25s, (left: %1.3f) (bot: %1.3f) '
+               '(right: %1.3f)  (top: %1.3f) ') % args
         return str
 
 
@@ -716,7 +717,10 @@ def print_tree(lb):
     '''
 
     if lb.parent is None:
+        print('LayoutBox Tree\n')
+        print('==============\n')
         print_children(lb)
+        print('\n')
     else:
         print_tree(lb.parent)
 

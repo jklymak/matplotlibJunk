@@ -197,12 +197,20 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
                 pos = ax.get_position()
                 tightbbox = get_axall_tightbbox(ax, renderer)
                 bbox = invTransFig(tightbbox)
-
-                ax.poslayoutbox.edit_left_margin_min(-bbox.x0 + pos.x0 + w_pad)
-                ax.poslayoutbox.edit_right_margin_min(bbox.x1 - pos.x1 + w_pad)
+                # use stored h_pad if it exists
+                h_padt = ax.poslayoutbox.h_pad
+                if h_padt is None:
+                    h_padt = h_pad
+                w_padt = ax.poslayoutbox.w_pad
+                if w_padt is None:
+                    w_padt = w_pad
+                ax.poslayoutbox.edit_left_margin_min(-bbox.x0 +
+                        pos.x0 + w_padt)
+                ax.poslayoutbox.edit_right_margin_min(bbox.x1 -
+                        pos.x1 + w_padt)
                 ax.poslayoutbox.edit_bottom_margin_min(
-                                            -bbox.y0 + pos.y0 + h_pad)
-                ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_pad)
+                        -bbox.y0 + pos.y0 + h_padt)
+                ax.poslayoutbox.edit_top_margin_min(bbox.y1-pos.y1+h_padt)
 
                 # logging.debug('left %f' % (-bbox.x0 + pos.x0 + w_pad))
                 # logging.debug('right %f' % (bbox.x1 - pos.x1 + w_pad))
@@ -396,6 +404,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad):
 
         fig.layoutbox.update_variables()
         # Now set the position of the axes...
+        layoutbox.print_tree(fig.layoutbox)
         for ax in axes:
             if ax.layoutbox is not None:
                 newpos = ax.poslayoutbox.get_rect()

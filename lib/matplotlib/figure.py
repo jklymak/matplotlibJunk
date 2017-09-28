@@ -2149,7 +2149,7 @@ class Figure(Artist):
         width, height = fig.get_size_inches()
         w_pad = w_pad / width
         h_pad = h_pad / height
-
+        print('w_pad', w_pad)
         if renderer is None:
             renderer = layoutbox.get_renderer(fig)
         do_constrained_layout(fig, renderer, h_pad, w_pad)
