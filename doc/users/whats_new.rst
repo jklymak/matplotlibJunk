@@ -14,12 +14,12 @@ revision, see the :ref:`github-stats`.
 ..
    For a release, add a new section after this, then comment out the include
    and toctree below by indenting them. Uncomment them after the release.
-.. include:: next_whats_new/README.rst
-.. toctree::
-   :glob:
-   :maxdepth: 1
+   .. include:: next_whats_new/README.rst
+   .. toctree::
+      :glob:
+      :maxdepth: 1
 
-   next_whats_new/*
+      next_whats_new/*
 
 New in Matplotlib 2.1
 =====================
@@ -62,6 +62,12 @@ negative values are simply used as labels, and the real radius is shifted by
 the configured minimum. This release also allows negative radii to be used for
 grids and ticks, which were previously silently ignored.
 
+Radial ticks have been modified to be parallel to the circular grid line, and
+angular ticks have been modified to be parallel to the grid line. It may also
+be useful to rotate tick *labels* to match the boundary. Calling
+``ax.tick_params(rotation='auto')`` will enable new behavior: radial tick
+labels will be parallel to the circular grid line, and angular tick labels will
+be perpendicular to the grid line (i.e., parallel to the outer boundary.)
 
 
 Merge JSAnimation
