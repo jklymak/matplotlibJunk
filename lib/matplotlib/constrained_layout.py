@@ -597,7 +597,6 @@ def layoutcolorbargridspec(parents, cax, shrink, aspect, location, pad=0.05):
     return lb, lbpos
 
 
-
 # Development Notes:
 
 # What gets a layoutbox:

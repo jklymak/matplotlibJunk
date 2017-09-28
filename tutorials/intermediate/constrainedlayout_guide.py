@@ -214,8 +214,6 @@ for ax in axs.flatten():
 fig.set_constrained_layout_pads(w_pad=2./72., h_pad=2./72.,
         hspace=0.2, wspace=0.2)
 
-
-
 ##########################################
 # rcParams:
 # -----------

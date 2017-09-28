@@ -549,7 +549,7 @@ L -4 0
      </g>
      <g id="text_15">
       <!-- 3 -->
-      <g transform="translate(29.669375 21.677188)scale(0.12 -0.12)">
+      <g transform="translate(29.669375 21.677187)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-33"/>
       </g>
      </g>
@@ -938,7 +938,7 @@ L 520.029109 17.118125
      </g>
      <g id="text_32">
       <!-- 3 -->
-      <g transform="translate(343.851193 21.677188)scale(0.12 -0.12)">
+      <g transform="translate(343.851193 21.677187)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-33"/>
       </g>
      </g>
@@ -1625,7 +1625,7 @@ L 520.029109 252.754489
   </g>
   <g id="axes_5">
    <g id="patch_22">
-    <path clip-path="url(#pc33833980f)" d="M 219.918086 132.332534 
+    <path clip-path="url(#p78c1a71b4a)" d="M 219.918086 132.332534 
 L 219.918086 131.994992 
 L 219.918086 46.259269 
 L 219.918086 45.921727 
@@ -1926,7 +1926,7 @@ z
   </g>
   <g id="axes_6">
    <g id="patch_24">
-    <path clip-path="url(#pf777f56e12)" d="M 534.099905 132.332534 
+    <path clip-path="url(#pa2c859be87)" d="M 534.099905 132.332534 
 L 534.099905 131.994992 
 L 534.099905 46.259269 
 L 534.099905 45.921727 
@@ -2056,7 +2056,7 @@ z
      </g>
      <g id="text_86">
       <!-- 0.2 -->
-      <g transform="translate(543.860625 85.045113)scale(0.12 -0.12)">
+      <g transform="translate(543.860625 85.045112)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-30"/>
        <use x="63.623047" xlink:href="#DejaVuSans-2e"/>
        <use x="95.410156" xlink:href="#DejaVuSans-32"/>
@@ -2127,7 +2127,7 @@ z
   </g>
   <g id="axes_7">
    <g id="patch_26">
-    <path clip-path="url(#pa0062dd3e4)" d="M 219.918086 367.968898 
+    <path clip-path="url(#pfd604eb1ab)" d="M 219.918086 367.968898 
 L 219.918086 367.631356 
 L 219.918086 281.895633 
 L 219.918086 281.558091 
@@ -2328,7 +2328,7 @@ z
   </g>
   <g id="axes_8">
    <g id="patch_28">
-    <path clip-path="url(#pc63199bb7e)" d="M 534.099905 367.968898 
+    <path clip-path="url(#pcfa7894263)" d="M 534.099905 367.968898 
 L 534.099905 367.631356 
 L 534.099905 281.895633 
 L 534.099905 281.558091 
@@ -2529,16 +2529,16 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pc33833980f">
+  <clipPath id="p78c1a71b4a">
    <rect height="86.410807" width="5.76072" x="219.918086" y="45.921727"/>
   </clipPath>
-  <clipPath id="pf777f56e12">
+  <clipPath id="pa2c859be87">
    <rect height="86.410807" width="5.76072" x="534.099905" y="45.921727"/>
   </clipPath>
-  <clipPath id="pa0062dd3e4">
+  <clipPath id="pfd604eb1ab">
    <rect height="86.410807" width="5.76072" x="219.918086" y="281.558091"/>
   </clipPath>
-  <clipPath id="pc63199bb7e">
+  <clipPath id="pcfa7894263">
    <rect height="86.410807" width="5.76072" x="534.099905" y="281.558091"/>
   </clipPath>
  </defs>

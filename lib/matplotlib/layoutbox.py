@@ -112,7 +112,6 @@ class LayoutBox(object):
         self.h_pad = h_pad
         self.w_pad = w_pad
 
-
     def constrain_margins(self):
         """
         Only do this for pos.  This sets a variable distance
