@@ -438,7 +438,7 @@ L -4 0
      </g>
      <g id="text_9">
       <!-- −3 -->
-      <g transform="translate(19.61375 163.731562)scale(0.12 -0.12)">
+      <g transform="translate(19.61375 163.731563)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-2212"/>
        <use x="83.789062" xlink:href="#DejaVuSans-33"/>
       </g>
@@ -827,7 +827,7 @@ L 520.157451 17.118125
      </g>
      <g id="text_26">
       <!-- −3 -->
-      <g transform="translate(336.41375 163.731562)scale(0.12 -0.12)">
+      <g transform="translate(336.41375 163.731563)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-2212"/>
        <use x="83.789062" xlink:href="#DejaVuSans-33"/>
       </g>
@@ -874,12 +874,12 @@ L 520.157451 17.118125
     <g id="ytick_11">
      <g id="line2d_49">
       <g>
-       <use style="stroke:#000000;stroke-width:0.5;" x="358.104375" xlink:href="#m556f96d829" y="88.145312"/>
+       <use style="stroke:#000000;stroke-width:0.5;" x="358.104375" xlink:href="#m556f96d829" y="88.145313"/>
       </g>
      </g>
      <g id="line2d_50">
       <g>
-       <use style="stroke:#000000;stroke-width:0.5;" x="520.157451" xlink:href="#m27e32ca04a" y="88.145312"/>
+       <use style="stroke:#000000;stroke-width:0.5;" x="520.157451" xlink:href="#m27e32ca04a" y="88.145313"/>
       </g>
      </g>
      <g id="text_29">
@@ -938,7 +938,7 @@ L 520.157451 17.118125
      </g>
      <g id="text_32">
       <!-- 3 -->
-      <g transform="translate(346.469375 21.677187)scale(0.12 -0.12)">
+      <g transform="translate(346.469375 21.677188)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-33"/>
       </g>
      </g>
@@ -2127,7 +2127,7 @@ z
   </g>
   <g id="axes_7">
    <g id="patch_26">
-    <path clip-path="url(#p8688400e5a)" d="M 217.37845 368.361625 
+    <path clip-path="url(#p50d767f2f7)" d="M 217.37845 368.361625 
 L 217.37845 368.028685 
 L 217.37845 283.46194 
 L 217.37845 283.129 
@@ -2535,7 +2535,7 @@ z
   <clipPath id="p5c24da6653">
    <rect height="85.232625" width="5.682175" x="534.17845" y="45.529"/>
   </clipPath>
-  <clipPath id="p8688400e5a">
+  <clipPath id="p50d767f2f7">
    <rect height="85.232625" width="5.682175" x="217.37845" y="283.129"/>
   </clipPath>
   <clipPath id="p024e789961">

@@ -256,7 +256,8 @@ def test_constrained_layout11rat():
     fig = plt.figure(constrained_layout=True, figsize=(10, 3))
     gs0 = gridspec.GridSpec(1, 2, fig=fig, width_ratios=[6., 1.])
     gsl = gridspec.GridSpecFromSubplotSpec(1, 2, gs0[0])
-    gsl0 = gridspec.GridSpecFromSubplotSpec(2, 2, gsl[1], height_ratios=[2., 1.])
+    gsl0 = gridspec.GridSpecFromSubplotSpec(2, 2, gsl[1],
+            height_ratios=[2., 1.])
     ax = fig.add_subplot(gs0[1])
     example_plot(ax, fontsize=9)
     axs = []

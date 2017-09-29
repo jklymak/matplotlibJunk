@@ -378,10 +378,14 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                             # subplots share a column.  For width if they
                             # share a row.
 
-                            widthC = np.sum(width_ratios[colnumCmin:(colnumCmax + 1)])
-                            width0 = np.sum(width_ratios[colnum0min:(colnum0max + 1)])
-                            heightC = np.sum(height_ratios[rownumCmin:(rownumCmax + 1)])
-                            height0 = np.sum(height_ratios[rownum0min:(rownum0max + 1)])
+                            widthC = np.sum(
+                                    width_ratios[colnumCmin:(colnumCmax + 1)])
+                            width0 = np.sum(
+                                    width_ratios[colnum0min:(colnum0max + 1)])
+                            heightC = np.sum(
+                                    height_ratios[rownumCmin:(rownumCmax + 1)])
+                            height0 = np.sum(
+                                    height_ratios[rownum0min:(rownum0max + 1)])
 
                             drowsC = (rownumCmax - rownumCmin + 1) * heightC
                             drows0 = (rownum0max - rownum0min + 1) * height0
