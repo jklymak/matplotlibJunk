@@ -618,53 +618,6 @@ def match_margins(boxes, levels=1):
     match_height_margins(boxes, levels=levels)
 
 
-def arange_subplotspecs(gs):
-    """
-    arange the subplotspec childgren of this gridspec, and then recursively
-    do the same of any gridspec children of those gridspecs...
-    """
-    sschildren = []
-    for child in gs.children:
-        name = (child.name).split('.')[-1][:-3]
-        if name == 'ss':
-            for child2 in child.children:
-                # check for gridspec children...
-                name = (child2.name).split('.')[-1][:-3]
-                if name == 'gridspec':
-                    arange_subplotspecs(child2)
-            sschildren += [child]
-    # now arrange the subplots...
-    for child0 in sschildren:
-        ss0 = child0.artist
-        nrows, ncols = ss0.get_gridspec().get_geometry()
-        if ss0.num2 is None:
-            ss0.num2 = ss0.num1
-        rowNum0min, colNum0min = divmod(ss0.num1, ncols)
-        rowNum0max, colNum0max = divmod(ss0.num2, ncols)
-        sschildren = sschildren[:-1]
-        for childc in sschildren:
-            ssc = childc.artist
-            rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
-            if ssc.num2 is None:
-                ssc.num2 = ssc.num1
-            rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
-            # OK, this tells us the relative layout of ax
-            # with axc
-            if colNum0max < colNumCmin:
-                hstack([ss0.layoutbox, ssc.layoutbox])
-            if colNumCmax < colNum0min:
-                hstack([ssc.layoutbox, ss0.layoutbox])
-
-            ####
-            # vertical alignment
-
-            if rowNum0max < rowNumCmin:
-                vstack([ss0.layoutbox,
-                        ssc.layoutbox])
-            if rowNumCmax < rowNum0min:
-                vstack([ssc.layoutbox,
-                        ss0.layoutbox])
-
 layoutboxobjnum = 0
 
 

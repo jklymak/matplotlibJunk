@@ -171,7 +171,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
         if fig.layoutbox.constrained_layout_called < 1:
             for gs in gss:
                 nrows, ncols = gs.get_geometry()
-                hassubplotspec = np.zeros(nrows * ncols)
+                hassubplotspec = np.zeros(nrows * ncols, dtype=bool)
                 axs = []
                 for ax in axes:
                     if (hasattr(ax, 'get_subplotspec')
@@ -182,9 +182,9 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                     ss0 = ax.get_subplotspec()
                     if ss0.num2 is None:
                         ss0.num2 = ss0.num1
-                    hassubplotspec[ss0.num1:ss0.num2+1] = 1.2
+                    hassubplotspec[ss0.num1:ss0.num2+1] = True
                 for nn, hss in enumerate(hassubplotspec):
-                    if hss < 1:
+                    if hss:
                         # this gridspec slot doesn't have an axis so we
                         # make a "ghost".
                         ax = fig.add_subplot(gs[nn])
@@ -260,9 +260,8 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
             for child in figlb.children:
                 name = (child.name).split('.')[-1][:-3]
                 if name == 'gridspec':
-                    # farm the gridspec layout out.  Maybe bad organization
-                    # and this function should be here in constrained_layout
-                    layoutbox.arange_subplotspecs(child)
+                    # farm the gridspec layout out.
+                    arange_subplotspecs(child, hspace=hspace, wspace=wspace)
 
         # this only needs to happen once:
 
@@ -430,6 +429,59 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                 # so this does the same w/o zeroing layout.
                 ax._set_position(newpos)
 
+
+def arange_subplotspecs(gs, hspace=0, wspace=0):
+    """
+    arange the subplotspec childgren of this gridspec, and then recursively
+    do the same of any gridspec children of those gridspecs...
+    """
+    print('arange_subplotspecs', wspace)
+    sschildren = []
+    for child in gs.children:
+        name = (child.name).split('.')[-1][:-3]
+        if name == 'ss':
+            for child2 in child.children:
+                # check for gridspec children...
+                name = (child2.name).split('.')[-1][:-3]
+                if name == 'gridspec':
+                    arange_subplotspecs(child2, hspace=hspace, wspace=wspace)
+            sschildren += [child]
+    # now arrange the subplots...
+    for child0 in sschildren:
+        ss0 = child0.artist
+        nrows, ncols = ss0.get_gridspec().get_geometry()
+        if ss0.num2 is None:
+            ss0.num2 = ss0.num1
+        rowNum0min, colNum0min = divmod(ss0.num1, ncols)
+        rowNum0max, colNum0max = divmod(ss0.num2, ncols)
+        sschildren = sschildren[:-1]
+        for childc in sschildren:
+            ssc = childc.artist
+            rowNumCmin, colNumCmin = divmod(ssc.num1, ncols)
+            if ssc.num2 is None:
+                ssc.num2 = ssc.num1
+            rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
+            # OK, this tells us the relative layout of ax
+            # with axc
+            thepad = wspace * (ss0.layoutbox.width +
+                                ssc.layoutbox.width) / 2.
+            if colNum0max < colNumCmin:
+                layoutbox.hstack([ss0.layoutbox, ssc.layoutbox],
+                        padding=thepad)
+            if colNumCmax < colNum0min:
+                layoutbox.hstack([ssc.layoutbox, ss0.layoutbox],
+                        padding=thepad)
+
+            ####
+            # vertical alignment
+            thepad = hspace * (ss0.layoutbox.height +
+                                ssc.layoutbox.height) / 2.
+            if rowNum0max < rowNumCmin:
+                layoutbox.vstack([ss0.layoutbox,
+                                 ssc.layoutbox], padding=thepad)
+            if rowNumCmax < rowNum0min:
+                layoutbox.vstack([ssc.layoutbox,
+                                  ss0.layoutbox], padding=thepad)
 
 def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
     """
