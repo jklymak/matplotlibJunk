@@ -249,6 +249,7 @@ def test_constrained_layout11():
     ax = fig.add_subplot(gsl[0])
     example_plot(ax, fontsize=9)
 
+
 @image_comparison(baseline_images=['constrained_layout11rat'],
         extensions=['png', 'pdf'])
 def test_constrained_layout11rat():
