@@ -27,7 +27,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_1">
-    <path clip-path="url(#p8b6716c528)" d="M 54.31149 167.019896 
+    <path clip-path="url(#pa392e55c15)" d="M 54.31149 167.019896 
 L 272.6064 26.23649 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -506,7 +506,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_14">
-    <path clip-path="url(#p47245c86b3)" d="M 345.162975 167.019896 
+    <path clip-path="url(#pc6a6b25ef9)" d="M 345.162975 167.019896 
 L 563.457885 26.23649 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -658,7 +658,7 @@ L 563.457885 26.23649
      </g>
      <g id="text_16">
       <!-- 2.0 -->
-      <g transform="translate(322.079225 30.795552)scale(0.12 -0.12)">
+      <g transform="translate(322.079225 30.795553)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-32"/>
        <use x="63.623047" xlink:href="#DejaVuSans-2e"/>
        <use x="95.410156" xlink:href="#DejaVuSans-30"/>
@@ -699,7 +699,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_27">
-    <path clip-path="url(#p82613d1333)" d="M 54.31149 385.15851 
+    <path clip-path="url(#pf5f0db934b)" d="M 54.31149 385.15851 
 L 272.6064 244.375104 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -892,7 +892,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_40">
-    <path clip-path="url(#p504e7f5eb4)" d="M 345.162975 385.15851 
+    <path clip-path="url(#pb2f2cab9ad)" d="M 345.162975 385.15851 
 L 563.457885 244.375104 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -1077,16 +1077,16 @@ L 563.457885 244.375104
   </g>
  </g>
  <defs>
-  <clipPath id="p8b6716c528">
+  <clipPath id="pa392e55c15">
    <rect height="140.783406" width="218.29491" x="54.31149" y="26.23649"/>
   </clipPath>
-  <clipPath id="p47245c86b3">
+  <clipPath id="pc6a6b25ef9">
    <rect height="140.783406" width="218.29491" x="345.162975" y="26.23649"/>
   </clipPath>
-  <clipPath id="p82613d1333">
+  <clipPath id="pf5f0db934b">
    <rect height="140.783406" width="218.29491" x="54.31149" y="244.375104"/>
   </clipPath>
-  <clipPath id="p504e7f5eb4">
+  <clipPath id="pb2f2cab9ad">
    <rect height="140.783406" width="218.29491" x="345.162975" y="244.375104"/>
   </clipPath>
  </defs>

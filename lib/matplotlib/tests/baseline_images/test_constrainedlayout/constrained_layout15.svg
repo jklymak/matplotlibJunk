@@ -27,7 +27,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_1">
-    <path clip-path="url(#pf56ffa3b6d)" d="M 42.69774 178.633646 
+    <path clip-path="url(#pca3e988bff)" d="M 42.69774 178.633646 
 L 272.6064 17.118365 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -404,7 +404,7 @@ Q 31.109375 20.453125 19.1875 8.296875
 z
 " id="DejaVuSans-32"/>
       </defs>
-      <g transform="translate(19.61399 21.677428)scale(0.12 -0.12)">
+      <g transform="translate(19.61399 21.677427)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-32"/>
        <use x="63.623047" xlink:href="#DejaVuSans-2e"/>
        <use x="95.410156" xlink:href="#DejaVuSans-30"/>
@@ -506,7 +506,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_14">
-    <path clip-path="url(#p7270a5d4e4)" d="M 333.549225 178.633646 
+    <path clip-path="url(#p0607df34d8)" d="M 333.549225 178.633646 
 L 563.457885 17.118365 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -658,7 +658,7 @@ L 563.457885 17.118365
      </g>
      <g id="text_16">
       <!-- 2.0 -->
-      <g transform="translate(310.465475 21.677428)scale(0.12 -0.12)">
+      <g transform="translate(310.465475 21.677427)scale(0.12 -0.12)">
        <use xlink:href="#DejaVuSans-32"/>
        <use x="63.623047" xlink:href="#DejaVuSans-2e"/>
        <use x="95.410156" xlink:href="#DejaVuSans-30"/>
@@ -699,7 +699,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_27">
-    <path clip-path="url(#pc0fa08b217)" d="M 42.69774 396.77226 
+    <path clip-path="url(#p3dcd63e45d)" d="M 42.69774 396.77226 
 L 272.6064 235.256979 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -892,7 +892,7 @@ z
 " style="fill:#ffffff;"/>
    </g>
    <g id="line2d_40">
-    <path clip-path="url(#pe64ea123bb)" d="M 333.549225 396.77226 
+    <path clip-path="url(#p8faadb1244)" d="M 333.549225 396.77226 
 L 563.457885 235.256979 
 " style="fill:none;stroke:#0000ff;stroke-linecap:square;"/>
    </g>
@@ -1077,16 +1077,16 @@ L 563.457885 235.256979
   </g>
  </g>
  <defs>
-  <clipPath id="pf56ffa3b6d">
+  <clipPath id="pca3e988bff">
    <rect height="161.515281" width="229.90866" x="42.69774" y="17.118365"/>
   </clipPath>
-  <clipPath id="p7270a5d4e4">
+  <clipPath id="p0607df34d8">
    <rect height="161.515281" width="229.90866" x="333.549225" y="17.118365"/>
   </clipPath>
-  <clipPath id="pc0fa08b217">
+  <clipPath id="p3dcd63e45d">
    <rect height="161.515281" width="229.90866" x="42.69774" y="235.256979"/>
   </clipPath>
-  <clipPath id="pe64ea123bb">
+  <clipPath id="p8faadb1244">
    <rect height="161.515281" width="229.90866" x="333.549225" y="235.256979"/>
   </clipPath>
  </defs>
