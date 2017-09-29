@@ -254,7 +254,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
         # the ones that contain gridspecs are a set proportion of their
         # parent gridspec.  The ones that contain axes are not so constrained.
 
-        # check for childrent that contain subplotspecs...
+        # check for children that contain subplotspecs...
         if fig.layoutbox.constrained_layout_called < 1:
             figlb = fig.layoutbox
             for child in figlb.children:
@@ -269,6 +269,12 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
             fig.layoutbox.constrained_layout_called += 1
             for gs in gss:
                 nrows, ncols = gs.get_geometry()
+                width_ratios = gs.get_width_ratios()
+                height_ratios = gs.get_height_ratios()
+                if width_ratios is None:
+                    width_ratios = np.ones(ncols)
+                if height_ratios is None:
+                    height_ratios = np.ones(nrows)
                 axs = []
 
                 # get axes in this gridspec....
@@ -307,8 +313,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                             # OK, this tells us the relative layout of ax
                             # with axc
                             # Horizontal alignment:
-                            thepad = (ss0.layoutbox.width +
-                                      ssc.layoutbox.width) * wspace / 2.
+                            thepad = wspace / ncols
 
                             if colnum0max < colnumCmin:
                                 layoutbox.hstack([ss0.layoutbox,
@@ -331,8 +336,7 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                                                 'right')
                             ####
                             # Vertical alignment:
-                            thepad = (ss0.layoutbox.height +
-                                      ssc.layoutbox.height) * hspace / 2.
+                            thepad = hspace / nrows
 
                             if rownum0max < rownumCmin:
                                 logging.debug('rownum0max < rownumCmin')
@@ -374,10 +378,15 @@ def do_constrained_layout(fig, renderer, h_pad, w_pad,
                             # subplots share a column.  For width if they
                             # share a row.
 
-                            drowsC = rownumCmax - rownumCmin + 1
-                            drows0 = rownum0max - rownum0min + 1
-                            dcolsC = colnumCmax - colnumCmin + 1
-                            dcols0 = colnum0max - colnum0min + 1
+                            widthC = np.sum(width_ratios[colnumCmin:(colnumCmax + 1)])
+                            width0 = np.sum(width_ratios[colnum0min:(colnum0max + 1)])
+                            heightC = np.sum(height_ratios[rownumCmin:(rownumCmax + 1)])
+                            height0 = np.sum(height_ratios[rownum0min:(rownum0max + 1)])
+
+                            drowsC = (rownumCmax - rownumCmin + 1) * heightC
+                            drows0 = (rownum0max - rownum0min + 1) * height0
+                            dcolsC = (colnumCmax - colnumCmin + 1) * widthC
+                            dcols0 = (colnum0max - colnum0min + 1) * width0
 
                             if drowsC > drows0:
                                 logging.debug('drowsC > drows0')
@@ -435,7 +444,6 @@ def arange_subplotspecs(gs, hspace=0, wspace=0):
     arange the subplotspec childgren of this gridspec, and then recursively
     do the same of any gridspec children of those gridspecs...
     """
-    print('arange_subplotspecs', wspace)
     sschildren = []
     for child in gs.children:
         name = (child.name).split('.')[-1][:-3]
@@ -463,8 +471,7 @@ def arange_subplotspecs(gs, hspace=0, wspace=0):
             rowNumCmax, colNumCmax = divmod(ssc.num2, ncols)
             # OK, this tells us the relative layout of ax
             # with axc
-            thepad = wspace * (ss0.layoutbox.width +
-                                ssc.layoutbox.width) / 2.
+            thepad = wspace / ncols
             if colNum0max < colNumCmin:
                 layoutbox.hstack([ss0.layoutbox, ssc.layoutbox],
                         padding=thepad)
@@ -474,14 +481,14 @@ def arange_subplotspecs(gs, hspace=0, wspace=0):
 
             ####
             # vertical alignment
-            thepad = hspace * (ss0.layoutbox.height +
-                                ssc.layoutbox.height) / 2.
+            thepad = hspace / nrows
             if rowNum0max < rowNumCmin:
                 layoutbox.vstack([ss0.layoutbox,
                                  ssc.layoutbox], padding=thepad)
             if rowNumCmax < rowNum0min:
                 layoutbox.vstack([ssc.layoutbox,
                                   ss0.layoutbox], padding=thepad)
+
 
 def layoutcolorbarsingle(ax, cax, shrink, aspect, location, pad=0.05):
     """
