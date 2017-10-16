@@ -8,7 +8,7 @@ a new ``plt.figure(constrained_layout=True)`` kwarg to
 :class:`~matplotlib.figure.Figure` or :method:`~matplotlib.figure.subplots`.
 There are new ``rcParams`` for this package, and spacing can be
 more finely tuned with the new
-:method:`~matplotlib.figure.set_constrained_layout_pads`.
+:meth:`~matplotlib.figure.set_constrained_layout_pads`.
 
 Features include:
 

@@ -78,7 +78,8 @@ def test_constrained_layout4():
     fig.colorbar(pcm, ax=axs, pad=0.01, shrink=0.6)
 
 
-@image_comparison(baseline_images=['constrained_layout5'])
+@image_comparison(baseline_images=['constrained_layout5'],
+                  tol=5.e-2)
 def test_constrained_layout5():
     '''
     Test constrained_layout for a single colorbar with subplots,
