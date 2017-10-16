@@ -35,6 +35,46 @@ from matplotlib.cbook._backports import broadcast_to
 #       the tests with multiple threads.
 
 
+def test_get_labels():
+    fig, ax = plt.subplots()
+    ax.set_xlabel('x label')
+    ax.set_ylabel('y label')
+    assert ax.get_xlabel() == 'x label'
+    assert ax.get_ylabel() == 'y label'
+
+
+@image_comparison(baseline_images=['acorr'], extensions=['png'], style='mpl20')
+def test_acorr():
+    np.random.seed(19680801)
+    n = 512
+    x = np.random.normal(0, 1, n).cumsum()
+
+    fig, ax = plt.subplots()
+    ax.acorr(x, maxlags=n - 1)
+
+
+@image_comparison(baseline_images=['spy'], extensions=['png'], style='mpl20')
+def test_spy():
+    np.random.seed(19680801)
+    a = np.ones(32 * 32)
+    a[:16 * 32] = 0
+    np.random.shuffle(a)
+    a = np.reshape(a, (32, 32))
+
+    fig, ax = plt.subplots()
+    ax.spy(a)
+
+
+@image_comparison(baseline_images=['matshow'],
+                  extensions=['png'], style='mpl20')
+def test_matshow():
+    np.random.seed(19680801)
+    a = np.random.rand(32, 32)
+
+    fig, ax = plt.subplots()
+    ax.matshow(a)
+
+
 @image_comparison(baseline_images=['formatter_ticker_001',
                                    'formatter_ticker_002',
                                    'formatter_ticker_003',
@@ -5260,12 +5300,15 @@ def test_eventplot_legend():
     plt.legend()
 
 
-def test_bar_single_height():
+def test_bar_broadcast_args():
     fig, ax = plt.subplots()
-    # Check that a bar chart with a single height for all bars works
+    # Check that a bar chart with a single height for all bars works.
     ax.bar(range(4), 1)
-    # Check that a horizontal chart with one width works
+    # Check that a horizontal chart with one width works.
     ax.bar(0, 1, bottom=range(4), width=1, orientation='horizontal')
+    # Check that edgecolor gets broadcasted.
+    rect1, rect2 = ax.bar([0, 1], [0, 1], edgecolor=(.1, .2, .3, .4))
+    assert rect1.get_edgecolor() == rect2.get_edgecolor() == (.1, .2, .3, .4)
 
 
 def test_invalid_axis_limits():
