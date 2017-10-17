@@ -5,7 +5,7 @@ A new method to automatically decide spacing between subplots and their
 organizing ``GridSpec`` instances has been added.  It is meant to
 replace the venerable ``tight_layout`` method.  It is invoked via
 a new ``plt.figure(constrained_layout=True)`` kwarg to
-:class:`~matplotlib.figure.Figure` or :method:`~matplotlib.figure.subplots`.
+:class:`~matplotlib.figure.Figure` or :meth:`~matplotlib.figure.subplots`.
 There are new ``rcParams`` for this package, and spacing can be
 more finely tuned with the new
 :meth:`~matplotlib.figure.set_constrained_layout_pads`.
