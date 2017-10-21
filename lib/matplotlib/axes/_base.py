@@ -2096,10 +2096,10 @@ class _AxesBase(martist.Artist):
         *m* times the data interval will be added to each
         end of that interval before it is used in autoscaling.
 
-        accepts: float in range 0 to 1
+        accepts: float greater than -0.5
         """
-        if m < 0 or m > 1:
-            raise ValueError("margin must be in range 0 to 1")
+        if m <= -0.5:
+            raise ValueError("margin must be greater than -0.5")
         self._xmargin = m
         self.stale = True
 
@@ -2110,10 +2110,10 @@ class _AxesBase(martist.Artist):
         *m* times the data interval will be added to each
         end of that interval before it is used in autoscaling.
 
-        accepts: float in range 0 to 1
+        accepts: float greater than -0.5
         """
-        if m < 0 or m > 1:
-            raise ValueError("margin must be in range 0 to 1")
+        if m <= -0.5:
+            raise ValueError("margin must be greater than -0.5")
         self._ymargin = m
         self.stale = True
 
@@ -3673,8 +3673,9 @@ class _AxesBase(martist.Artist):
                     xzc + xwidth/2./scl, yzc + ywidth/2./scl]
         elif len(bbox) != 4:
             # should be len 3 or 4 but nothing else
-            warnings.warn('Warning in _set_view_from_bbox: bounding box is not a\
-                  tuple of length 3 or 4. Ignoring the view change...')
+            warnings.warn(
+                "Warning in _set_view_from_bbox: bounding box is not a tuple "
+                "of length 3 or 4. Ignoring the view change.")
             return
 
         # Just grab bounding box

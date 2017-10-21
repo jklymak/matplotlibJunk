@@ -1533,6 +1533,14 @@ def test_hist_step_filled():
     assert all([p.get_facecolor() == p.get_edgecolor() for p in patches])
 
 
+@image_comparison(baseline_images=['hist_density'], extensions=['png'])
+def test_hist_density():
+    np.random.seed(19680801)
+    data = np.random.standard_normal(2000)
+    fig, ax = plt.subplots()
+    ax.hist(data, density=True)
+
+
 @image_comparison(baseline_images=['hist_step_log_bottom'],
                   remove_text=True, extensions=['png'])
 def test_hist_step_log_bottom():
@@ -1783,33 +1791,24 @@ def test_stackplot_baseline():
     np.random.seed(0)
 
     def layers(n, m):
-        def bump(a):
-            x = 1 / (.1 + np.random.random())
-            y = 2 * np.random.random() - .5
-            z = 10 / (.1 + np.random.random())
-            a += x * np.exp(-((np.arange(m) / m - y) * z) ** 2)
         a = np.zeros((m, n))
         for i in range(n):
             for j in range(5):
-                bump(a[:, i])
+                x = 1 / (.1 + np.random.random())
+                y = 2 * np.random.random() - .5
+                z = 10 / (.1 + np.random.random())
+                a[:, i] += x * np.exp(-((np.arange(m) / m - y) * z) ** 2)
         return a
 
     d = layers(3, 100)
     d[50, :] = 0  # test for fixed weighted wiggle (issue #6313)
 
-    fig = plt.figure()
+    fig, axs = plt.subplots(2, 2)
 
-    plt.subplot(2, 2, 1)
-    plt.stackplot(list(xrange(100)), d.T, baseline='zero')
-
-    plt.subplot(2, 2, 2)
-    plt.stackplot(list(xrange(100)), d.T, baseline='sym')
-
-    plt.subplot(2, 2, 3)
-    plt.stackplot(list(xrange(100)), d.T, baseline='wiggle')
-
-    plt.subplot(2, 2, 4)
-    plt.stackplot(list(xrange(100)), d.T, baseline='weighted_wiggle')
+    axs[0, 0].stackplot(range(100), d.T, baseline='zero')
+    axs[0, 1].stackplot(range(100), d.T, baseline='sym')
+    axs[1, 0].stackplot(range(100), d.T, baseline='wiggle')
+    axs[1, 1].stackplot(range(100), d.T, baseline='weighted_wiggle')
 
 
 @image_comparison(baseline_images=['bxp_baseline'],
@@ -4570,6 +4569,25 @@ def test_set_get_ticklabels():
     ax[1].set_yticklabels(ax[0].get_yticklabels())
 
 
+def test_tick_label_update():
+    # test issue 9397
+
+    fig, ax = plt.subplots()
+
+    # Set up a dummy formatter
+    def formatter_func(x, pos):
+        return "unit value" if x == 1 else ""
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(formatter_func))
+
+    # Force some of the x-axis ticks to be outside of the drawn range
+    ax.set_xticks([-1, 0, 1, 2, 3])
+    ax.set_xlim(-0.5, 2.5)
+
+    ax.figure.canvas.draw()
+    tick_texts = [tick.get_text() for tick in ax.xaxis.get_ticklabels()]
+    assert tick_texts == ["", "", "unit value", "", ""]
+
+
 @image_comparison(baseline_images=['o_marker_path_snap'], extensions=['png'],
                   savefig_kwarg={'dpi': 72})
 def test_o_marker_path_snap():
@@ -4585,21 +4603,37 @@ def test_o_marker_path_snap():
 def test_margins():
     # test all ways margins can be called
     data = [1, 10]
+    xmin = 0.0
+    xmax = len(data) - 1.0
+    ymin = min(data)
+    ymax = max(data)
 
     fig1, ax1 = plt.subplots(1, 1)
     ax1.plot(data)
     ax1.margins(1)
     assert ax1.margins() == (1, 1)
+    assert ax1.get_xlim() == (xmin - (xmax - xmin) * 1,
+                              xmax + (xmax - xmin) * 1)
+    assert ax1.get_ylim() == (ymin - (ymax - ymin) * 1,
+                              ymax + (ymax - ymin) * 1)
 
     fig2, ax2 = plt.subplots(1, 1)
     ax2.plot(data)
-    ax2.margins(1, 0.5)
-    assert ax2.margins() == (1, 0.5)
+    ax2.margins(0.5, 2)
+    assert ax2.margins() == (0.5, 2)
+    assert ax2.get_xlim() == (xmin - (xmax - xmin) * 0.5,
+                              xmax + (xmax - xmin) * 0.5)
+    assert ax2.get_ylim() == (ymin - (ymax - ymin) * 2,
+                              ymax + (ymax - ymin) * 2)
 
     fig3, ax3 = plt.subplots(1, 1)
     ax3.plot(data)
-    ax3.margins(x=1, y=0.5)
-    assert ax3.margins() == (1, 0.5)
+    ax3.margins(x=-0.2, y=0.5)
+    assert ax3.margins() == (-0.2, 0.5)
+    assert ax3.get_xlim() == (xmin - (xmax - xmin) * -0.2,
+                              xmax + (xmax - xmin) * -0.2)
+    assert ax3.get_ylim() == (ymin - (ymax - ymin) * 0.5,
+                              ymax + (ymax - ymin) * 0.5)
 
 
 def test_length_one_hist():
