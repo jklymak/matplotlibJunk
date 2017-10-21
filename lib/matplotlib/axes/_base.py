@@ -4013,6 +4013,21 @@ class _AxesBase(martist.Artist):
         make a twinx axes of self. This is used for twinx and twiny.
         """
         ax2 = self.figure.add_axes(self.get_position(True), *kl, **kwargs)
+        # check if we have a layoutbox.  If so, then set this axis
+        # gets the same poslayoutbox and layoutbox...
+        if self.layoutbox is not None:
+            name = self.layoutbox.name + 'twin' + layoutbox.seq_id()
+            ax2.layoutbox = layoutbox.LayoutBox(
+                    parent=self._subplotspec.layoutbox,
+                    name=name,
+                    artist=ax2)
+            ax2.poslayoutbox = layoutbox.LayoutBox(
+                    parent=ax2.layoutbox,
+                    name=ax2.layoutbox.name+'.pos',
+                    pos=True, subplot=True, artist=ax2)
+            # make the layout boxes be the same
+            ax2.layoutbox.constrain_same(self.layoutbox)
+            ax2.poslayoutbox.constrain_same(self.poslayoutbox)
         return ax2
 
     def twinx(self):
