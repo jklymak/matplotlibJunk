@@ -389,29 +389,23 @@ def xkcd(scale=1, length=100, randomness=2):
             "xkcd mode is not compatible with text.usetex = True")
 
     from matplotlib import patheffects
-    context = rc_context()
-    try:
-        rcParams['font.family'] = ['xkcd', 'Humor Sans', 'Comic Sans MS']
-        rcParams['font.size'] = 14.0
-        rcParams['path.sketch'] = (scale, length, randomness)
-        rcParams['path.effects'] = [
-            patheffects.withStroke(linewidth=4, foreground="w")]
-        rcParams['axes.linewidth'] = 1.5
-        rcParams['lines.linewidth'] = 2.0
-        rcParams['figure.facecolor'] = 'white'
-        rcParams['grid.linewidth'] = 0.0
-        rcParams['axes.grid'] = False
-        rcParams['axes.unicode_minus'] = False
-        rcParams['axes.edgecolor'] = 'black'
-        rcParams['xtick.major.size'] = 8
-        rcParams['xtick.major.width'] = 3
-        rcParams['ytick.major.size'] = 8
-        rcParams['ytick.major.width'] = 3
-    except:
-        context.__exit__(*sys.exc_info())
-        raise
-    return context
-
+    return rc_context({
+        'font.family': ['xkcd', 'Humor Sans', 'Comic Sans MS'],
+        'font.size': 14.0,
+        'path.sketch': (scale, length, randomness),
+        'path.effects': [patheffects.withStroke(linewidth=4, foreground="w")],
+        'axes.linewidth': 1.5,
+        'lines.linewidth': 2.0,
+        'figure.facecolor': 'white',
+        'grid.linewidth': 0.0,
+        'axes.grid': False,
+        'axes.unicode_minus': False,
+        'axes.edgecolor': 'black',
+        'xtick.major.size': 8,
+        'xtick.major.width': 3,
+        'ytick.major.size': 8,
+        'ytick.major.width': 3,
+    })
 
 ## Figures ##
 
