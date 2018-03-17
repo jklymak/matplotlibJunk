@@ -396,6 +396,8 @@ class Verbose(object):
         'return true if self.level is >= level'
         return self.vald[self.level] >= self.vald[level]
 
+verbose = Verbose()
+
 
 def _wrap(fmt, func, level=logging.DEBUG, always=True):
     """
