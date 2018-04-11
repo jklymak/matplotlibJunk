@@ -117,3 +117,20 @@ ll, bb, ww, hh = CB.ax.get_position().bounds
 CB.ax.set_position([ll, b + 0.1*h, ww, h*0.8])
 
 plt.show()
+
+#############################################################################
+#
+# ------------
+#
+# References
+# """"""""""
+#
+# The use of the following functions and methods is shown in this example:
+
+import matplotlib
+matplotlib.axes.Axes.contour
+matplotlib.axes.Axes.clabel
+matplotlib.axes.Axes.imshow
+matplotlib.axes.Axes.set_position
+matplotlib.axes.Axes.get_position
+matplotlib.figure.Figure.colorbar
