@@ -2193,20 +2193,21 @@ class FigureCanvasBase(object):
 
                     bbox_filtered = []
                     for a in bbox_artists:
-                        bbox = a.get_window_extent(renderer)
-                        if a.get_clip_on():
-                            clip_box = a.get_clip_box()
-                            if clip_box is not None:
-                                bbox = Bbox.intersection(bbox, clip_box)
-                            clip_path = a.get_clip_path()
-                            if clip_path is not None and bbox is not None:
-                                clip_path = \
-                                    clip_path.get_fully_transformed_path()
-                                bbox = Bbox.intersection(
-                                    bbox, clip_path.get_extents())
-                        if bbox is not None and (
-                                bbox.width != 0 or bbox.height != 0):
-                            bbox_filtered.append(bbox)
+                        if a.inbbox:
+                            bbox = a.get_window_extent(renderer)
+                            if a.get_clip_on():
+                                clip_box = a.get_clip_box()
+                                if clip_box is not None:
+                                    bbox = Bbox.intersection(bbox, clip_box)
+                                clip_path = a.get_clip_path()
+                                if clip_path is not None and bbox is not None:
+                                    clip_path = \
+                                        clip_path.get_fully_transformed_path()
+                                    bbox = Bbox.intersection(
+                                        bbox, clip_path.get_extents())
+                            if bbox is not None and (
+                                    bbox.width != 0 or bbox.height != 0):
+                                bbox_filtered.append(bbox)
 
                     if bbox_filtered:
                         _bbox = Bbox.union(bbox_filtered)

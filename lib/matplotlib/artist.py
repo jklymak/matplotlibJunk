@@ -119,6 +119,8 @@ class Artist(object):
         self._sketch = rcParams['path.sketch']
         self._path_effects = rcParams['path.effects']
         self._sticky_edges = _XYPair([], [])
+        self.inbbox = True  # boolean to tell us if this artist should be
+                            # included in bouding box calculations...
 
     def __getstate__(self):
         d = self.__dict__.copy()
