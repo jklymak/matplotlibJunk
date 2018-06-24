@@ -418,7 +418,7 @@ class Text(Artist):
         xmin -= offsetx
         ymin -= offsety
 
-        bbox = Bbox.from_bounds(xmin, ymin, width, height)
+        bbox = Bbox.from_bounds(xmin, ymin, width, height + descent)
 
         # now rotate the positions around the first x,y position
         xys = M.transform(offsetLayout)
