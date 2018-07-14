@@ -58,7 +58,7 @@ There is no reason this should not extend beyond 1-d axes data.  2-D pcolor/imag
 
 ## Example
 
-The base converter class would be similar to current `ConversionInterface` class.  
+
 
 
 
