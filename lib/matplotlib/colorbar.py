@@ -393,18 +393,11 @@ class ColorbarBase(cm.ScalarMappable):
             self.locator = ticker.FixedLocator(ticks, nbins=len(ticks))
         else:
             self.locator = ticks    # Handle default in _ticker()
-        if format is None:
-            if isinstance(self.norm, colors.LogNorm):
-                self.formatter = ticker.LogFormatterSciNotation()
-            elif isinstance(self.norm, colors.SymLogNorm):
-                self.formatter = ticker.LogFormatterSciNotation(
-                                        linthresh=self.norm.linthresh)
-            else:
-                self.formatter = ticker.ScalarFormatter()
-        elif isinstance(format, str):
+
+        if isinstance(format, str):
             self.formatter = ticker.FormatStrFormatter(format)
         else:
-            self.formatter = format  # Assume it is a Formatter
+            self.formatter = format  # Assume it is a Formatter or None
         # The rest is in a method so we can recalculate when clim changes.
         self.draw_all()
 
@@ -499,6 +492,18 @@ class ColorbarBase(cm.ScalarMappable):
             else:
                 b = self._boundaries[self._inside]
                 locator = ticker.FixedLocator(b, nbins=10)
+
+        if self.formatter is None:
+            if isinstance(self.norm, colors.LogNorm):
+                formatter = ticker.LogFormatterSciNotation()
+            elif isinstance(self.norm, colors.SymLogNorm):
+                formatter = ticker.LogFormatterSciNotation(
+                                        linthresh=self.norm.linthresh)
+            else:
+                formatter = ticker.ScalarFormatter()
+        else:
+            formatter = self.formatter
+
         _log.debug('locator: %r', locator)
         return locator, formatter
 
@@ -521,7 +526,6 @@ class ColorbarBase(cm.ScalarMappable):
         # get the locator and formatter.  Defaults to
         # self.locator if not None..
         locator, formatter = self._get_ticker_locator_formatter()
-
         if self.orientation == 'vertical':
             long_axis, short_axis = ax.yaxis, ax.xaxis
         else:
@@ -791,7 +795,7 @@ class ColorbarBase(cm.ScalarMappable):
             self._values = np.array(self.values)
             if self.boundaries is None:
                 b = np.zeros(len(self.values) + 1)
-                b[1:-1] = 0.5 * (self._values[:-1] - self._values[1:])
+                b[1:-1] = 0.5 * (self._values[:-1] + self._values[1:])
                 b[0] = 2.0 * b[1] - b[2]
                 b[-1] = 2.0 * b[-2] - b[-3]
                 self._boundaries = b
@@ -1133,6 +1137,8 @@ class Colorbar(ColorbarBase):
         not clear the axes.  This is meant to be called when the image
         or contour plot to which this colorbar belongs is changed.
         '''
+        # self.mappable = mappable
+        self.norm = self.mappable.norm
         self.draw_all()
         if isinstance(self.mappable, contour.ContourSet):
             CS = self.mappable
