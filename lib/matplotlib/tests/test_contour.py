@@ -371,7 +371,7 @@ def test_circular_contour_warning():
 
 
 @image_comparison(baseline_images=['contour_log_extension'],
-                  extensions=['png'], remove_text=True, style='mpl20')
+                  extensions=['png'], style='mpl20')
 def test_contourf_log_extension():
     # Test that contourf with lognorm is extended correctly
     fig = plt.figure(figsize=(10, 5))
@@ -389,7 +389,7 @@ def test_contourf_log_extension():
 
     # original data
     c1 = ax1.contourf(data,
-                      norm=LogNorm(vmin=data.min(), vmax=data.max()))
+                      norm=LogNorm(vmin=data.min(), vmax=data.max()),)
     # just show data in levels
     c2 = ax2.contourf(data, levels=levels,
                       norm=LogNorm(vmin=levels.min(), vmax=levels.max()),

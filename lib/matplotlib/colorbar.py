@@ -555,16 +555,6 @@ class ColorbarBase(_ColorbarMappableDummy):
         _log.debug('locator: %r', locator)
         return locator, formatter
 
-    def _use_auto_colorbar_locator(self):
-        """
-        Return if we should use an adjustable tick locator or a fixed
-        one.  (check is used twice so factored out here...)
-        """
-        return (self.boundaries is None
-                and self.values is None
-                and ((type(self.norm) == colors.Normalize)
-                    or (type(self.norm) == colors.LogNorm)))
-
     def _reset_locator_formatter_scale(self):
         """
         Reset the locator et al to defaults.  Any user-hardcoded changes
@@ -573,12 +563,13 @@ class ColorbarBase(_ColorbarMappableDummy):
         """
         self.locator = None
         self.formatter = None
-        if (isinstance(self.norm, colors.LogNorm)
-                and self._use_auto_colorbar_locator()):
+        if isinstance(self.norm, colors.LogNorm):
             # *both* axes are made log so that determining the
             # mid point is easier.
             self.ax.set_xscale('log')
             self.ax.set_yscale('log')
+            self.minorticks_on()
+
         else:
             self.ax.set_xscale('linear')
             self.ax.set_yscale('linear')
@@ -597,19 +588,10 @@ class ColorbarBase(_ColorbarMappableDummy):
         else:
             long_axis, short_axis = ax.xaxis, ax.yaxis
 
-        if self._use_auto_colorbar_locator():
-            _log.debug('Using auto colorbar locator on colorbar')
-            _log.debug('locator: %r', locator)
-            long_axis.set_major_locator(locator)
-            long_axis.set_major_formatter(formatter)
-            if type(self.norm) == colors.LogNorm:
-                self.minorticks_on()
-        else:
-            _log.debug('Using fixed locator on colorbar')
-            ticks, ticklabels, offset_string = self._ticker(locator, formatter)
-            long_axis.set_ticks(ticks)
-            long_axis.set_ticklabels(ticklabels)
-            long_axis.get_major_formatter().set_offset_string(offset_string)
+        _log.debug('Using auto colorbar locator on colorbar')
+        _log.debug('locator: %r', locator)
+        long_axis.set_major_locator(locator)
+        long_axis.set_major_formatter(formatter)
 
     def set_ticks(self, ticks, update_ticks=True):
         """
@@ -827,36 +809,6 @@ class ColorbarBase(_ColorbarMappableDummy):
         col.set_color(colors)
         self.ax.add_collection(col)
         self.stale = True
-
-    def _ticker(self, locator, formatter):
-        '''
-        Return the sequence of ticks (colorbar data locations),
-        ticklabels (strings), and the corresponding offset string.
-        '''
-        if isinstance(self.norm, colors.NoNorm) and self.boundaries is None:
-            intv = self._values[0], self._values[-1]
-        else:
-            intv = self.vmin, self.vmax
-        locator.create_dummy_axis(minpos=intv[0])
-        formatter.create_dummy_axis(minpos=intv[0])
-        locator.set_view_interval(*intv)
-        locator.set_data_interval(*intv)
-        formatter.set_view_interval(*intv)
-        formatter.set_data_interval(*intv)
-
-        b = np.array(locator())
-        if isinstance(locator, ticker.LogLocator):
-            eps = 1e-10
-            b = b[(b <= intv[1] * (1 + eps)) & (b >= intv[0] * (1 - eps))]
-        else:
-            eps = (intv[1] - intv[0]) * 1e-10
-            b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
-        self._manual_tick_data_values = b
-        ticks = self._locate(b)
-        formatter.set_locs(b)
-        ticklabels = formatter.format_ticks(b)
-        offset_string = formatter.get_offset()
-        return ticks, ticklabels, offset_string
 
     def _process_values(self, b=None):
         '''
@@ -1082,15 +1034,16 @@ class ColorbarBase(_ColorbarMappableDummy):
             y = self._uniform_y(self._central_N())
         else:
             y = self._proportional_y()
-        if self._use_auto_colorbar_locator():
+        try:
             y = self.norm.inverse(y)
             x = self.norm.inverse(x)
+            xmid = self.norm.inverse(0.5)
+        except ValueError:
+            # BoundaryNorm doesn't have an inverse.  Maybe others don't too..
+            xmid = 0.5
         self._y = y
         X, Y = np.meshgrid(x, y)
-        if self._use_auto_colorbar_locator():
-            xmid = self.norm.inverse(0.5)
-        else:
-            xmid = 0.5
+
         if self._extend_lower() and not self.extendrect:
             X[0, :] = xmid
         if self._extend_upper() and not self.extendrect:
