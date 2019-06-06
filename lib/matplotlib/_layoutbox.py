@@ -129,7 +129,7 @@ class LayoutBox(object):
         # left
         if not sol.hasEditVariable(self.left_margin_min):
             sol.addEditVariable(self.left_margin_min, 'strong')
-            sol.suggestValue(self.left_margin_min, 0.0001)
+            sol.suggestValue(self.left_margin_min, 0.000)
         c = (self.left_margin == self.left - self.parent.left)
         self.solver.addConstraint(c | 'required')
         c = (self.left_margin >= self.left_margin_min)
@@ -138,7 +138,7 @@ class LayoutBox(object):
         # right
         if not sol.hasEditVariable(self.right_margin_min):
             sol.addEditVariable(self.right_margin_min, 'strong')
-            sol.suggestValue(self.right_margin_min, 0.0001)
+            sol.suggestValue(self.right_margin_min, 0.000)
         c = (self.right_margin == self.parent.right - self.right)
         self.solver.addConstraint(c | 'required')
         c = (self.right_margin >= self.right_margin_min)
@@ -146,7 +146,7 @@ class LayoutBox(object):
         # bottom
         if not sol.hasEditVariable(self.bottom_margin_min):
             sol.addEditVariable(self.bottom_margin_min, 'strong')
-            sol.suggestValue(self.bottom_margin_min, 0.0001)
+            sol.suggestValue(self.bottom_margin_min, 0.000)
         c = (self.bottom_margin == self.bottom - self.parent.bottom)
         self.solver.addConstraint(c | 'required')
         c = (self.bottom_margin >= self.bottom_margin_min)
@@ -154,7 +154,7 @@ class LayoutBox(object):
         # top
         if not sol.hasEditVariable(self.top_margin_min):
             sol.addEditVariable(self.top_margin_min, 'strong')
-            sol.suggestValue(self.top_margin_min, 0.0001)
+            sol.suggestValue(self.top_margin_min, 0.000)
         c = (self.top_margin == self.parent.top - self.top)
         self.solver.addConstraint(c | 'required')
         c = (self.top_margin >= self.top_margin_min)
@@ -251,9 +251,9 @@ class LayoutBox(object):
                 print('Removing')
                 sol.removeConstraint(self.aspect_constraint)
                 self.aspect_constraint = None
-            cs = [self.height == self.width * aspect]
+            cs = [self.height == self.parent.width * aspect]
             for c in cs:
-                self.aspect_constraint = c | 50
+                self.aspect_constraint = c | 40
                 sol.addConstraint(self.aspect_constraint)
             print("Adding!", self.aspect_constraint)
 
@@ -279,10 +279,10 @@ class LayoutBox(object):
                 cx, cy = anchor
             self.aspect_bottom_constraint = (self.bottom ==
                 self.parent.bottom + cy *
-                (self.parent.height - self.height)) | 50
+                (self.parent.height - self.height)) | 40
             self.solver.addConstraint(self.aspect_bottom_constraint)
             self.aspect_left_constraint = (self.left == self.parent.left +
-                cx * (self.parent.width - self.width)) | 50
+                cx * (self.parent.width - self.width)) | 40
             self.solver.addConstraint(self.aspect_left_constraint)
 
     def constrain_left_margin(self, margin, strength='strong'):
@@ -324,19 +324,6 @@ class LayoutBox(object):
         '''
         self.solver.updateVariables()
 
-    def edit_height(self, height, strength='strong'):
-        '''
-        Set the height of the layout box.
-
-        This is done as an editable variable so that the value can change
-        due to resizing.
-        '''
-        sol = self.solver
-        for i in [self.height]:
-            if not sol.hasEditVariable(i):
-                sol.addEditVariable(i, strength)
-        sol.suggestValue(self.height, height)
-
     def constrain_height(self, height, strength='strong'):
         '''
         Constrain the height of the layout box.  height is
@@ -348,13 +335,6 @@ class LayoutBox(object):
     def constrain_height_min(self, height, strength='strong'):
         c = (self.height >= height)
         self.solver.addConstraint(c | strength)
-
-    def edit_width(self, width, strength='strong'):
-        sol = self.solver
-        for i in [self.width]:
-            if not sol.hasEditVariable(i):
-                sol.addEditVariable(i, strength)
-        sol.suggestValue(self.width, width)
 
     def constrain_width(self, width, strength='strong'):
         '''
