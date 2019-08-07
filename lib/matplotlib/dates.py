@@ -8,8 +8,10 @@ shoulders of python :mod:`datetime` and the add-on module :mod:`dateutil`.
 Matplotlib date format
 ----------------------
 Matplotlib represents dates using floating point numbers specifying the number
-of days since 0001-01-01 UTC, plus 1.  For example, 0001-01-01, 06:00 is 1.25,
-not 0.25. Values < 1, i.e. dates before 0001-01-01 UTC, are not supported.
+of days since a defaul epoch of 0001-01-01 UTC, plus 1. For example,
+0001-01-01, 06:00 is 1.25, not 0.25.   (The epoch can be changed via
+`.dates.set_epoch` to other dates; see
+:doc:`/gallery/misc/date_accuracy_and_epochs` for a discussion.)
 
 There are a number of helper functions to convert between :mod:`datetime`
 objects and Matplotlib dates:
@@ -23,9 +25,11 @@ objects and Matplotlib dates:
    date2num
    num2date
    num2timedelta
-   epoch2num
-   num2epoch
    drange
+   set_epoch
+   get_epoch
+   reset_epoch
+
 
 .. note::
 
@@ -155,7 +159,8 @@ import matplotlib.cbook as cbook
 import matplotlib.ticker as ticker
 
 __all__ = ('datestr2num', 'date2num', 'num2date', 'num2timedelta', 'drange',
-           'epoch2num', 'num2epoch', 'mx2num', 'DateFormatter',
+           'epoch2num', 'num2epoch', 'mx2num', 'set_epoch',
+           'get_epoch', 'reset_epoch', 'DateFormatter',
            'ConciseDateFormatter', 'IndexDateFormatter', 'AutoDateFormatter',
            'DateLocator', 'RRuleLocator', 'AutoDateLocator', 'YearLocator',
            'MonthLocator', 'WeekdayLocator',
@@ -206,6 +211,52 @@ MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = (
     MO, TU, WE, TH, FR, SA, SU)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
 
+# default epoch: passed to np.datetime64...
+_default_epoch = '0001-01-01T00:00:00'
+_epoch = _default_epoch
+
+
+def reset_epoch():
+    """
+    Reset the Matplotlib date epoch to its default.
+    """
+    global _epoch
+    global _default_epoch
+
+    _epoch = _default_epoch
+
+
+def set_epoch(epoch):
+    """
+    Set the epoch (origin for dates) for datetime calculations.  The
+    default epoch is '0000-01-01T00:00:00', but this means "modern"
+    dates only have an accuracy of approximately 8 microseconds in the
+    matplotlib floating point representation.  Smaller floats means more
+    precision, so an epoch within 50 days of the dates being considered
+    can reach 1 nanosecond resolution.
+
+    See :doc:`/gallery/misc/date_accuracy_and_epochs` for a discussion.
+
+    Parameters
+    ----------
+    epoch : str
+        valid UTC date parsable by `.datetime64` (do not include timezone).
+
+    """
+    global _epoch
+    _epoch = epoch
+
+
+def get_epoch():
+    """
+    Get the epoch currently used by `.dates`.
+
+    Returns
+    -------
+    epoch: str
+    """
+    return _epoch
+
 
 def _to_ordinalf(dt):
     """
@@ -217,22 +268,9 @@ def _to_ordinalf(dt):
     tzi = getattr(dt, 'tzinfo', None)
     if tzi is not None:
         dt = dt.astimezone(UTC)
-        tzi = UTC
-
-    base = float(dt.toordinal())
-
-    # If it's sufficiently datetime-like, it will have a `date()` method
-    cdate = getattr(dt, 'date', lambda: None)()
-    if cdate is not None:
-        # Get a datetime object at midnight UTC
-        midnight_time = datetime.time(0, tzinfo=tzi)
-
-        rdt = datetime.datetime.combine(cdate, midnight_time)
-
-        # Append the seconds as a fraction of a day
-        base += (dt - rdt).total_seconds() / SEC_PER_DAY
-
-    return base
+        dt = dt.replace(tzinfo=None)
+    dt64 = np.datetime64(dt)
+    return _dt64_to_ordinalf(dt64)
 
 
 # a version of _to_ordinalf that can operate on numpy arrays
@@ -250,9 +288,10 @@ def _dt64_to_ordinalf(d):
 
     # the "extra" ensures that we at least allow the dynamic range out to
     # seconds.  That should get out to +/-2e11 years.
-    extra = (d - d.astype('datetime64[s]')).astype('timedelta64[ns]')
-    t0 = np.datetime64('0001-01-01T00:00:00', 's')
-    dt = (d.astype('datetime64[s]') - t0).astype(np.float64)
+    dseconds = d.astype('datetime64[s]')
+    extra = (d - dseconds).astype('timedelta64[ns]')
+    t0 = np.datetime64(_epoch, 's')
+    dt = (dseconds - t0).astype(np.float64)
     dt += extra.astype(np.float64) / 1.0e9
     dt = dt / SEC_PER_DAY + 1.0
 
@@ -276,33 +315,30 @@ def _from_ordinalf(x, tz=None):
     timezone *tz*, or if *tz* is ``None``, in the timezone specified in
     :rc:`timezone`.
     """
+
     if tz is None:
         tz = _get_rc_timezone()
 
-    ix, remainder = divmod(x, 1)
-    ix = int(ix)
-    if ix < 1:
-        raise ValueError('Cannot convert {} to a date.  This often happens if '
-                         'non-datetime values are passed to an axis that '
-                         'expects datetime objects.'.format(ix))
-    dt = datetime.datetime.fromordinal(ix).replace(tzinfo=UTC)
+    dt = (np.datetime64(_epoch) +
+          np.timedelta64(int((x - 1.0) * MUSECONDS_PER_DAY), 'us'))
+    if dt < np.datetime64('0001-01-01') or dt > np.datetime64('10000-01-01'):
+        raise ValueError(f'Matplotlib date {dt} cannot be converted to a '
+                          'datetime.')
+    dt = dt.tolist()
+    # datetime64 is always UTC:
+    dt = dt.replace(tzinfo=dateutil.tz.gettz('UTC'))
+    # but maybe we are working in a different timezone so move.
+    dt = dt.astimezone(tz)
+    if x > 30 * 365:
+        # if x is big, round off to nearest twenty microseconds.
+        # This avoids floating point roundoff error
+        ms = round(dt.microsecond / 20) * 20
+        if ms == 1000000:
+            dt = dt.replace(microsecond=0) + datetime.timedelta(seconds=1)
+        else:
+            dt = dt.replace(microsecond=ms)
 
-    # Since the input date *x* float is unable to preserve microsecond
-    # precision of time representation in non-antique years, the
-    # resulting datetime is rounded to the nearest multiple of
-    # `musec_prec`. A value of 20 is appropriate for current dates.
-    musec_prec = 20
-    remainder_musec = int(round(remainder * MUSECONDS_PER_DAY / musec_prec)
-                          * musec_prec)
-
-    # For people trying to plot with full microsecond precision, enable
-    # an early-year workaround
-    if x < 30 * 365:
-        remainder_musec = int(round(remainder * MUSECONDS_PER_DAY))
-
-    # add hours, minutes, seconds, microseconds
-    dt += datetime.timedelta(microseconds=remainder_musec)
-    return dt.astimezone(tz)
+    return dt
 
 
 # a version of _from_ordinalf that can operate on numpy arrays
@@ -604,11 +640,6 @@ class DateFormatter(ticker.Formatter):
         self.tz = tz
 
     def __call__(self, x, pos=0):
-        if x == 0:
-            raise ValueError('DateFormatter found a value of x=0, which is '
-                             'an illegal date; this usually occurs because '
-                             'you have not informed the axis that it is '
-                             'plotting dates, e.g., with ax.xaxis_date()')
         return num2date(x, self.tz).strftime(self.fmt)
 
     def set_tzinfo(self, tz):
@@ -1077,12 +1108,7 @@ class DateLocator(ticker.Locator):
         dmin, dmax = self.axis.get_data_interval()
         if dmin > dmax:
             dmin, dmax = dmax, dmin
-        if dmin < 1:
-            raise ValueError('datalim minimum {} is less than 1 and '
-                             'is an invalid Matplotlib date value. This often '
-                             'happens if you pass a non-datetime '
-                             'value to an axis that has datetime units'
-                             .format(dmin))
+
         return num2date(dmin, self.tz), num2date(dmax, self.tz)
 
     def viewlim_to_dt(self):
@@ -1092,12 +1118,6 @@ class DateLocator(ticker.Locator):
         vmin, vmax = self.axis.get_view_interval()
         if vmin > vmax:
             vmin, vmax = vmax, vmin
-        if vmin < 1:
-            raise ValueError('view limit minimum {} is less than 1 and '
-                             'is an invalid Matplotlib date value. This '
-                             'often happens if you pass a non-datetime '
-                             'value to an axis that has datetime units'
-                             .format(vmin))
         return num2date(vmin, self.tz), num2date(vmax, self.tz)
 
     def _get_unit(self):
@@ -1315,7 +1335,8 @@ class AutoDateLocator(DateLocator):
             SECONDLY: [1, 5, 10, 15, 30],
             MICROSECONDLY: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000,
                             5000, 10000, 20000, 50000, 100000, 200000, 500000,
-                            1000000]}
+                            1000000],
+                            }
         if interval_multiples:
             # Swap "3" for "4" in the DAILY list; If we use 3 we get bad
             # tick loc for months w/ 31 days: 1, 4, ..., 28, 31, 1
@@ -1440,8 +1461,7 @@ class AutoDateLocator(DateLocator):
                 byranges[i] = self._byranges[i]
             break
         else:
-            raise ValueError('No sensible date limit could be found in the '
-                             'AutoDateLocator.')
+            interval = 1
 
         if (freq == YEARLY) and self.interval_multiples:
             locator = YearLocator(interval, tz=self.tz)
@@ -1456,11 +1476,12 @@ class AutoDateLocator(DateLocator):
             locator = RRuleLocator(rrule, self.tz)
         else:
             locator = MicrosecondLocator(interval, tz=self.tz)
-            if dmin.year > 20 and interval < 1000:
+            if date2num(dmin) > 30 * 365 and interval < 1000:
                 cbook._warn_external(
-                    'Plotting microsecond time intervals is not well '
-                    'supported; please see the MicrosecondLocator '
-                    'documentation for details.')
+                    'Plotting microsecond time intervals for dates far from '
+                    f'the epoch (time origin: {_epoch}) is not well-'
+                    'supported. See matplotlib.dates.set_epoch to change the '
+                    'epoch.')
 
         locator.set_axis(self.axis)
 
@@ -1698,17 +1719,17 @@ class MicrosecondLocator(DateLocator):
 
     .. note::
 
-        Due to the floating point representation of time in days since
-        0001-01-01 UTC (plus 1), plotting data with microsecond time
-        resolution does not work well with current dates.
+        By default, Matplotlib uses a floating point representation of time in
+        days since 0001-01-01 UTC (plus 1), so plotting data with
+        microsecond time resolution does not work well with modern dates.
 
         If you want microsecond resolution time plots, it is strongly
         recommended to use floating point seconds, not datetime-like
         time representation.
 
         If you really must use datetime.datetime() or similar and still
-        need microsecond precision, your only chance is to use very
-        early years; using year 0001 is recommended.
+        need microsecond precision, change the time origin via
+        `.dates.set_epoch` to something closer to the dates being plotted.
 
     """
     def __init__(self, interval=1, tz=None):
@@ -1744,10 +1765,15 @@ class MicrosecondLocator(DateLocator):
 
     def tick_values(self, vmin, vmax):
         nmin, nmax = date2num((vmin, vmax))
+        t0 = np.floor(nmin)
+        nmax = nmax - t0
+        nmin = nmin - t0
         nmin *= MUSECONDS_PER_DAY
         nmax *= MUSECONDS_PER_DAY
+
         ticks = self._wrapped_locator.tick_values(nmin, nmax)
-        ticks = [tick / MUSECONDS_PER_DAY for tick in ticks]
+
+        ticks = ticks / MUSECONDS_PER_DAY + t0
         return ticks
 
     def _get_unit(self):
@@ -1764,6 +1790,7 @@ class MicrosecondLocator(DateLocator):
         return self._interval
 
 
+@cbook.deprecated("3.2")
 def epoch2num(e):
     """
     Convert an epoch or sequence of epochs to the new date format,
@@ -1772,6 +1799,7 @@ def epoch2num(e):
     return EPOCH_OFFSET + np.asarray(e) / SEC_PER_DAY
 
 
+@cbook.deprecated("3.2")
 def num2epoch(d):
     """
     Convert days since 0001 to epoch.  *d* can be a number or sequence.
