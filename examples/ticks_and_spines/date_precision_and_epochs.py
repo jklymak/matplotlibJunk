@@ -45,7 +45,7 @@ date2 = mdates.num2date(mdate1)
 print('After Roundtrip:  ', date2)
 
 #############################################################################
-# If a user wants to use modern dates at micro-second precision, they
+# If a user wants to use modern dates at microsecond precision, they
 # can change the epoch.
 
 mdates.set_epoch('1990-01-01')
@@ -61,7 +61,7 @@ print('After Roundtrip:  ', date2)
 # datetime64
 # ----------
 #
-# `numpy.datetime64` objects have micro-second precision for a much larger
+# `numpy.datetime64` objects have microsecond precision for a much larger
 # timespace than `.datetime` objects.  However, currently Matplotlib time is
 # only converted back to datetime objects, which have microsecond resolution,
 # and years that only span 0000 to 9999.
@@ -81,12 +81,13 @@ print('After Roundtrip:  ', date2)
 # This all of course has an effect on plotting.  With the default epoch
 # the times are rounded, leading to jumps in the data:
 
-mdates.set_epoch('0000-01-01')
+mdates.reset_epoch()
 x = np.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
               dtype='datetime64[us]')
 y = np.arange(0, len(x))
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(x, y)
+ax.set_title('Epoch: ' + mdates.get_epoch())
 plt.setp(ax.xaxis.get_majorticklabels(), rotation=40)
 plt.show()
 
@@ -96,9 +97,11 @@ plt.show()
 mdates.set_epoch('1999-01-01')
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(x, y)
+ax.set_title('Epoch: ' + mdates.get_epoch())
 plt.setp(ax.xaxis.get_majorticklabels(), rotation=40)
 plt.show()
 
+mdates.reset_epoch()
 
 #############################################################################
 # ------------
