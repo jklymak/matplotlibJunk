@@ -556,6 +556,40 @@ def num2date(x, tz=None):
         return _from_ordinalf_np_vectorized(x, tz).tolist()
 
 
+def num2date64(x):
+    """
+    Convert Matplotlib dates to `~datetime.datetime` objects.
+
+    Parameters
+    ----------
+    x : float or sequence of floats
+
+    Returns
+    -------
+    `numpy.datetime64` or sequence of `numpy.datetime64`.
+    """
+
+    t0 = np.datetime64(_epoch)
+    ddays = x.max() - x.min()
+    # want as much resolution as possible, but at some point we
+    # can't do any better because of floating point roundoff
+    res = 's'
+    resmult = 1.
+    if ddays < 365 * 285000 / 2:
+        res = 'ms'
+        resmult = 1e3
+    if ddays < 365 * 280 / 2:
+        res = 'us'
+        resmult = 1e6
+    if ddays < 200 / 2:
+        res = 'ns'
+        resmult = 1e9
+
+    dt = (x * SEC_PER_DAY * resmult).astype(f'timedelta64[{res}]')
+
+    return dt + t0
+
+
 def _ordinalf_to_timedelta(x):
     return datetime.timedelta(days=x)
 
