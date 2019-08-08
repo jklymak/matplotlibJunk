@@ -11,7 +11,7 @@ Matplotlib represents dates using floating point numbers specifying the number
 of days since a defaul epoch of 0001-01-01 UTC, plus 1. For example,
 0001-01-01, 06:00 is 1.25, not 0.25.   (The epoch can be changed via
 `.dates.set_epoch` to other dates; see
-:doc:`/gallery/ticks_and_spines/date_accuracy_and_epochs` for a discussion.)
+:doc:`/gallery/ticks_and_spines/date_precision_and_epochs` for a discussion.)
 
 There are a number of helper functions to convert between :mod:`datetime`
 objects and Matplotlib dates:
@@ -231,7 +231,7 @@ def set_epoch(epoch):
     Set the epoch (origin for dates) for datetime calculations.  The
     default epoch is '0000-01-01T00:00:00', but this means "modern"
     dates only have an accuracy of approximately 8 microseconds in the
-    matplotlib floating point representation.  Smaller floats means more
+    Matplotlib floating point representation.  Smaller floats means more
     precision, so an epoch within 50 days of the dates being considered
     can reach 1 nanosecond resolution.
 
