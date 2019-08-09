@@ -59,7 +59,7 @@ except RuntimeError as e:
 #############################################################################
 # For this tutorial, we reset the sentinel.
 # .. warning:: Users (and downstream libraries) should avoid using the private
-#              method of resetting sentinel.
+# method of resetting sentinel.
 
 mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
 
