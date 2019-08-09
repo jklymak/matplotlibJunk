@@ -694,6 +694,9 @@ class DateFormatter(ticker.Formatter):
         print('fmt', self.fmt)
         date64 = num2date64(x)
 
+        # Plan use strftime but then change the year according to an
+        # offset.  Need to catch all the types of formats, but
+        # should be possible.  
 
         str = num2date(x, self.tz).strftime(self.fmt)
         return str
