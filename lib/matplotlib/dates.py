@@ -235,7 +235,8 @@ def set_epoch(epoch):
     precision, so an epoch within 50 days of the dates being considered
     can reach 1 nanosecond resolution.
 
-    See :doc:`/gallery/misc/date_precision_and_epochs` for a discussion.
+    See :doc:`/gallery/ticks_and_spines/date_precision_and_epochs` for a
+    discussion.
 
     Parameters
     ----------
