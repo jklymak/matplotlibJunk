@@ -572,8 +572,9 @@ def num2date64(x):
 
     t0 = np.datetime64(_epoch)
     x = cbook._check_1d(x)
+    print('x', x)
 
-    ddays = x.max()
+    ddays = np.abs(x.max())
     # want as much resolution as possible, but at some point we
     # can't do any better because of floating point roundoff
     res = 's'
@@ -1176,7 +1177,7 @@ class DateLocator(ticker.Locator):
         vmin, vmax = self.axis.get_view_interval()
         if vmin > vmax:
             vmin, vmax = vmax, vmin
-        print(vmin, vmax, num2date(vmin), num2date64(vmin))
+        print('viewlim_to_dt64', vmin, vmax)
         return num2date64(vmin)[0], num2date64(vmax)[0]
 
     def _get_unit(self):
@@ -1408,7 +1409,8 @@ class AutoDateLocator(DateLocator):
     def __call__(self):
         'Return the locations of the ticks'
         self.refresh()
-        return self._locator()
+        ticks = self._locator()
+        return ticks
 
     def tick_values(self, vmin, vmax):
         return self.get_locator(vmin, vmax).tick_values(vmin, vmax)
@@ -1428,6 +1430,7 @@ class AutoDateLocator(DateLocator):
     def refresh(self):
         # docstring inherited
         dmin, dmax = self.viewlim_to_dt64()
+
         self._locator = self.get_locator(dmin, dmax)
 
     def _get_unit(self):
@@ -1446,7 +1449,7 @@ class AutoDateLocator(DateLocator):
     def get_locator(self, dmin, dmax):
         'Pick the best locator based on a distance.'
         delta = np.abs(dmax - dmin)
-        print('DMIN', dmin)
+        print('DMIN', dmin, delta)
         # The following uses a mix of calls to relativedelta and timedelta
         # methods because there is incomplete overlap in the functionality of
         # these similar functions, and it's best to avoid doing our own math
@@ -1471,7 +1474,7 @@ class AutoDateLocator(DateLocator):
         for i, (freq, num) in enumerate(zip(self._freqs, nums)):
             # If this particular frequency doesn't give enough ticks, continue
             num = num.astype(float)
-            print(num, num.dtype, num.astype(float))
+            print('NUM', num, num.dtype, num.astype(float))
             if num < self.minticks:
                 # Since we're not using this particular frequency, set
                 # the corresponding by_ to None so the rrule can act as
@@ -1512,10 +1515,13 @@ class AutoDateLocator(DateLocator):
         else:
             interval = 1
 
+        print('freq', freq)
         if (freq == YEARLY) and self.interval_multiples:
+            print('Yearly!')
             locator = YearLocator(interval, tz=self.tz)
         elif use_rrule_locator[i]:
             _, bymonth, bymonthday, byhour, byminute, bysecond, _ = byranges
+            print('dmin, dmax', dmin, dmax)
             dmin = dmin.astype('datetime64[us]').tolist()
             print(dmin)
             dmax = dmax.astype('datetime64[us]').tolist()
