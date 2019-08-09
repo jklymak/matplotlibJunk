@@ -784,5 +784,4 @@ def test_change_epoch():
     np.testing.assert_equal(mdates.date2num(date), 730120.0)
     mdates.set_epoch('2000-01-01T01:00:00')
     np.testing.assert_allclose(mdates.date2num(date), 1.0 - 1./24.)
-    
     mdates.set_epoch('0001-01-01')
