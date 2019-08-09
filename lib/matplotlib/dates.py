@@ -230,12 +230,12 @@ def set_epoch(epoch):
     """
     Set the epoch (origin for dates) for datetime calculations.  The
     default epoch is '0000-01-01T00:00:00', but this means "modern"
-    dates only have an accuracy of approximately 8 microseconds in the
+    dates only have a precision of approximately 8 microseconds in the
     Matplotlib floating point representation.  Smaller floats means more
     precision, so an epoch within 50 days of the dates being considered
     can reach 1 nanosecond resolution.
 
-    See :doc:`/gallery/misc/date_accuracy_and_epochs` for a discussion.
+    See :doc:`/gallery/misc/date_precision_and_epochs` for a discussion.
 
     Parameters
     ----------
