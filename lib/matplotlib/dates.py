@@ -10,7 +10,7 @@ Matplotlib date format
 Matplotlib represents dates using floating point numbers specifying the number
 of days since a defaul epoch of 0001-01-01 UTC, plus 1. For example,
 0001-01-01, 06:00 is 1.25, not 0.25.   (The epoch can be changed via
-`.dates.set_epoch` to other dates; see
+`.dates.set_epoch` (called when the library is imported) to other dates; see
 :doc:`/gallery/ticks_and_spines/date_precision_and_epochs` for a discussion.)
 
 There are a number of helper functions to convert between :mod:`datetime`
@@ -28,8 +28,6 @@ objects and Matplotlib dates:
    drange
    set_epoch
    get_epoch
-   reset_epoch
-
 
 .. note::
 
@@ -160,7 +158,7 @@ import matplotlib.ticker as ticker
 
 __all__ = ('datestr2num', 'date2num', 'num2date', 'num2timedelta', 'drange',
            'epoch2num', 'num2epoch', 'mx2num', 'set_epoch',
-           'get_epoch', 'reset_epoch', 'DateFormatter',
+           'get_epoch', 'DateFormatter',
            'ConciseDateFormatter', 'IndexDateFormatter', 'AutoDateFormatter',
            'DateLocator', 'RRuleLocator', 'AutoDateLocator', 'YearLocator',
            'MonthLocator', 'WeekdayLocator',
@@ -214,15 +212,17 @@ WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
 # default epoch: passed to np.datetime64...
 _default_epoch = '0001-01-01T00:00:00'
 _epoch = _default_epoch
+_epoch_used = False
 
-
-def reset_epoch():
+def _reset_epoch():
     """
     Reset the Matplotlib date epoch to its default.
     """
     global _epoch
     global _default_epoch
+    global _epoch_used
 
+    _epoch_used = False
     _epoch = _default_epoch
 
 
@@ -235,6 +235,9 @@ def set_epoch(epoch):
     precision, so an epoch within 50 days of the dates being considered
     can reach 1 nanosecond resolution.
 
+    This must be called before any dates (i.e. right after import of
+    `.matplotlib.dates`) are converted or a RuntimeErrorwill be raised.  
+
     See :doc:`/gallery/ticks_and_spines/date_precision_and_epochs` for a
     discussion.
 
@@ -245,6 +248,10 @@ def set_epoch(epoch):
 
     """
     global _epoch
+    global _epoch_used
+    if _epoch_used:
+        raise RuntimeError('set_epoch must be called before dates plotted.')
+    _epoch_used = True
     _epoch = epoch
 
 
@@ -256,6 +263,10 @@ def get_epoch():
     -------
     epoch: str
     """
+    global _epoch
+    global _epoch_used
+
+    _epoch_used = True
     return _epoch
 
 
@@ -291,7 +302,7 @@ def _dt64_to_ordinalf(d):
     # seconds.  That should get out to +/-2e11 years.
     dseconds = d.astype('datetime64[s]')
     extra = (d - dseconds).astype('timedelta64[ns]')
-    t0 = np.datetime64(_epoch, 's')
+    t0 = np.datetime64(get_epoch(), 's')
     dt = (dseconds - t0).astype(np.float64)
     dt += extra.astype(np.float64) / 1.0e9
     dt = dt / SEC_PER_DAY + 1.0
@@ -320,7 +331,7 @@ def _from_ordinalf(x, tz=None):
     if tz is None:
         tz = _get_rc_timezone()
 
-    dt = (np.datetime64(_epoch) +
+    dt = (np.datetime64(get_epoch()) +
           np.timedelta64(int((x - 1.0) * MUSECONDS_PER_DAY), 'us'))
     if dt < np.datetime64('0001-01-01') or dt > np.datetime64('10000-01-01'):
         raise ValueError(f'Matplotlib date {dt} cannot be converted to a '
@@ -1480,7 +1491,7 @@ class AutoDateLocator(DateLocator):
             if date2num(dmin) > 30 * 365 and interval < 1000:
                 cbook._warn_external(
                     'Plotting microsecond time intervals for dates far from '
-                    f'the epoch (time origin: {_epoch}) is not well-'
+                    f'the epoch (time origin: {get_epoch()}) is not well-'
                     'supported. See matplotlib.dates.set_epoch to change the '
                     'epoch.')
 

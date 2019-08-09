@@ -46,10 +46,24 @@ print('After Roundtrip:  ', date2)
 
 #############################################################################
 # If a user wants to use modern dates at microsecond precision, they
-# can change the epoch.
+# can change the epoch.  However, note that calling `.set_epoch` yields an
+# error here.  Thats because mixing epochs in a script is confusing, so
+# we attach a sentinel that doesn't let it be changed after any dates
+# code has been run.
+
+try:
+    mdates.set_epoch('1990-01-01')
+except RuntimeError as e:
+    print('RuntimeError:', str(e))
+
+#############################################################################
+# For this tutorial, we reset the sentinelself.
+# .. warning:: Users (and downstream libraries) should avoid using the private
+# method of resetting sentinel
+
+mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
 
 mdates.set_epoch('1990-01-01')
-
 date1 = datetime.datetime(2000, 1, 1, 0, 10, 0, 12,
                           tzinfo=dateutil.tz.gettz('UTC'))
 mdate1 = mdates.date2num(date1)
@@ -66,6 +80,8 @@ print('After Roundtrip:  ', date2)
 # only converted back to datetime objects, which have microsecond resolution,
 # and years that only span 0000 to 9999.
 
+mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
+
 mdates.set_epoch('1990-01-01')
 
 date1 = np.datetime64('2000-01-01T00:10:00.000012')
@@ -81,7 +97,8 @@ print('After Roundtrip:  ', date2)
 # This all of course has an effect on plotting.  With the default epoch
 # the times are rounded, leading to jumps in the data:
 
-mdates.reset_epoch()
+mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
+
 x = np.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
               dtype='datetime64[us]')
 y = np.arange(0, len(x))
@@ -94,6 +111,8 @@ plt.show()
 #############################################################################
 # For a more recent epoch, the plot is smooth:
 
+mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
+
 mdates.set_epoch('1999-01-01')
 fig, ax = plt.subplots(constrained_layout=True)
 ax.plot(x, y)
@@ -101,7 +120,7 @@ ax.set_title('Epoch: ' + mdates.get_epoch())
 plt.setp(ax.xaxis.get_majorticklabels(), rotation=40)
 plt.show()
 
-mdates.reset_epoch()
+mdates._reset_epoch()  # Don't do this.  Just being done for this tutorial.
 
 #############################################################################
 # ------------
