@@ -558,7 +558,7 @@ def num2date(x, tz=None):
 
 def num2date64(x):
     """
-    Convert Matplotlib dates to `~datetime.datetime` objects.
+    Convert Matplotlib dates to `numpy.datetime64` objects.
 
     Parameters
     ----------
@@ -566,11 +566,14 @@ def num2date64(x):
 
     Returns
     -------
-    `numpy.datetime64` or sequence of `numpy.datetime64`.
+    `numpy.datetime64` or sequence of `numpy.datetime64`.  Note datetime64 is
+    timezone naive, which Matplotlib takes to be in UTC.
     """
 
     t0 = np.datetime64(_epoch)
-    ddays = x.max() - x.min()
+    x = cbook._check_1d(x)
+
+    ddays = x.max()
     # want as much resolution as possible, but at some point we
     # can't do any better because of floating point roundoff
     res = 's'
@@ -1166,6 +1169,16 @@ class DateLocator(ticker.Locator):
             vmin, vmax = vmax, vmin
         return num2date(vmin, self.tz), num2date(vmax, self.tz)
 
+    def viewlim_to_dt64(self):
+        """
+        Converts the view interval to datetime objects.
+        """
+        vmin, vmax = self.axis.get_view_interval()
+        if vmin > vmax:
+            vmin, vmax = vmax, vmin
+        print(vmin, vmax, num2date(vmin), num2date64(vmin))
+        return num2date64(vmin)[0], num2date64(vmax)[0]
+
     def _get_unit(self):
         """
         Return how many days a unit of the locator is; used for
@@ -1414,7 +1427,7 @@ class AutoDateLocator(DateLocator):
 
     def refresh(self):
         # docstring inherited
-        dmin, dmax = self.viewlim_to_dt()
+        dmin, dmax = self.viewlim_to_dt64()
         self._locator = self.get_locator(dmin, dmax)
 
     def _get_unit(self):
@@ -1432,28 +1445,16 @@ class AutoDateLocator(DateLocator):
 
     def get_locator(self, dmin, dmax):
         'Pick the best locator based on a distance.'
-        delta = relativedelta(dmax, dmin)
-        tdelta = dmax - dmin
-
-        # take absolute difference
-        if dmin > dmax:
-            delta = -delta
-            tdelta = -tdelta
-
+        delta = np.abs(dmax - dmin)
+        print('DMIN', dmin)
         # The following uses a mix of calls to relativedelta and timedelta
         # methods because there is incomplete overlap in the functionality of
         # these similar functions, and it's best to avoid doing our own math
         # whenever possible.
-        numYears = float(delta.years)
-        numMonths = numYears * MONTHS_PER_YEAR + delta.months
-        numDays = tdelta.days   # Avoids estimates of days/month, days/year
-        numHours = numDays * HOURS_PER_DAY + delta.hours
-        numMinutes = numHours * MIN_PER_HOUR + delta.minutes
-        numSeconds = np.floor(tdelta.total_seconds())
-        numMicroseconds = np.floor(tdelta.total_seconds() * 1e6)
 
-        nums = [numYears, numMonths, numDays, numHours, numMinutes,
-                numSeconds, numMicroseconds]
+        theres = ['Y', 'M', 'D', 'h', 'm', 's', 'us']
+        nums = [delta.astype(f'timedelta64[{res}]') for res in theres]
+        print(nums)
 
         use_rrule_locator = [True] * 6 + [False]
 
@@ -1469,6 +1470,8 @@ class AutoDateLocator(DateLocator):
         # (bymonth, etc.) as appropriate to be passed to rrulewrapper.
         for i, (freq, num) in enumerate(zip(self._freqs, nums)):
             # If this particular frequency doesn't give enough ticks, continue
+            num = num.astype(float)
+            print(num, num.dtype, num.astype(float))
             if num < self.minticks:
                 # Since we're not using this particular frequency, set
                 # the corresponding by_ to None so the rrule can act as
@@ -1513,6 +1516,9 @@ class AutoDateLocator(DateLocator):
             locator = YearLocator(interval, tz=self.tz)
         elif use_rrule_locator[i]:
             _, bymonth, bymonthday, byhour, byminute, bysecond, _ = byranges
+            dmin = dmin.astype('datetime64[us]').tolist()
+            print(dmin)
+            dmax = dmax.astype('datetime64[us]').tolist()
             rrule = rrulewrapper(self._freq, interval=interval,
                                  dtstart=dmin, until=dmax,
                                  bymonth=bymonth, bymonthday=bymonthday,
