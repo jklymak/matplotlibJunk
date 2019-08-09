@@ -690,7 +690,13 @@ class DateFormatter(ticker.Formatter):
         self.tz = tz
 
     def __call__(self, x, pos=0):
-        return num2date(x, self.tz).strftime(self.fmt)
+
+        print('fmt', self.fmt)
+        date64 = num2date64(x)
+
+
+        str = num2date(x, self.tz).strftime(self.fmt)
+        return str
 
     def set_tzinfo(self, tz):
         self.tz = tz
@@ -1210,40 +1216,44 @@ class DateLocator(ticker.Locator):
 class RRuleLocator(DateLocator):
     # use the dateutil rrule instance
 
-    def __init__(self, o, tz=None):
+    def __init__(self, o, tz=None, century_offset=None):
         DateLocator.__init__(self, tz)
         self.rule = o
+        self._century_offset = century_offset
+        if self._century_offset is None:
+            self._century_offset = np.timedelta64(0, 'us')
+
 
     def __call__(self):
         # if no data have been set, this will tank with a ValueError
         try:
-            dmin, dmax = self.viewlim_to_dt()
-        except ValueError:
+            print('CALLING')
+            dmin, dmax = self.viewlim_to_dt64()
+            print('CALL', dmin, dmax)
+        except ValueError as e:
+            print(e)
             return []
 
         return self.tick_values(dmin, dmax)
 
     def tick_values(self, vmin, vmax):
-        delta = relativedelta(vmax, vmin)
 
-        # We need to cap at the endpoints of valid datetime
-        try:
-            start = vmin - delta
-        except (ValueError, OverflowError):
-            start = _from_ordinalf(1.0)
-
-        try:
-            stop = vmax + delta
-        except (ValueError, OverflowError):
-            # The magic number!
-            stop = _from_ordinalf(3652059.9999999)
-
+        start = vmin.astype('datetime64[us]') - self._century_offset
+        stop = vmax.astype('datetime64[us]') - self._century_offset
+        start = start.tolist()
+        stop = stop.tolist()
         self.rule.set(dtstart=start, until=stop)
+        dates = self.rule.between(start, stop, True)
+        print('dates', dates)
 
-        dates = self.rule.between(vmin, vmax, True)
+        # convert back to datetime64:
+        dates = (np.array([np.datetime64(date) for date in dates]) +
+                 self._century_offset)
+
+        print('dates', dates)
         if len(dates) == 0:
-            return date2num([vmin, vmax])
-        return self.raise_if_exceeds(date2num(dates))
+            return [vmin, vmax]
+        return date2num(dates)
 
     def _get_unit(self):
         """
@@ -1521,9 +1531,16 @@ class AutoDateLocator(DateLocator):
             locator = YearLocator(interval, tz=self.tz)
         elif use_rrule_locator[i]:
             _, bymonth, bymonthday, byhour, byminute, bysecond, _ = byranges
-            print('dmin, dmax', dmin, dmax)
+            print('dmin, dmax', dmin, dmax, dmin.dtype)
+            if dmin < np.datetime64('0001-01-01'):
+                cent = np.floor(dmin.astype('datetime64[Y]').astype(float) / 400) * 400
+                self._century_offset = np.timedelta64(int(cent), 'Y').astype('timedelta64[us]')
+                dmin = dmin - self._century_offset
+                dmax = dmax - self._century_offset
+            else:
+                self._century_offset = None
+
             dmin = dmin.astype('datetime64[us]').tolist()
-            print(dmin)
             dmax = dmax.astype('datetime64[us]').tolist()
             rrule = rrulewrapper(self._freq, interval=interval,
                                  dtstart=dmin, until=dmax,
@@ -1531,7 +1548,7 @@ class AutoDateLocator(DateLocator):
                                  byhour=byhour, byminute=byminute,
                                  bysecond=bysecond)
 
-            locator = RRuleLocator(rrule, self.tz)
+            locator = RRuleLocator(rrule, self.tz, self._century_offset)
         else:
             locator = MicrosecondLocator(interval, tz=self.tz)
             if date2num(dmin) > 30 * 365 and interval < 1000:
