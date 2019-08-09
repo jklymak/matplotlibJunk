@@ -776,12 +776,26 @@ def test_datetime64_in_list():
 
 def test_change_epoch():
     date = np.datetime64('2000-01-01')
-
     np.testing.assert_equal(mdates.date2num(date), 730120.0)
+
+
+    with pytest.raises(RuntimeError):
+        # this should fail here because there is a sentinel on the epoch
+        # if the epoch has been used then it cannot be set.
+        mdates.set_epoch('2000-01-01')
+
+    # use private method to clear the epoch and allow it to be set...
+    mdates._reset_epoch()
     mdates.set_epoch('2000-01-01')
     np.testing.assert_equal(mdates.date2num(date), 1.0)
+
+    mdates._reset_epoch()
     mdates.set_epoch('0001-01-01')
     np.testing.assert_equal(mdates.date2num(date), 730120.0)
+
+    mdates._reset_epoch()
     mdates.set_epoch('2000-01-01T01:00:00')
     np.testing.assert_allclose(mdates.date2num(date), 1.0 - 1./24.)
-    mdates.set_epoch('0001-01-01')
+
+    # reset so rest of testing is done with base epoch...
+    mdates._reset_epoch()
