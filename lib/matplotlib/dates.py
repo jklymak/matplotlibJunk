@@ -154,6 +154,7 @@ import matplotlib.units as units
 import matplotlib.cbook as cbook
 import matplotlib.ticker as ticker
 
+
 __all__ = ('datestr2num', 'date2num', 'num2date', 'num2timedelta', 'drange',
            'epoch2num', 'num2epoch', 'mx2num', 'DateFormatter',
            'ConciseDateFormatter', 'IndexDateFormatter', 'AutoDateFormatter',
@@ -205,6 +206,105 @@ MUSECONDS_PER_DAY = 1e6 * SEC_PER_DAY
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = (
     MO, TU, WE, TH, FR, SA, SU)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
+
+
+
+class _datetimey(datetime.datetime):
+
+    def __new__(cls, year, month=None, day=None, hour=0, minute=0, second=0,
+                microsecond=0, tzinfo=None):
+        _year0 = year
+        if year < 1 or year > 9999:
+            year = int(year % 400 + 2000)
+        self = super().__new__(cls, year, month, day, hour, minute, second,
+                        microsecond, tzinfo)
+        self._year0 = _year0
+        return self
+
+    def __str__(self):
+        return self.strftime('%Y-%m-%dT%H:%M:%S.%f')
+
+    def strftime(self, fmt):
+        """
+        format the time..
+        """
+        if self._year0 < 0:
+            fmt = fmt.replace('%Y', f'{self._year0:05d}')
+        else:
+            fmt = fmt.replace('%Y', f'{self._year0:04d}')
+        return super().strftime(fmt)
+
+    @classmethod
+    def fromordinal(cls, ix):
+        d400 = 146097  # days in 400 years...
+
+        intday = int(np.floor(ix))
+        rest = ix - intday
+        if intday < 0 or intday > d400 * 25:
+            n400 = np.floor(intday / d400)
+            offset = n400 * d400
+        else:
+            n400 = 0
+            offset = 0
+        dt = super().fromordinal(int(intday - offset))
+        year = dt.year + n400 * 400
+        hour = int(np.floor(rest * 24))
+        rest = rest * 24 - hour
+        minute = int(np.floor(rest * 60))
+        rest = rest * 60 - minute
+        second = int(np.floor(rest * 60))
+        rest = rest * 60 - second
+        us = int(rest * 1e6)
+        print('year!!', year)
+        out = cls(int(year), dt.month, dt.day, hour, minute, second, us)
+        print('out', out._year0, out)
+        return out
+
+    def toordinal(self):
+        d400 = 146097  # days in 400 years...
+        ord = super().toordinal()
+        noffset = floor((self._year0 - self.year) / 400)
+        ord = ord + noffset * d400
+        print('ord', ord)
+        return(ord)
+
+    def astimezone(self, tz=None):
+        dt = super().astimezone(self, tz)
+
+
+
+
+def _to_ordinalfy(dt):
+    """
+    Convert :mod:`datetime` or :mod:`date` to the Gregorian date as UTC float
+    days, preserving hours, minutes, seconds and microseconds.  Return value
+    is a :func:`float`.
+    """
+    # Convert to UTC
+    tzi = getattr(dt, 'tzinfo', None)
+    if tzi is not None:
+        dt = dt.astimezone(UTC)
+        tzi = UTC
+
+    base = float(dt.toordinal())
+    print('base!!!', dt, base)
+
+    # If it's sufficiently datetime-like, it will have a `date()` method
+    cdate = getattr(dt, 'date', lambda: None)()
+    if cdate is not None:
+        # Get a datetime object at midnight UTC
+        midnight_time = datetime.time(0, tzinfo=tzi)
+
+        rdt = datetime.datetime.combine(cdate, midnight_time)
+
+        # Append the seconds as a fraction of a day
+        base += (dt - rdt).total_seconds() / SEC_PER_DAY
+
+    return base
+
+# a version of _to_ordinalf that can operate on numpy arrays
+_to_ordinalfy_np_vectorized = np.vectorize(_to_ordinalfy)
+
 
 
 def _to_ordinalf(dt):
@@ -266,6 +366,25 @@ def _dt64_to_ordinalf(d):
     return dt
 
 
+def _from_ordinalfy(ix, tz=None):
+    """
+    Convert Gregorian float of the date, preserving hours, minutes,
+    seconds and microseconds.  Return value is a `.datetime`.
+
+    The input date *x* is a float in ordinal days at UTC, and the output will
+    be the specified `.datetime` object corresponding to that time in
+    timezone *tz*, or if *tz* is ``None``, in the timezone specified in
+    :rc:`timezone`.
+    """
+    if tz is None:
+        tz = _get_rc_timezone()
+    dt = _datetimey.fromordinal(ix).replace(tzinfo=UTC)
+    return dt.astimezone(tz)
+
+# a version of _from_ordinalf that can operate on numpy arrays
+_from_ordinalfy_np_vectorized = np.vectorize(_from_ordinalfy)
+
+
 def _from_ordinalf(x, tz=None):
     """
     Convert Gregorian float of the date, preserving hours, minutes,
@@ -303,7 +422,6 @@ def _from_ordinalf(x, tz=None):
     # add hours, minutes, seconds, microseconds
     dt += datetime.timedelta(microseconds=remainder_musec)
     return dt.astimezone(tz)
-
 
 # a version of _from_ordinalf that can operate on numpy arrays
 _from_ordinalf_np_vectorized = np.vectorize(_from_ordinalf)
@@ -437,6 +555,46 @@ def date2num(d):
         return _to_ordinalf_np_vectorized(d)
 
 
+
+def _datey2num(d):
+    """
+    Convert datetime objects to Matplotlib dates.
+
+    Parameters
+    ----------
+    d : `datetime.datetime` or `numpy.datetime64` or sequences of these
+
+    Returns
+    -------
+    float or sequence of floats
+        Number of days (fraction part represents hours, minutes, seconds, ms)
+        since 0001-01-01 00:00:00 UTC, plus one.
+
+    Notes
+    -----
+    The addition of one here is a historical artifact. Also, note that the
+    Gregorian calendar is assumed; this is not universal practice.
+    For details see the module docstring.
+    """
+    if hasattr(d, "values"):
+        # this unpacks pandas series or dataframes...
+        d = d.values
+    if not np.iterable(d):
+        if (isinstance(d, np.datetime64) or
+                (isinstance(d, np.ndarray) and
+                 np.issubdtype(d.dtype, np.datetime64))):
+            return _dt64_to_ordinalf(d)
+        return _to_ordinalfy(d)
+
+    else:
+        d = np.asarray(d)
+        if np.issubdtype(d.dtype, np.datetime64):
+            return _dt64_to_ordinalf(d)
+        if not d.size:
+            return d
+        return _to_ordinalfy_np_vectorized(d)
+
+
 def julian2num(j):
     """
     Convert a Julian date (or sequence) to a Matplotlib date (or sequence).
@@ -508,6 +666,44 @@ def num2date(x, tz=None):
         return _from_ordinalf_np_vectorized(x, tz).tolist()
 
 
+def _num2datey(x, tz=None):
+    """
+    Convert Matplotlib dates to `~datetime.datetime` objects.
+
+    Parameters
+    ----------
+    x : float or sequence of floats
+        Number of days (fraction part represents hours, minutes, seconds)
+        since 0001-01-01 00:00:00 UTC, plus one.
+    tz : str, optional
+        Timezone of *x* (defaults to rcparams ``timezone``).
+
+    Returns
+    -------
+    `~datetime.datetime` or sequence of `~datetime.datetime`
+        Dates are returned in timezone *tz*.
+
+        If *x* is a sequence, a sequence of :class:`datetime` objects will
+        be returned.
+
+    Notes
+    -----
+    The addition of one here is a historical artifact. Also, note that the
+    Gregorian calendar is assumed; this is not universal practice.
+    For details, see the module docstring.
+    """
+    if tz is None:
+        tz = _get_rc_timezone()
+    if not np.iterable(x):
+        return _from_ordinalfy(x, tz)
+    else:
+        x = np.asarray(x)
+        if not x.size:
+            return x
+        return _from_ordinalfy_np_vectorized(x, tz).tolist()
+
+
+
 def _ordinalf_to_timedelta(x):
     return datetime.timedelta(days=x)
 
@@ -561,8 +757,8 @@ def drange(dstart, dend, delta):
         A list floats representing Matplotlib dates.
 
     """
-    f1 = date2num(dstart)
-    f2 = date2num(dend)
+    f1 = _datey2num(dstart)
+    f2 = _datey2num(dend)
     step = delta.total_seconds() / SEC_PER_DAY
 
     # calculate the difference between dend and dstart in times of delta
@@ -577,7 +773,7 @@ def drange(dstart, dend, delta):
         dinterval_end -= delta
         num -= 1
 
-    f2 = date2num(dinterval_end)  # new float-endpoint
+    f2 = _datey2num(dinterval_end)  # new float-endpoint
     return np.linspace(f1, f2, num + 1)
 
 ## date tickers and formatters ###
@@ -609,7 +805,7 @@ class DateFormatter(ticker.Formatter):
                              'an illegal date; this usually occurs because '
                              'you have not informed the axis that it is '
                              'plotting dates, e.g., with ax.xaxis_date()')
-        return num2date(x, self.tz).strftime(self.fmt)
+        return _num2datey(x, self.tz).strftime(self.fmt)
 
     def set_tzinfo(self, tz):
         self.tz = tz
@@ -636,7 +832,7 @@ class IndexDateFormatter(ticker.Formatter):
         ind = int(round(x))
         if ind >= len(self.t) or ind <= 0:
             return ''
-        return num2date(self.t[ind], self.tz).strftime(self.fmt)
+        return _num2datey(self.t[ind], self.tz).strftime(self.fmt)
 
 
 class ConciseDateFormatter(ticker.Formatter):
@@ -769,7 +965,7 @@ class ConciseDateFormatter(ticker.Formatter):
         return formatter(x, pos=pos)
 
     def format_ticks(self, values):
-        tickdatetime = [num2date(value) for value in values]
+        tickdatetime = [_num2datey(value) for value in values]
         tickdate = np.array([tdt.timetuple()[:6] for tdt in tickdatetime])
 
         # basic algorithm:
@@ -835,7 +1031,7 @@ class ConciseDateFormatter(ticker.Formatter):
         return self.offset_string
 
     def format_data_short(self, value):
-        return num2date(value).strftime('%Y-%m-%d %H:%M:%S')
+        return _num2datey(value).strftime('%Y-%m-%d %H:%M:%S')
 
 
 class AutoDateFormatter(ticker.Formatter):
@@ -1077,28 +1273,17 @@ class DateLocator(ticker.Locator):
         dmin, dmax = self.axis.get_data_interval()
         if dmin > dmax:
             dmin, dmax = dmax, dmin
-        if dmin < 1:
-            raise ValueError('datalim minimum {} is less than 1 and '
-                             'is an invalid Matplotlib date value. This often '
-                             'happens if you pass a non-datetime '
-                             'value to an axis that has datetime units'
-                             .format(dmin))
-        return num2date(dmin, self.tz), num2date(dmax, self.tz)
+        return _num2datey(dmin, self.tz), _num2datey(dmax, self.tz)
 
     def viewlim_to_dt(self):
         """
         Converts the view interval to datetime objects.
         """
         vmin, vmax = self.axis.get_view_interval()
+        print('vlim,', vmin, vmax, _num2datey(vmin, self.tz))
         if vmin > vmax:
             vmin, vmax = vmax, vmin
-        if vmin < 1:
-            raise ValueError('view limit minimum {} is less than 1 and '
-                             'is an invalid Matplotlib date value. This '
-                             'often happens if you pass a non-datetime '
-                             'value to an axis that has datetime units'
-                             .format(vmin))
-        return num2date(vmin, self.tz), num2date(vmax, self.tz)
+        return _num2datey(vmin, self.tz), _num2datey(vmax, self.tz)
 
     def _get_unit(self):
         """
@@ -1144,6 +1329,7 @@ class RRuleLocator(DateLocator):
         return self.tick_values(dmin, dmax)
 
     def tick_values(self, vmin, vmax):
+        print('rrule tick_v', vmin, vmax)
         delta = relativedelta(vmax, vmin)
 
         # We need to cap at the endpoints of valid datetime
@@ -1162,8 +1348,8 @@ class RRuleLocator(DateLocator):
 
         dates = self.rule.between(vmin, vmax, True)
         if len(dates) == 0:
-            return date2num([vmin, vmax])
-        return self.raise_if_exceeds(date2num(dates))
+            return _datey2num([vmin, vmax])
+        return self.raise_if_exceeds(_datey2num(dates))
 
     def _get_unit(self):
         """
@@ -1227,8 +1413,8 @@ class RRuleLocator(DateLocator):
         if not vmax:
             vmax = dmax
 
-        vmin = date2num(vmin)
-        vmax = date2num(vmax)
+        vmin = _datey2num(vmin)
+        vmax = _datey2num(vmax)
 
         return self.nonsingular(vmin, vmax)
 
@@ -1524,7 +1710,7 @@ class YearLocator(DateLocator):
         while True:
             dt = ticks[-1]
             if dt.year >= ymax:
-                return date2num(ticks)
+                return _datey2num(ticks)
             year = dt.year + self.base.step
             dt = dt.replace(year=year, **self.replaced)
             if hasattr(self.tz, 'localize'):
@@ -1548,8 +1734,8 @@ class YearLocator(DateLocator):
         vmax = dmax.replace(year=ymax, **self.replaced)
         vmax = vmax.astimezone(self.tz)
 
-        vmin = date2num(vmin)
-        vmax = date2num(vmax)
+        vmin = _datey2num(vmin)
+        vmax = _datey2num(vmax)
         return self.nonsingular(vmin, vmax)
 
 
@@ -1743,7 +1929,7 @@ class MicrosecondLocator(DateLocator):
         return self.tick_values(dmin, dmax)
 
     def tick_values(self, vmin, vmax):
-        nmin, nmax = date2num((vmin, vmax))
+        nmin, nmax = _datey2num((vmin, vmax))
         nmin *= MUSECONDS_PER_DAY
         nmax *= MUSECONDS_PER_DAY
         ticks = self._wrapped_locator.tick_values(nmin, nmax)
@@ -1905,7 +2091,7 @@ class DateConverter(units.ConversionInterface):
 
         The *unit* and *axis* arguments are not used.
         """
-        return date2num(value)
+        return _datey2num(value)
 
     @staticmethod
     def default_units(x, axis):
