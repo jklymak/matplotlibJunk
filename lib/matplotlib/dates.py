@@ -134,6 +134,20 @@ The available date formatters are:
 * `IndexDateFormatter`: date plots with implicit *x* indexing.
 """
 
+"""
+Timezone notes:
+
+We want to be able to pass in data in different timezones, and have them line
+up.  So date2num uses the timezone info if provided (?) to put into UTC for
+datetime.  For np.datetim64, they convert right away to naive.
+
+When we do num2date64 we get a naive datetime64 back.  But if we are
+locating or formatting, we may be doing *that* in a different timezone.
+So we shoudl convert that date64 to the proper timezone using an offset
+(somehow. )
+
+"""
+
 import datetime
 import functools
 import logging
@@ -315,6 +329,100 @@ def _dt64_to_ordinalf(d):
         if d_int == NaT_int:
             dt = np.nan
     return dt
+
+
+def _dt64_year(arr):
+    return arr.astype('datetime64[Y]').astype(int) + 1970
+
+
+def _dt64_month(arr):
+    return arr.astype('datetime64[M]').astype(int) % 12 + 1
+
+
+def _dt64_day(arr):
+    return (arr.astype('datetime64[D]') -
+                 arr.astype('datetime64[M]')).astype(int) + 1
+
+
+def _dt64_hour(arr):
+    return arr.astype('datetime64[h]').astype(int) % 24
+
+
+def _dt64_minute(arr):
+    return (arr.astype('datetime64[m]') -
+             arr.astype('datetime64[h]')).astype(int)
+
+
+def _dt64_second(arr):
+    return (arr.astype('datetime64[s]') -
+             arr.astype('datetime64[m]')).astype(int)
+
+
+def _dt64_microsecond(arr):
+    return (arr.astype('datetime64[ms]') -
+             arr.astype('datetime64[s]')).astype(int)
+
+
+def _dt64_timetuple(arr):
+    tt = np.zeros((7, len(arr)))
+    tt[0, :] = _dt64_year(arr)
+    tt[1, :] = _dt64_month(arr)
+    tt[2, :] = _dt64_day(arr)
+    tt[3, :] = _dt64_hour(arr)
+    tt[4, :] = _dt64_minute(arr)
+    tt[5, :] = _dt64_second(arr)
+    tt[6, :] = _dt64_microsecond(arr)
+    return tt
+
+def _datetime_to_dt64(arr, years):
+    """
+    convert a set of datetimes to dt64, but substituting the year...
+    """
+
+def _dt64_to_datetime(arr, tz=None):
+    """
+    Take an array of datetime64 and return a list of datetimes.  These
+    datetimes will have the year normalized to be between 2000 and 2400 if
+    the year is before 0001 or after 9999 because datetime cannot handle
+    these year ranges.
+    """
+    arr = cbook._check_1d(arr)
+    years = _dt64_year(arr)
+    months = _dt64_month(arr)
+    days = _dt64_day(arr)
+    hours = _dt64_hour(arr)
+    minutes = _dt64_minute(arr)
+    seconds = _dt64_second(arr)
+    microseconds = _dt64_microsecond(arr)
+
+    datetimes = [None] * len(arr)
+    yearsout = [None] * len(arr)
+    for ind in range(len(arr)):
+        yearsout[ind] = years[ind]
+        if (years[ind] < 1 or years[ind] > 9999):
+            years = (years % 400) + 2000
+        datetimes[ind] = datetime.datetime(years[ind], months[ind], days[ind],
+            hours[ind], minutes[ind], seconds[ind], microseconds[ind])
+        if tz is not None:
+            datetimes[ind] = datetimes[ind].replace(
+                tzinfo=dateutil.tz.gettz('UTC'))
+            # but maybe we are working in a different timezone so move.
+            datetimes[ind] = datetimes[ind].astimezone(tz)
+
+    return datetimes, yearsout
+
+
+def _dt64_strftime(date64, fmt, tz=None):
+
+        date, year = _dt64_to_datetime(date64, tz=tz)
+        # format %Y/%y here...
+        if year[0] < 0:
+            fmt = fmt.replace('%Y', f'{year[0]:05d}')
+        else:
+            fmt = fmt.replace('%Y', f'{year[0]:04d}')
+
+        fmt = fmt.replace('%y', f'{year[0]:02d}[-2:]')
+        return date[0].strftime(fmt)
 
 
 def _from_ordinalf(x, tz=None):
@@ -556,7 +664,7 @@ def num2date(x, tz=None):
         return _from_ordinalf_np_vectorized(x, tz).tolist()
 
 
-def num2date64(x):
+def num2date64(x, tz=None):
     """
     Convert Matplotlib dates to `numpy.datetime64` objects.
 
@@ -570,9 +678,11 @@ def num2date64(x):
     timezone naive, which Matplotlib takes to be in UTC.
     """
 
+    if tz is None:
+        tz = _get_rc_timezone()
     t0 = np.datetime64(_epoch)
-    x = cbook._check_1d(x)
-    print('x', x)
+    x = cbook._check_1d(x) - 1
+
 
     ddays = np.abs(x.max())
     # want as much resolution as possible, but at some point we
@@ -585,13 +695,18 @@ def num2date64(x):
     if ddays < 365 * 280 / 2:
         res = 'us'
         resmult = 1e6
-    if ddays < 200 / 2:
-        res = 'ns'
-        resmult = 1e9
+    #if ddays < 200 / 2:
+    #    res = 'ns'
+    #    resmult = 1e9
 
-    dt = (x * SEC_PER_DAY * resmult).astype(f'timedelta64[{res}]')
+    dt = (x * SEC_PER_DAY * resmult).astype(f'timedelta64[{res}]') + t0
+    # OK, these are proper datetime64 but no tz info has been set.
+    if tz is not None:
+        datet, year = _dt64_to_datetime(dt, tz=tz)
+        print('datet', datet, year)
 
-    return dt + t0
+
+    return dt
 
 
 def _ordinalf_to_timedelta(x):
@@ -691,14 +806,10 @@ class DateFormatter(ticker.Formatter):
 
     def __call__(self, x, pos=0):
 
-        print('fmt', self.fmt)
         date64 = num2date64(x)
+        print(date64, x)
+        str = _dt64_strftime(date64, self.fmt, self.tz)
 
-        # Plan use strftime but then change the year according to an
-        # offset.  Need to catch all the types of formats, but
-        # should be possible.  
-
-        str = num2date(x, self.tz).strftime(self.fmt)
         return str
 
     def set_tzinfo(self, tz):
@@ -859,9 +970,10 @@ class ConciseDateFormatter(ticker.Formatter):
         return formatter(x, pos=pos)
 
     def format_ticks(self, values):
-        tickdatetime = [num2date(value) for value in values]
-        tickdate = np.array([tdt.timetuple()[:6] for tdt in tickdatetime])
-
+        tickdatetime = num2date64(values)
+        print(tickdatetime)
+        tickdate = _dt64_timetuple(tickdatetime).T
+        print(tickdate)
         # basic algorithm:
         # 1) only display a part of the date if it changes over the ticks.
         # 2) don't display the smaller part of the date if:
@@ -894,12 +1006,12 @@ class ConciseDateFormatter(ticker.Formatter):
                     fmt = fmts[level]
             else:
                 # special handling for seconds + microseconds
-                if (tickdatetime[nn].second == tickdatetime[nn].microsecond
+                if (tickdate[5, nn] == tickdate[6, nn]
                         == 0):
                     fmt = zerofmts[level]
                 else:
                     fmt = fmts[level]
-            labels[nn] = tickdatetime[nn].strftime(fmt)
+            labels[nn] = _dt64_strftime(tickdatetime[nn], fmt, self._tz)
 
         # special handling of seconds and microseconds:
         # strip extra zeros and decimal if possible.
@@ -917,7 +1029,9 @@ class ConciseDateFormatter(ticker.Formatter):
 
         if self.show_offset:
             # set the offset string:
-            self.offset_string = tickdatetime[-1].strftime(offsetfmts[level])
+            print('FF', tickdatetime)
+            self.offset_string = _dt64_strftime(tickdatetime[-1],
+                                                offsetfmts[level], tz=self._tz)
 
         return labels
 
@@ -1245,6 +1359,8 @@ class RRuleLocator(DateLocator):
         stop = vmax.astype('datetime64[us]') - self._century_offset
         start = start.tolist()
         stop = stop.tolist()
+        # start and stop are in naive time...
+
         self.rule.set(dtstart=start, until=stop)
         dates = self.rule.between(start, stop, True)
         print('dates', dates)
@@ -1600,38 +1716,31 @@ class YearLocator(DateLocator):
             self.replaced['tzinfo'] = tz
 
     def __call__(self):
+        print('YEARLOC')
         # if no data have been set, this will tank with a ValueError
+        dmin, dmax  = self.viewlim_to_dt64()
         try:
-            dmin, dmax = self.viewlim_to_dt()
+            dmin, dmax  = self.viewlim_to_dt64()
+            print(dmin, dmax)
         except ValueError:
             return []
 
         return self.tick_values(dmin, dmax)
 
     def tick_values(self, vmin, vmax):
-        ymin = self.base.le(vmin.year) * self.base.step
-        ymax = self.base.ge(vmax.year) * self.base.step
+        minyear = _dt64_year(vmin)
+        maxyear = _dt64_year(vmax)
+        ymin = self.base.le(minyear) * self.base.step
+        ymax = self.base.ge(maxyear) * self.base.step
 
-        vmin = vmin.replace(year=ymin, **self.replaced)
-        if hasattr(self.tz, 'localize'):
-            # look after pytz
-            if not vmin.tzinfo:
-                vmin = self.tz.localize(vmin, is_dst=True)
+        print('ymin, ymax', ymin, ymax, self.base.step, type(ymin))
+        print('Boo', np.datetime64(f'{ymin}-01-01'), int(self.base.step))
+        ticks = np.arange(np.datetime64(f'{ymin}-01-01'),
+                          np.datetime64(f'{ymax+1}-01-01'),
+                          int(self.base.step), dtype='datetime64[Y]')
+        print('TICKS', ticks, type(ticks), ticks.dtype)
+        return date2num(ticks, self.tz)
 
-        ticks = [vmin]
-
-        while True:
-            dt = ticks[-1]
-            if dt.year >= ymax:
-                return date2num(ticks)
-            year = dt.year + self.base.step
-            dt = dt.replace(year=year, **self.replaced)
-            if hasattr(self.tz, 'localize'):
-                # look after pytz
-                if not dt.tzinfo:
-                    dt = self.tz.localize(dt, is_dst=True)
-
-            ticks.append(dt)
 
     @cbook.deprecated("3.2")
     def autoscale(self):
