@@ -218,7 +218,7 @@ class _datetimey(datetime.datetime):
             year = int(year % 400 + 2000)
         self = super().__new__(cls, year, month, day, hour, minute, second,
                         microsecond, tzinfo)
-        self._year0 = _year0
+        self._yearoffset = _year0 - year
         return self
 
     def __str__(self):
@@ -228,10 +228,10 @@ class _datetimey(datetime.datetime):
         """
         format the time..
         """
-        if self._year0 < 0:
-            fmt = fmt.replace('%Y', f'{self._year0:05d}')
+        if self._yearoffset + self.year < 0:
+            fmt = fmt.replace('%Y', f'{self._yearoffset + self.year:05d}')
         else:
-            fmt = fmt.replace('%Y', f'{self._year0:04d}')
+            fmt = fmt.replace('%Y', f'{self._yearoffset + self.year:04d}')
         return super().strftime(fmt)
 
     @classmethod
@@ -255,23 +255,46 @@ class _datetimey(datetime.datetime):
         second = int(np.floor(rest * 60))
         rest = rest * 60 - second
         us = int(rest * 1e6)
-        print('year!!', year)
         out = cls(int(year), dt.month, dt.day, hour, minute, second, us)
-        print('out', out._year0, out)
         return out
 
     def toordinal(self):
         d400 = 146097  # days in 400 years...
         ord = super().toordinal()
-        noffset = floor((self._year0 - self.year) / 400)
+        noffset = floor((self._yearoffset) / 400)
         ord = ord + noffset * d400
-        print('ord', ord)
         return(ord)
 
+    @classmethod
     def astimezone(self, tz=None):
-        dt = super().astimezone(self, tz)
+        print('assss', self.year)
+        dt = datetime.datetime(self.year, self.month,
+                   self.day)
 
+        return cls.__new__(cls, dt.year + self._yearoffset, dt.month,
+                   dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
 
+    def replace(self, year=None, month=None, day=None, hour=None,
+                minute=None, second=None, microsecond=None, tzinfo=True):
+        """Return a new datetime with new values for the specified fields."""
+        if year is None:
+            year = self.year
+        if month is None:
+            month = self.month
+        if day is None:
+            day = self.day
+        if hour is None:
+            hour = self.hour
+        if minute is None:
+            minute = self.minute
+        if second is None:
+            second = self.second
+        if microsecond is None:
+            microsecond = self.microsecond
+        if tzinfo is True:
+            tzinfo = self.tzinfo
+        return type(self)(year, month, day, hour, minute, second,
+                          microsecond, tzinfo)
 
 
 def _to_ordinalfy(dt):
@@ -379,6 +402,7 @@ def _from_ordinalfy(ix, tz=None):
     if tz is None:
         tz = _get_rc_timezone()
     dt = _datetimey.fromordinal(ix).replace(tzinfo=UTC)
+    print('type', type(dt), dt.year, dt, dt.day)
     return dt.astimezone(tz)
 
 # a version of _from_ordinalf that can operate on numpy arrays
