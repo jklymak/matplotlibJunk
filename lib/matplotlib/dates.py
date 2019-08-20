@@ -209,17 +209,17 @@ WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
 
 
 
-class _datetimey(datetime.datetime):
+class _datetimey(object):
 
-    def __new__(cls, year, month=None, day=None, hour=0, minute=0, second=0,
+    def __init__(self, year, month=None, day=None, hour=0, minute=0, second=0,
                 microsecond=0, tzinfo=None):
         _year0 = year
         if year < 1 or year > 9999:
             year = int(year % 400 + 2000)
-        self = super().__new__(cls, year, month, day, hour, minute, second,
+        self.dt = datetime.datetime(year, month, day, hour, minute, second,
                         microsecond, tzinfo)
         self._yearoffset = _year0 - year
-        return self
+        return None
 
     def __str__(self):
         return self.strftime('%Y-%m-%dT%H:%M:%S.%f')
@@ -228,11 +228,11 @@ class _datetimey(datetime.datetime):
         """
         format the time..
         """
-        if self._yearoffset + self.year < 0:
-            fmt = fmt.replace('%Y', f'{self._yearoffset + self.year:05d}')
+        if self._yearoffset + self.dt.year < 0:
+            fmt = fmt.replace('%Y', f'{self._yearoffset + self.dt.year:05d}')
         else:
-            fmt = fmt.replace('%Y', f'{self._yearoffset + self.year:04d}')
-        return super().strftime(fmt)
+            fmt = fmt.replace('%Y', f'{self._yearoffset + self.dt.year:04d}')
+        return self.dt.strftime(fmt)
 
     @classmethod
     def fromordinal(cls, ix):
@@ -246,7 +246,7 @@ class _datetimey(datetime.datetime):
         else:
             n400 = 0
             offset = 0
-        dt = super().fromordinal(int(intday - offset))
+        dt = datetime.datetime.fromordinal(int(intday - offset))
         year = dt.year + n400 * 400
         hour = int(np.floor(rest * 24))
         rest = rest * 24 - hour
@@ -255,47 +255,33 @@ class _datetimey(datetime.datetime):
         second = int(np.floor(rest * 60))
         rest = rest * 60 - second
         us = int(rest * 1e6)
-        out = cls(int(year), dt.month, dt.day, hour, minute, second, us)
+        out = cls(int(year), int(dt.month), int(dt.day), hour, minute, second, us, tzinfo=None)
         return out
 
     def toordinal(self):
         d400 = 146097  # days in 400 years...
-        ord = super().toordinal()
-        noffset = floor((self._yearoffset) / 400)
+        ord = self.dt.toordinal()
+        noffset = np.floor((self._yearoffset) / 400)
         ord = ord + noffset * d400
         return(ord)
 
-    @classmethod
     def astimezone(self, tz=None):
-        print('assss', self.year)
-        dt = datetime.datetime(self.year, self.month,
-                   self.day)
+        dtnew = self
+        if dtnew.dt.tzinfo is None:
+            dtnew.dt = dtnew.dt.replace(tzinfo=dateutil.tz.UTC)
+        dtnew.dt = dtnew.dt.astimezone(tz)
+        return dtnew
 
-        return cls.__new__(cls, dt.year + self._yearoffset, dt.month,
-                   dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
-
-    def replace(self, year=None, month=None, day=None, hour=None,
-                minute=None, second=None, microsecond=None, tzinfo=True):
+    def replace(self, **kwargs):
         """Return a new datetime with new values for the specified fields."""
-        if year is None:
-            year = self.year
-        if month is None:
-            month = self.month
-        if day is None:
-            day = self.day
-        if hour is None:
-            hour = self.hour
-        if minute is None:
-            minute = self.minute
-        if second is None:
-            second = self.second
-        if microsecond is None:
-            microsecond = self.microsecond
-        if tzinfo is True:
-            tzinfo = self.tzinfo
-        return type(self)(year, month, day, hour, minute, second,
-                          microsecond, tzinfo)
 
+        dtnew = self
+        dtnew.dt = dtnew.dt.replace(**kwargs)
+
+        return dtnew
+
+    def timetuple(self):
+        return self.dt.timetuple()
 
 def _to_ordinalfy(dt):
     """
@@ -402,7 +388,7 @@ def _from_ordinalfy(ix, tz=None):
     if tz is None:
         tz = _get_rc_timezone()
     dt = _datetimey.fromordinal(ix).replace(tzinfo=UTC)
-    print('type', type(dt), dt.year, dt, dt.day)
+    print('type', type(dt), dt.dt.year, dt, dt.dt.day)
     return dt.astimezone(tz)
 
 # a version of _from_ordinalf that can operate on numpy arrays
@@ -1182,24 +1168,24 @@ class rrulewrapper:
         # datetimes are returned
         if 'dtstart' in kwargs:
             dtstart = kwargs['dtstart']
-            if dtstart.tzinfo is not None:
+            if dtstart.dt.tzinfo is not None:
                 if tzinfo is None:
-                    tzinfo = dtstart.tzinfo
+                    tzinfo = dtstart.dt.tzinfo
                 else:
                     dtstart = dtstart.astimezone(tzinfo)
 
-                kwargs['dtstart'] = dtstart.replace(tzinfo=None)
+                kwargs['dtstart'] = dtstart.dt.replace(tzinfo=None)
 
         if 'until' in kwargs:
             until = kwargs['until']
-            if until.tzinfo is not None:
+            if until.dt.tzinfo is not None:
                 if tzinfo is not None:
                     until = until.astimezone(tzinfo)
                 else:
                     raise ValueError('until cannot be aware if dtstart '
                                      'is naive and tzinfo is None')
 
-                kwargs['until'] = until.replace(tzinfo=None)
+                kwargs['until'] = until.dt.replace(tzinfo=None)
 
         self._construct = kwargs.copy()
         self._tzinfo = tzinfo
@@ -1354,23 +1340,23 @@ class RRuleLocator(DateLocator):
 
     def tick_values(self, vmin, vmax):
         print('rrule tick_v', vmin, vmax)
-        delta = relativedelta(vmax, vmin)
+        delta = relativedelta(vmax.dt, vmin.dt)
 
         # We need to cap at the endpoints of valid datetime
         try:
-            start = vmin - delta
+            start = vmin.dt - delta
         except (ValueError, OverflowError):
             start = _from_ordinalf(1.0)
 
         try:
-            stop = vmax + delta
+            stop = vmax.dt + delta
         except (ValueError, OverflowError):
             # The magic number!
             stop = _from_ordinalf(3652059.9999999)
 
         self.rule.set(dtstart=start, until=stop)
 
-        dates = self.rule.between(vmin, vmax, True)
+        dates = self.rule.between(vmin.dt, vmax.dt, True)
         if len(dates) == 0:
             return _datey2num([vmin, vmax])
         return self.raise_if_exceeds(_datey2num(dates))
@@ -1575,11 +1561,12 @@ class AutoDateLocator(DateLocator):
 
     def get_locator(self, dmin, dmax):
         'Pick the best locator based on a distance.'
-        delta = relativedelta(dmax, dmin)
-        tdelta = dmax - dmin
+        print(dmin, dmax, type(dmin))
+        delta = relativedelta(dmax.dt, dmin.dt)
+        tdelta = dmax.dt - dmin.dt
 
         # take absolute difference
-        if dmin > dmax:
+        if dmin.dt > dmax.dt:
             delta = -delta
             tdelta = -tdelta
 
