@@ -1121,30 +1121,31 @@ div.viewcode-block:target {
 
 /* new main nav */
 nav.main-nav{
-    background-color: #002b47;
+    background-color: #11557C;
     font-family: Calibri, 'Carlito', 'Gill Sans', 'Gill Sans MT', 'Trebuchet MS', sans-serif;
     text-transform: uppercase;
     letter-spacing: 2px;
     font-size: 12px;
+    font-weight: bold;
   }
-  
+
   nav.main-nav ul{
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: row;
   }
-  
+
   nav.main-nav li{
     margin: 8px 15px;
     list-style-type: none;
   }
-  
+
   nav.main-nav a{
     color: rgba(256, 256, 256, .8);
     transform: color .2s ease-in-out;
   }
-  
+
   nav.main-nav a:hover{
     color: white;
     text-decoration: underline;
