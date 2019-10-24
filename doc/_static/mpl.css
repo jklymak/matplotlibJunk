@@ -1122,10 +1122,8 @@ div.viewcode-block:target {
 /* new main nav */
 nav.main-nav{
     background-color: #11557C;
-    font-family: Calibri, 'Carlito', 'Gill Sans', 'Gill Sans MT', 'Trebuchet MS', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 12px;
+    color: #fff;
+    font-size: 16px;
     font-weight: bold;
   }
 
@@ -1142,11 +1140,11 @@ nav.main-nav{
   }
 
   nav.main-nav a{
-    color: rgba(256, 256, 256, .8);
+    color: rgba(256, 256, 256, 1);
     transform: color .2s ease-in-out;
   }
 
   nav.main-nav a:hover{
-    color: white;
+    color: rgba(256, 256, 256, 0.8);
     text-decoration: underline;
   }
