@@ -73,6 +73,8 @@ import re
 import numpy as np
 import matplotlib.cbook as cbook
 from matplotlib import docstring
+import matplotlib.scale as mscale
+
 from ._color_data import BASE_COLORS, TABLEAU_COLORS, CSS4_COLORS, XKCD_COLORS
 
 
@@ -1228,10 +1230,17 @@ class SymLogNorm(Normalize):
         Normalize.__init__(self, vmin, vmax, clip)
         self.linthresh = float(linthresh)
         self._linscale_adj = (linscale / (1.0 - np.e ** -1))
+        self._transform = mscale.SymmetricalLogTransform(
+            10., linthresh, linscale)
+        self._inv_transform = mscale.InvertedSymmetricalLogTransform(
+            10., linthresh, linscale)
         if vmin is not None and vmax is not None:
             self._transform_vmin_vmax()
 
+        print('Hello!')
+
     def __call__(self, value, clip=None):
+        print('HHHHHH')
         if clip is None:
             clip = self.clip
 
@@ -1257,7 +1266,7 @@ class SymLogNorm(Normalize):
             result = result[0]
         return result
 
-    def _transform(self, a):
+    def _transform_old(self, a):
         """Inplace transformation."""
         with np.errstate(invalid="ignore"):
             masked = np.abs(a) > self.linthresh
@@ -1268,7 +1277,7 @@ class SymLogNorm(Normalize):
         a[~masked] *= self._linscale_adj
         return a
 
-    def _inv_transform(self, a):
+    def _inv_transform_old(self, a):
         """Inverse inplace Transformation."""
         masked = np.abs(a) > (self.linthresh * self._linscale_adj)
         sign = np.sign(a[masked])

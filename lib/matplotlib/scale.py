@@ -13,6 +13,7 @@ import textwrap
 import numpy as np
 from numpy import ma
 
+import matplotlib
 from matplotlib import cbook, docstring, rcParams
 from matplotlib.ticker import (
     NullFormatter, ScalarFormatter, LogFormatterSciNotation, LogitFormatter,
