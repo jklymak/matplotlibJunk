@@ -293,7 +293,7 @@ class GridSpecBase:
         .pyplot.subplot
         """
 
-        figure = self[0, 0].get_topmost_subplotspec().get_gridspec().figure
+        figure = self.figure
 
         if figure is None:
             raise ValueError("GridSpec.subplots() only works for GridSpecs "
@@ -415,14 +415,19 @@ class GridSpec(GridSpecBase):
                               width_ratios=width_ratios,
                               height_ratios=height_ratios)
 
-        if self.figure is None or not self.figure.get_constrained_layout():
-            self._layoutbox = None
-        else:
-            self.figure.init_layoutbox()
-            self._layoutbox = layoutbox.LayoutBox(
-                parent=self.figure._layoutbox,
-                name='gridspec' + layoutbox.seq_id(),
-                artist=self)
+        self._layoutbox = None
+        if 1:
+            if self.figure is None or not self.figure.get_constrained_layout():
+                self._layoutbox = None
+            else:
+                self.figure.init_layoutbox()
+                self._layoutbox = layoutbox.LayoutBox(
+                    parent=self.figure._layoutbox,
+                    name='gridspec' + layoutbox.seq_id(),
+                    artist=self)
+                self._layoutbox.constrain_height_min(20, strength='weak')
+                self._layoutbox.constrain_width_min(20, strength='weak')
+
         # by default the layoutbox for a gridspec will fill a figure.
         # but this can change below if the gridspec is created from a
         # subplotspec. (GridSpecFromSubplotSpec)
@@ -626,6 +631,7 @@ class SubplotSpec:
                     parent=glb,
                     name=glb.name + '.ss' + layoutbox.seq_id(),
                     artist=self)
+
         else:
             self._layoutbox = None
 
