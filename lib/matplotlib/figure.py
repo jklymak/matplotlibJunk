@@ -233,6 +233,8 @@ class FigureBase(Artist):
         del self._axes
 
         self._suptitle = None
+        self._supxlabel = None
+        self._supylabel = None
 
         # constrained_layout:
         self._layoutgrid = None
@@ -254,7 +256,6 @@ class FigureBase(Artist):
         self.images = []
         self.legends = []
         self.subfigs = []
-        self._suptitle = None
         self.stale = True
         self.suppressComposite = None
 
@@ -369,26 +370,27 @@ class FigureBase(Artist):
         """
         return self.bbox
 
-    def suptitle(self, t, **kwargs):
+    def _suplabels(self, t, info, **kwargs):
         """
-        Add a centered title to the figure.
+        Add a centered {name} to the figure.
 
         Parameters
         ----------
         t : str
-            The title text.
+            The {name} text.
 
-        x : float, default: 0.5
+        x : float, default {x0}
             The x location of the text in figure coordinates.
 
-        y : float, default: 0.98
+        y : float, default {y0}
             The y location of the text in figure coordinates.
 
-        horizontalalignment, ha : {'center', 'left', right'}, default: 'center'
+        horizontalalignment, ha : 'center', 'left', 'right', \
+default: {ha}
             The horizontal alignment of the text relative to (*x*, *y*).
 
-        verticalalignment, va : {'top', 'center', 'bottom', 'baseline'}, \
-default: 'top'
+        verticalalignment, va : 'top', 'center', 'bottom', 'baseline', \
+default: {va}
             The vertical alignment of the text relative to (*x*, *y*).
 
         fontsize, size : default: :rc:`figure.titlesize`
@@ -401,8 +403,8 @@ default: 'top'
 
         Returns
         -------
-        `.Text`
-            The instance of the title.
+        text
+            The `.Text` instance of the {name}.
 
         Other Parameters
         ----------------
@@ -415,19 +417,20 @@ default: 'top'
         **kwargs
             Additional kwargs are `matplotlib.text.Text` properties.
 
-        Examples
-        --------
-        >>> fig.suptitle('This is the figure title', fontsize=12)
         """
-        manual_position = ('x' in kwargs or 'y' in kwargs)
 
-        x = kwargs.pop('x', 0.5)
-        y = kwargs.pop('y', 0.98)
+        manual_position = ('x' in kwargs or 'y' in kwargs)
+        suplab = getattr(self, info['name'])
+
+        x = kwargs.pop('x', info['x0'])
+        y = kwargs.pop('y', info['y0'])
 
         if 'horizontalalignment' not in kwargs and 'ha' not in kwargs:
-            kwargs['horizontalalignment'] = 'center'
+            kwargs['horizontalalignment'] = info['ha']
         if 'verticalalignment' not in kwargs and 'va' not in kwargs:
-            kwargs['verticalalignment'] = 'top'
+            kwargs['verticalalignment'] = info['va']
+        if 'rotation' not in kwargs:
+            kwargs['rotation'] = info['rotation']
 
         if 'fontproperties' not in kwargs:
             if 'fontsize' not in kwargs and 'size' not in kwargs:
@@ -436,19 +439,45 @@ default: 'top'
                 kwargs['weight'] = mpl.rcParams['figure.titleweight']
 
         sup = self.text(x, y, t, **kwargs)
-        if self._suptitle is not None:
-            self._suptitle.set_text(t)
-            self._suptitle.set_position((x, y))
-            self._suptitle.update_from(sup)
+        if suplab is not None:
+            suplab.set_text(t)
+            suplab.set_position((x, y))
+            suplab.update_from(sup)
             sup.remove()
         else:
-            self._suptitle = sup
-
+            suplab = sup
         if manual_position:
-            self._suptitle.set_in_layout(False)
-
+            suplab.set_in_layout(False)
+        setattr(self, info['name'], suplab)
         self.stale = True
-        return self._suptitle
+        return suplab
+
+    def suptitle(self, t, **kwargs):
+        # docstring from _suplabels...
+        info = {'name': '_suptitle', 'x0': 0.5, 'y0': 0.98,
+                'ha': 'center', 'va': 'top', 'rotation': 0}
+        return self._suplabels(t, info, **kwargs)
+
+    suptitle.__doc__ = _suplabels.__doc__.format(
+        x0=0.5, y0=0.98, name='suptitle', ha='center', va='top')
+
+    def supxlabel(self, t, **kwargs):
+        # docstring from _suplabels...
+        info = {'name': '_supxlabel', 'x0': 0.5, 'y0': 0.01,
+                'ha': 'center', 'va': 'bottom', 'rotation': 0}
+        return self._suplabels(t, info, **kwargs)
+
+    supxlabel.__doc__ = _suplabels.__doc__.format(
+        x0=0.5, y0=0.01, name='supxlabel', ha='center', va='bottom')
+
+    def supylabel(self, t, **kwargs):
+        # docstring from _suplabels...
+        info = {'name': '_supylabel', 'x0': 0.02, 'y0': 0.5,
+                'ha': 'left', 'va': 'center', 'rotation': 90}
+        return self._suplabels(t, info, **kwargs)
+
+    supylabel.__doc__ = _suplabels.__doc__.format(
+        x0=0.02, y0=0.5, name='supylabel', ha='left', va='center')
 
     def get_edgecolor(self):
         """Get the edge color of the Figure rectangle."""
@@ -2801,6 +2830,9 @@ class Figure(FigureBase):
         if not keep_observers:
             self._axobservers = cbook.CallbackRegistry()
         self._suptitle = None
+        self._supxlabel = None
+        self._supylabel = None
+
         if self.get_constrained_layout():
             self.init_layoutgrid()
         self.stale = True
