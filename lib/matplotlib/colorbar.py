@@ -318,6 +318,7 @@ class _ColorbarSpine(mspines.Spine):
     def __init__(self, axes):
         super().__init__(axes, 'colorbar',
                          mpath.Path(np.empty((0, 2)), closed=True))
+        self.set_transform(self.axes.transAxes)
 
     def get_window_extent(self, renderer=None):
         # This Spine has no Axis associated with it, and doesn't need to adjust
@@ -529,22 +530,28 @@ class ColorbarBase:
         # Set self.vmin and self.vmax to first and last boundary, excluding
         # extensions.
         self.vmin, self.vmax = self._boundaries[self._inside][[0, -1]]
+
         # Compute the X/Y mesh.
-        X, Y = self._mesh()
-        # Extract bounding polygon (the last entry's value (X[0, 1]) doesn't
-        # matter, it just matches the CLOSEPOLY code).
-        x = np.concatenate([X[[0, 1, -2, -1], 0], X[[-1, -2, 1, 0, 0], 1]])
-        y = np.concatenate([Y[[0, 1, -2, -1], 0], Y[[-1, -2, 1, 0, 0], 1]])
+        X, Y, extendlen = self._mesh()
+        print(extendlen)
+        self.ax.set(xlim=(X.min(), X.max()), ylim=(Y.min(), Y.max()))
+
+        # make bounding polygon:
+        x = np.array([0.0, 0.5, 1.0, 1.0, 0.5, 0.0, 0.0])
+        y = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0])
+        if self._extend_lower():
+            # todo fix extendfrac
+            y[1] = -extendlen[0]
+        if self._extend_upper():
+            y[-3] = 1. + extendlen[1]
         xy = np.column_stack([x, y])
-        # Configure axes limits, patch, and outline.
-        xmin, ymin = xy.min(axis=0)
-        xmax, ymax = xy.max(axis=0)
-        self.ax.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
         self.outline.set_xy(xy)
         self.patch.set_xy(xy)
+
+
         self.update_ticks()
         if self.filled:
-            self._add_solids(X, Y, self._values[:, np.newaxis])
+            self._add_solids(X, Y, self._values[:, np.newaxis], extendlen)
 
     @cbook.deprecated("3.3")
     def config_axis(self):
@@ -772,13 +779,40 @@ class ColorbarBase:
             self.ax.set_xlabel(label, loc=loc, **kwargs)
         self.stale = True
 
-    def _add_solids(self, X, Y, C):
+    def _add_solids(self, X, Y, C, extendlen):
         """Draw the colors; optionally add separators."""
         # Cleanup previously set artists.
         if self.solids is not None:
             self.solids.remove()
         for solid in self.solids_patches:
             solid.remove()
+
+        # add extend triangles.  In axes space...
+        if self._extend_lower():
+            xy = np.array([[0, 0], [1, 0], [0.5, -extendlen[0]], [0, 0]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, [1, 0]]
+            patch = mpatches.PathPatch(mpath.Path(xy),
+                                       facecolor=self.cmap(self.norm(C[0][0])),
+                                       linewidth=0, antialiased=False,
+                                       alpha=self.alpha,
+                                       transform=self.ax.transAxes,
+                                       clip_on=False)
+            self.ax.add_patch(patch)
+            C = C[1:]
+        if self._extend_upper():
+            xy = np.array([[0, 1], [1, 1], [0.5, 1.+extendlen[1]], [0, 1]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, [1, 0]]
+            patch = mpatches.PathPatch(mpath.Path(xy),
+                                       facecolor=self.cmap(self.norm(C[-1][0])),
+                                       linewidth=0, antialiased=False,
+                                       alpha=self.alpha,
+                                       transform=self.ax.transAxes,
+                                       clip_on=False)
+            self.ax.add_patch(patch)
+            C = C[:-1]
+
         # Add new artist(s), based on mappable type.  Use individual patches if
         # hatching is needed, pcolormesh otherwise.
         mappable = getattr(self, 'mappable', None)
@@ -1077,29 +1111,29 @@ class ColorbarBase:
         norm.vmax = self.vmax
         x = np.array([0.0, 1.0])
         if self.spacing == 'uniform':
-            n_boundaries_no_extensions = len(self._boundaries[self._inside])
-            y = self._uniform_y(n_boundaries_no_extensions)
+            N = len(self._boundaries[self._inside])
+            automin = automax = 1. / (N - 1.)
+            extendlen = self._get_extension_lengths(self.extendfrac,
+                                                       automin, automax,
+                                                       default=0.05)
+            y = np.linspace(0, 1, N)
         else:
+            raise NotImplementedError
             y = self._proportional_y()
-        xmid = np.array([0.5])
+
         if self.__scale != 'manual':
             y = norm.inverse(y)
             x = norm.inverse(x)
-            xmid = norm.inverse(xmid)
         else:
             # if a norm doesn't have a named scale, or
             # we are not using a norm
             dv = self.vmax - self.vmin
             x = x * dv + self.vmin
             y = y * dv + self.vmin
-            xmid = xmid * dv + self.vmin
         self._y = y
         X, Y = np.meshgrid(x, y)
-        if self._extend_lower() and not self.extendrect:
-            X[0, :] = xmid
-        if self._extend_upper() and not self.extendrect:
-            X[-1, :] = xmid
-        return (X, Y) if self.orientation == 'vertical' else (Y, X)
+
+        return (X, Y, extendlen) if self.orientation == 'vertical' else (Y, X, extendlen)
 
     def _locate(self, x):
         """
