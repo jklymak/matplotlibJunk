@@ -279,18 +279,41 @@ def _make_margin_suptitles(fig, renderer, *, w_pad=0, h_pad=0):
     for panel in fig.subfigs:
         _make_margin_suptitles(panel, renderer, w_pad=w_pad, h_pad=h_pad)
 
-    if fig._suptitle is not None and fig._suptitle.get_in_layout():
-        invTransFig = fig.transSubfigure.inverted().transform_bbox
+    invTransFig = fig.transSubfigure.inverted().transform_bbox
+    if hasattr(fig, '_parent'):
+        parenttrans = fig._parent.transSubfigure
+    else:
         parenttrans = fig.transFigure
-        w_pad, h_pad = (fig.transSubfigure -
-                        parenttrans).transform((w_pad, 1 - h_pad))
-        w_pad, one = (fig.transSubfigure -
-                      parenttrans).transform((w_pad, 1))
+
+    if fig._suptitle is not None and fig._suptitle.get_in_layout():
+        _, h_pad = (fig.transSubfigure -
+                        parenttrans).transform((1.0, 1.0 - h_pad))
+        _, one = (fig.transSubfigure -
+                      parenttrans).transform((1.0, 1))
         h_pad = one - h_pad
         bbox = invTransFig(fig._suptitle.get_tightbbox(renderer))
         p = fig._suptitle.get_position()
-        fig._suptitle.set_position((p[0], 1-h_pad))
-        fig._layoutgrid.edit_margin_min('top', bbox.height + 2 * h_pad)
+        fig._suptitle.set_position((p[0], 1.0 - h_pad))
+        fig._layoutgrid.edit_margin_min('top', bbox.height + 2.0 * h_pad)
+
+    if fig._supxlabel is not None and fig._supxlabel.get_in_layout():
+        _, h_pad = (fig.transSubfigure -
+                        parenttrans).transform((1.0, h_pad))
+
+        bbox = invTransFig(fig._supxlabel.get_tightbbox(renderer))
+        p = fig._supxlabel.get_position()
+        fig._supxlabel.set_position((p[0], h_pad))
+        fig._layoutgrid.edit_margin_min('bottom', bbox.height + 2 * h_pad)
+
+
+    if fig._supylabel is not None and fig._supxlabel.get_in_layout():
+        w_pad, _ = (fig.transSubfigure -
+                        parenttrans).transform((w_pad, 1.0))
+
+        bbox = invTransFig(fig._supylabel.get_tightbbox(renderer))
+        p = fig._supylabel.get_position()
+        fig._supylabel.set_position((w_pad, p[1]))
+        fig._layoutgrid.edit_margin_min('left', bbox.width + 2 * w_pad)
 
 
 def _match_submerged_margins(fig):
