@@ -5231,9 +5231,10 @@ default: :rc:`scatter.edgecolors`
     #### plotting z(x, y): imshow, pcolor and relatives, contour
     @_preprocess_data()
     def imshow(self, X, cmap=None, norm=None, aspect=None,
-               interpolation=None, alpha=None, vmin=None, vmax=None,
-               origin=None, extent=None, *, filternorm=True, filterrad=4.0,
-               resample=None, url=None, **kwargs):
+               interpolation=None, interp_postrgba=False, alpha=None,
+               vmin=None, vmax=None, origin=None, extent=None, *,
+               filternorm=True, filterrad=4.0, resample=None, url=None,
+               **kwargs):
         """
         Display data as an image, i.e., on a 2D regular raster.
 
@@ -5323,6 +5324,14 @@ default: :rc:`scatter.edgecolors`
             Some interpolation methods require an additional radius parameter,
             which can be set by *filterrad*. Additionally, the antigrain image
             resize filter is controlled by the parameter *filternorm*.
+
+        interp_postrgba : bool, default: False
+            Whether the interpolation above is carried out before or after
+            the image data has been passed through the *norm* and colormapping.
+            This will cause the interpolation to take place in colorspace
+            rather than dataspace, which can be better for visual
+            anti-aliasing.  Note that this is ignored if *X* is passed in as
+            RGB(A).  
 
         alpha : float or array-like, optional
             The alpha blending value, between 0 (transparent) and 1 (opaque).
@@ -5421,9 +5430,9 @@ default: :rc:`scatter.edgecolors`
         if aspect is None:
             aspect = rcParams['image.aspect']
         self.set_aspect(aspect)
-        im = mimage.AxesImage(self, cmap, norm, interpolation, origin, extent,
-                              filternorm=filternorm, filterrad=filterrad,
-                              resample=resample, **kwargs)
+        im = mimage.AxesImage(self, cmap, norm, interpolation, interp_postrgba,
+                              origin, extent, filternorm=filternorm,
+                              filterrad=filterrad, resample=resample, **kwargs)
 
         im.set_data(X)
         im.set_alpha(alpha)

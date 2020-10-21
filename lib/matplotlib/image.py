@@ -235,6 +235,7 @@ class _ImageBase(martist.Artist, cm.ScalarMappable):
                  cmap=None,
                  norm=None,
                  interpolation=None,
+                 interp_postrgba=False,
                  origin=None,
                  filternorm=True,
                  filterrad=4.0,
@@ -250,6 +251,7 @@ class _ImageBase(martist.Artist, cm.ScalarMappable):
         self.set_filternorm(filternorm)
         self.set_filterrad(filterrad)
         self.set_interpolation(interpolation)
+        self.set_interp_postrgba(interp_postrgba)
         self.set_resample(resample)
         self.axes = ax
 
@@ -394,7 +396,7 @@ class _ImageBase(martist.Artist, cm.ScalarMappable):
             if not (A.ndim == 2 or A.ndim == 3 and A.shape[-1] in (3, 4)):
                 raise ValueError(f"Invalid shape {A.shape} for image data")
 
-            if A.ndim == 2:
+            if A.ndim == 2 and not self._interp_postrgba:
                 # if we are a 2D array, then we are running through the
                 # norm + colormap transformation.  However, in general the
                 # input data is not going to match the size on the screen so we
@@ -544,6 +546,9 @@ class _ImageBase(martist.Artist, cm.ScalarMappable):
                                        ):
                     output = self.norm(resampled_masked)
             else:
+                if A.ndim == 2:  # _interp_postrgba is True
+                    self.norm.autoscale_None(A)
+                    A = self.to_rgba(A)
                 if A.shape[2] == 3:
                     A = _rgb_to_rgba(A)
                 alpha = self._get_scalar_alpha()
@@ -775,6 +780,20 @@ class _ImageBase(martist.Artist, cm.ScalarMappable):
         self._interpolation = s
         self.stale = True
 
+    def set_interp_postrgba(self, s):
+        """
+        Set whether interpolation happens after the image has been
+        transformed to RGBA.
+
+        Parameters
+        ----------
+        s : bool or None
+        """
+        if s is None:
+            s = False  #  placeholder for maybe having rcParam
+        self._interp_postrgba = s
+        self.stale = True
+
     def can_composite(self):
         """Return whether the image can be composited with its neighbors."""
         trans = self.get_transform()
@@ -887,6 +906,7 @@ class AxesImage(_ImageBase):
                  cmap=None,
                  norm=None,
                  interpolation=None,
+                 interp_postrgba=False,
                  origin=None,
                  extent=None,
                  filternorm=True,
@@ -902,6 +922,7 @@ class AxesImage(_ImageBase):
             cmap=cmap,
             norm=norm,
             interpolation=interpolation,
+            interp_postrgba=interp_postrgba,
             origin=origin,
             filternorm=filternorm,
             filterrad=filterrad,
