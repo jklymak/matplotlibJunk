@@ -9,7 +9,7 @@ from matplotlib.testing.decorators import image_comparison
 import matplotlib.pyplot as plt
 from matplotlib.colors import (BoundaryNorm, LogNorm, PowerNorm, Normalize,
                                TwoSlopeNorm)
-from matplotlib.colorbar import ColorbarBase, _ColorbarLogLocator
+from matplotlib.colorbar import ColorbarBase
 from matplotlib.ticker import FixedLocator
 
 
@@ -86,13 +86,13 @@ def _colorbar_extension_length(spacing):
             # Create a subplot.
             cax = fig.add_subplot(12, 1, i*3 + j + 1)
             # Generate the colorbar.
-            ColorbarBase(cax, cmap=cmap, norm=norm,
-                         boundaries=boundaries, values=values,
-                         extend=extension_type, extendfrac=extendfrac,
-                         orientation='horizontal', spacing=spacing)
+            cb = ColorbarBase(cax, cmap=cmap, norm=norm,
+                              boundaries=boundaries, values=values,
+                              extend=extension_type, extendfrac=extendfrac,
+                              orientation='horizontal', spacing=spacing)
             # Turn off text and ticks.
             cax.tick_params(left=False, labelleft=False,
-                            bottom=False, labelbottom=False)
+                              bottom=False, labelbottom=False)
     # Return the figure to the caller.
     return fig
 
@@ -240,7 +240,7 @@ def test_colorbarbase():
     ColorbarBase(ax, cmap=plt.cm.bone)
 
 
-@image_comparison(['colorbar_closed_patch'], remove_text=True)
+@image_comparison(['colorbar_closed_patch.png'], remove_text=True)
 def test_colorbar_closed_patch():
     # Remove this line when this test image is regenerated.
     plt.rcParams['pcolormesh.snap'] = False
@@ -308,10 +308,12 @@ def test_colorbar_minorticks_on_off():
 
         im.set_clim(vmin=-1.2, vmax=1.2)
         cbar.minorticks_on()
+        #fig.canvas.draw()
+        print('here', cbar.ax.yaxis.get_minorticklocs())
         np.testing.assert_almost_equal(
             cbar.ax.yaxis.get_minorticklocs(),
-            [-1.2, -1.1, -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
-             0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2])
+            [-1.1, -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
+             0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3])
 
     # tests for github issue #13257 and PR #13265
     data = np.random.uniform(low=1, high=10, size=(20, 20))
@@ -319,8 +321,8 @@ def test_colorbar_minorticks_on_off():
     fig, ax = plt.subplots()
     im = ax.pcolormesh(data, norm=LogNorm())
     cbar = fig.colorbar(im)
+    fig.canvas.draw()
     default_minorticklocks = cbar.ax.yaxis.get_minorticklocs()
-
     # test that minorticks turn off for LogNorm
     cbar.minorticks_off()
     np.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(), [])
@@ -381,10 +383,12 @@ def test_colorbar_autoticks():
         pcm = ax[1].pcolormesh(X, Y, Z)
         cbar2 = fig.colorbar(pcm, ax=ax[1], extend='both',
                              orientation='vertical', shrink=0.4)
+        # note only -10 to 10 are visible,
         np.testing.assert_almost_equal(cbar.ax.yaxis.get_ticklocs(),
-                                       np.arange(-10, 11, 5))
+                                       np.arange(-15, 16, 5))
+        # note only -10 to 10 are visible
         np.testing.assert_almost_equal(cbar2.ax.yaxis.get_ticklocs(),
-                                       np.arange(-10, 11, 10))
+                                       np.arange(-20, 21, 10))
 
 
 def test_colorbar_autotickslog():
@@ -403,10 +407,12 @@ def test_colorbar_autotickslog():
         pcm = ax[1].pcolormesh(X, Y, 10**Z, norm=LogNorm())
         cbar2 = fig.colorbar(pcm, ax=ax[1], extend='both',
                              orientation='vertical', shrink=0.4)
+        # note only -12 to +12 are visible
         np.testing.assert_almost_equal(cbar.ax.yaxis.get_ticklocs(),
-                                       10**np.arange(-12., 12.2, 4.))
+                                       10**np.arange(-16., 16.2, 4.))
+        # note only -24 to +24 are visible
         np.testing.assert_almost_equal(cbar2.ax.yaxis.get_ticklocs(),
-                                       10**np.arange(-12., 13., 12.))
+                                       10**np.arange(-24., 25., 12.))
 
 
 def test_colorbar_get_ticks():
@@ -465,13 +471,13 @@ def test_colorbar_log_minortick_labels():
         pcm = ax.imshow([[10000, 50000]], norm=LogNorm())
         cb = fig.colorbar(pcm)
         fig.canvas.draw()
-        lb = cb.ax.yaxis.get_ticklabels(which='both')
+        lb = [l.get_text() for l in cb.ax.yaxis.get_ticklabels(which='both')]
         expected = [r'$\mathdefault{10^{4}}$',
                     r'$\mathdefault{2\times10^{4}}$',
                     r'$\mathdefault{3\times10^{4}}$',
                     r'$\mathdefault{4\times10^{4}}$']
-        for l, exp in zip(lb, expected):
-            assert l.get_text() == exp
+        for exp in expected:
+            assert exp in lb
 
 
 def test_colorbar_renorm():
@@ -482,16 +488,15 @@ def test_colorbar_renorm():
     im = ax.imshow(z)
     cbar = fig.colorbar(im)
     np.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
-                               np.arange(0, 120000.1, 15000))
+                               np.arange(0, 120000.1, 20000))
 
     cbar.set_ticks([1, 2, 3])
     assert isinstance(cbar.locator, FixedLocator)
 
     norm = LogNorm(z.min(), z.max())
     im.set_norm(norm)
-    assert isinstance(cbar.locator, _ColorbarLogLocator)
     np.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
-                               np.logspace(-8, 5, 14))
+                               np.logspace(-10, 7, 18))
     # note that set_norm removes the FixedLocator...
     assert np.isclose(cbar.vmin, z.min())
     cbar.set_ticks([1, 2, 3])
@@ -514,19 +519,19 @@ def test_colorbar_format():
     im = ax.imshow(z)
     cbar = fig.colorbar(im, format='%4.2e')
     fig.canvas.draw()
-    assert cbar.ax.yaxis.get_ticklabels()[4].get_text() == '6.00e+04'
+    assert cbar.ax.yaxis.get_ticklabels()[4].get_text() == '8.00e+04'
 
     # make sure that if we change the clim of the mappable that the
     # formatting is *not* lost:
     im.set_clim([4, 200])
     fig.canvas.draw()
-    assert cbar.ax.yaxis.get_ticklabels()[4].get_text() == '8.00e+01'
+    assert cbar.ax.yaxis.get_ticklabels()[4].get_text() == '2.00e+02'
 
     # but if we change the norm:
     im.set_norm(LogNorm(vmin=0.1, vmax=10))
     fig.canvas.draw()
     assert (cbar.ax.yaxis.get_ticklabels()[0].get_text() ==
-            r'$\mathdefault{10^{-1}}$')
+            r'$\mathdefault{10^{-2}}$')
 
 
 def test_colorbar_scale_reset():
@@ -552,7 +557,7 @@ def test_colorbar_get_ticks_2():
     fig, ax = plt.subplots()
     pc = ax.pcolormesh([[.05, .95]])
     cb = fig.colorbar(pc)
-    np.testing.assert_allclose(cb.get_ticks(), [0.2, 0.4, 0.6, 0.8])
+    np.testing.assert_allclose(cb.get_ticks(), [0., 0.2, 0.4, 0.6, 0.8, 1.0])
 
 
 def test_colorbar_inverted_ticks():
@@ -582,7 +587,7 @@ def test_extend_colorbar_customnorm():
     pcm = ax0.pcolormesh([[0]], norm=TwoSlopeNorm(vcenter=0., vmin=-2, vmax=1))
     cb = fig.colorbar(pcm, ax=ax0, extend='both')
     np.testing.assert_allclose(cb.ax.get_position().extents,
-                               [0.78375, 0.536364, 0.796147, 0.9], rtol=1e-3)
+                               [0.78375, 0.536364, 0.796147, 0.9], rtol=2e-3)
 
 
 def test_mappable_no_alpha():

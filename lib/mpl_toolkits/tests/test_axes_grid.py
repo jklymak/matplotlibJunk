@@ -1,7 +1,4 @@
-from contextlib import ExitStack
-
 import numpy as np
-import pytest
 
 import matplotlib as mpl
 from matplotlib.testing.decorators import image_comparison
@@ -12,14 +9,13 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 # The original version of this test relied on mpl_toolkits's slightly different
 # colorbar implementation; moving to matplotlib's own colorbar implementation
 # caused the small image comparison error.
-@pytest.mark.parametrize("legacy_colorbar", [False, True])
 @image_comparison(['imagegrid_cbar_mode.png'],
                   remove_text=True, style='mpl20', tol=0.3)
-def test_imagegrid_cbar_mode_edge(legacy_colorbar):
+def test_imagegrid_cbar_mode_edge():
     # Remove this line when this test image is regenerated.
     plt.rcParams['pcolormesh.snap'] = False
 
-    mpl.rcParams["mpl_toolkits.legacy_colorbar"] = legacy_colorbar
+    mpl.rcParams["mpl_toolkits.legacy_colorbar"] = False
 
     X, Y = np.meshgrid(np.linspace(0, 6, 30), np.linspace(0, 6, 30))
     arr = np.sin(X) * np.cos(Y) + 1j*(np.sin(3*Y) * np.cos(Y/2.))
@@ -45,15 +41,9 @@ def test_imagegrid_cbar_mode_edge(legacy_colorbar):
         ax3.imshow(np.abs(arr), cmap='jet')
         ax4.imshow(np.arctan2(arr.imag, arr.real), cmap='hsv')
 
-        with (pytest.warns(mpl.MatplotlibDeprecationWarning) if legacy_colorbar
-              else ExitStack()):
-            # In each row/column, the "first" colorbars must be overwritten by
-            # the "second" ones.  To achieve this, clear out the axes first.
-            for ax in grid:
-                ax.cax.cla()
-                cb = ax.cax.colorbar(
-                    ax.images[0],
-                    ticks=mpl.ticker.MaxNLocator(5))  # old default locator.
+        for ax in grid:
+            ax.cax.cla()
+            cb = ax.cax.colorbar(ax.images[0])  # old default locator.
 
 
 def test_imagegrid():
@@ -63,4 +53,4 @@ def test_imagegrid():
     ax = grid[0]
     im = ax.imshow([[1, 2]], norm=mpl.colors.LogNorm())
     cb = ax.cax.colorbar(im)
-    assert isinstance(cb.locator, mpl.colorbar._ColorbarLogLocator)
+    # assert isinstance(cb.locator, mpl.colorbar._ColorbarLogLocator)

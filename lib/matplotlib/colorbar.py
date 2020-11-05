@@ -36,6 +36,8 @@ import numpy as np
 
 import matplotlib as mpl
 from matplotlib import _api, cbook, collections, cm, colors, contour, ticker
+from matplotlib.axes._base import _TransformedBoundsLocator
+from matplotlib.axes._axes import Axes
 import matplotlib.artist as martist
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
@@ -222,102 +224,55 @@ def _set_ticks_on_axis_warn(*args, **kw):
     cbook._warn_external("Use the colorbar set_ticks() method instead.")
 
 
-class _ColorbarAutoLocator(ticker.MaxNLocator):
+class ColorbarAxes(Axes):
     """
-    AutoLocator for Colorbar
+    Colorbar Axes are actually two axes, a parent axes that takes care of
+    positioning the axes and an inset_axes that takes care of the drawing,
+    labels, ticks, etc. The inset axes is used as a way to properly
+    position the triangles (or rectangles) that are used to indicate
+    over/under colors.
 
-    This locator is just a `.MaxNLocator` except the min and max are
-    clipped by the norm's min and max (i.e. vmin/vmax from the
-    image/pcolor/contour object).  This is necessary so ticks don't
-    extrude into the "extend regions".
+    Users should not normally instantiate this class, but it is the class
+    returned by ``cbar = fig.colorbar(im); cax = cbar.ax``.
     """
-
-    def __init__(self, colorbar):
+    def __init__(self, parent):
         """
-        This ticker needs to know the *colorbar* so that it can access
-        its *vmin* and *vmax*.  Otherwise it is the same as
-        `~.ticker.AutoLocator`.
         """
+        inner_ax = parent.inset_axes([0, 0, 1, 1])
+        #self.__class__ = type(inner_ax.__class__.__name__+"ColorBar",
+        #                      (self.__class__, inner_ax.__class__),
+        #                      {})
+        self.__dict__ = inner_ax.__dict__
+        self.parent_ax = parent
+        self.inner_ax = inner_ax
+        self.parent_ax.xaxis.set_visible(False)
+        self.parent_ax.yaxis.set_visible(False)
+        self.parent_ax.set_facecolor('none')
+        # map some features to the parent so users have access...
+        self.parent_ax.tick_params = self.inner_ax.tick_params
 
-        self._colorbar = colorbar
-        nbins = 'auto'
-        steps = [1, 2, 2.5, 5, 10]
-        super().__init__(nbins=nbins, steps=steps)
+    def get_position(self, original=False):
+        # inherited
+        return self.parent_ax.get_position(original=original)
 
-    def tick_values(self, vmin, vmax):
-        # flip if needed:
-        if vmin > vmax:
-            vmin, vmax = vmax, vmin
-        vmin = max(vmin, self._colorbar.norm.vmin)
-        vmax = min(vmax, self._colorbar.norm.vmax)
-        ticks = super().tick_values(vmin, vmax)
-        rtol = (vmax - vmin) * 1e-10
-        return ticks[(ticks >= vmin - rtol) & (ticks <= vmax + rtol)]
+    def set_position(self, pos, which='both'):
+        # inherited
+        self.parent_ax.set_position(pos, which=which)
 
-
-class _ColorbarAutoMinorLocator(ticker.AutoMinorLocator):
-    """
-    AutoMinorLocator for Colorbar
-
-    This locator is just a `.AutoMinorLocator` except the min and max are
-    clipped by the norm's min and max (i.e. vmin/vmax from the
-    image/pcolor/contour object).  This is necessary so that the minorticks
-    don't extrude into the "extend regions".
-    """
-
-    def __init__(self, colorbar, n=None):
+    def _set_inner_bounds(self, bounds):
         """
-        This ticker needs to know the *colorbar* so that it can access
-        its *vmin* and *vmax*.
+        Change the inset_axes location...
         """
-        self._colorbar = colorbar
-        self.ndivs = n
-        super().__init__(n=None)
-
-    def __call__(self):
-        vmin = self._colorbar.norm.vmin
-        vmax = self._colorbar.norm.vmax
-        ticks = super().__call__()
-        rtol = (vmax - vmin) * 1e-10
-        return ticks[(ticks >= vmin - rtol) & (ticks <= vmax + rtol)]
-
-
-class _ColorbarLogLocator(ticker.LogLocator):
-    """
-    LogLocator for Colorbarbar
-
-    This locator is just a `.LogLocator` except the min and max are
-    clipped by the norm's min and max (i.e. vmin/vmax from the
-    image/pcolor/contour object).  This is necessary so ticks don't
-    extrude into the "extend regions".
-
-    """
-    def __init__(self, colorbar, *args, **kwargs):
-        """
-        This ticker needs to know the *colorbar* so that it can access
-        its *vmin* and *vmax*.  Otherwise it is the same as
-        `~.ticker.LogLocator`.  The ``*args`` and ``**kwargs`` are the
-        same as `~.ticker.LogLocator`.
-        """
-        self._colorbar = colorbar
-        super().__init__(*args, **kwargs)
-
-    def tick_values(self, vmin, vmax):
-        if vmin > vmax:
-            vmin, vmax = vmax, vmin
-        vmin = max(vmin, self._colorbar.norm.vmin)
-        vmax = min(vmax, self._colorbar.norm.vmax)
-        ticks = super().tick_values(vmin, vmax)
-        rtol = (np.log10(vmax) - np.log10(vmin)) * 1e-10
-        ticks = ticks[(np.log10(ticks) >= np.log10(vmin) - rtol) &
-                      (np.log10(ticks) <= np.log10(vmax) + rtol)]
-        return ticks
+        self.inner_ax._axes_locator = _TransformedBoundsLocator(
+            bounds, self.parent_ax.transAxes)
 
 
 class _ColorbarSpine(mspines.Spine):
     def __init__(self, axes):
+        self._ax = axes
         super().__init__(axes, 'colorbar',
                          mpath.Path(np.empty((0, 2)), closed=True))
+        mpatches.Patch.set_transform(self, axes.parent_ax.transAxes)
 
     def get_window_extent(self, renderer=None):
         # This Spine has no Axis associated with it, and doesn't need to adjust
@@ -438,6 +393,7 @@ class ColorbarBase:
         _api.check_in_list(
             ['uniform', 'proportional'], spacing=spacing)
 
+        ax = ColorbarAxes(ax)
         self.ax = ax
         # Bind some methods to the axes to warn users against using them.
         ax.set_xticks = ax.set_yticks = _set_ticks_on_axis_warn
@@ -472,9 +428,11 @@ class ColorbarBase:
         self.solids_patches = []
         self.lines = []
 
-        for spine in ax.spines.values():
+        for spine in self.ax.spines.values():
             spine.set_visible(False)
-        self.outline = ax.spines['outline'] = _ColorbarSpine(ax)
+        for spine in self.ax.parent_ax.spines.values():
+            spine.set_visible(False)
+        self.outline = self.ax.spines['outline'] = _ColorbarSpine(self.ax)
 
         self.patch = mpatches.Polygon(
             np.empty((0, 2)),
@@ -518,6 +476,88 @@ class ColorbarBase:
         """Return whether the upper limit is open ended."""
         return self.extend in ('both', 'max')
 
+    def _long_axis(self):
+        if self.orientation == 'vertical':
+            return self.ax.yaxis
+        else:
+            return self.ax.xaxis
+
+    def _short_axis(self):
+        if self.orientation == 'vertical':
+            return self.ax.xaxis
+        else:
+            return self.ax.yaxis
+
+    def _do_extends(self, extendlen):
+        """
+        Make adjustments for the extend triangles (or rectanges)
+        """
+        # extend lengths are fraction of the *inner* part of colorbar,
+        # not the total colorbar:
+        el = extendlen[0] if self._extend_lower() else 0
+        eu = extendlen[1] if self._extend_upper() else 0
+        tot = eu + el + 1
+        el = el / tot
+        eu = eu / tot
+        width = 1 / tot
+
+        bounds = np.array([0.0, 0.0, 1.0, 1.0])
+        bounds[1] = el
+        bounds[3] = width
+
+        # make the inner axes smaller to make room for the extend rectangle
+        top = bounds[1] + bounds[3]
+        if not self.extendrect:
+            xyout = np.array([[0, bounds[1]], [0.5, 0], [1, bounds[1]],
+                              [1, top], [0.5, 1], [0, top], [0, bounds[1]]])
+        else:
+            xyout = np.array([[0, bounds[1]], [0, 0], [1, 0], [1, bounds[1]],
+                              [1, top], [1, 1], [0, 1], [0, top],
+                              [0, bounds[1]]])
+        if self.orientation == 'horizontal':
+            bounds = bounds[[1, 0, 3, 2]]
+            xyout = xyout[:, ::-1]
+        self.ax._set_inner_bounds(bounds)
+
+        if not self.filled:
+            return xyout
+        # Make extend triangles or rectangles.  These are defined in the
+        # outer parent axes' co-ordinates:
+        mappable = getattr(self, 'mappable', None)
+        if (isinstance(mappable, contour.ContourSet)
+                and any(hatch is not None for hatch in mappable.hatches)):
+            hatches = mappable.hatches
+        else:
+            hatches = [None]
+        if self._extend_lower:
+
+            if not self.extendrect:
+                xy = np.array([[0.5, 0], [1, el], [0, el]])
+            else:
+                xy = np.array([[0, 0], [1., 0], [1, el], [0, el]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, ::-1]
+            color = self.cmap(self.norm(self._values[0]))
+            patch = mpatches.PathPatch(
+                mpath.Path(xy), facecolor=color, linewidth=0,
+                antialiased=False, transform=self.ax.parent_ax.transAxes,
+                hatch=hatches[0])
+            self.ax.parent_ax.add_patch(patch)
+        if self._extend_upper:
+            if not self.extendrect:
+                xy = np.array([[0.5, 1], [1, 1-eu], [0, 1-eu]])
+            else:
+                xy = np.array([[0, 1], [1, 1], [1, 1-eu], [0, 1-eu]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, ::-1]
+            color = self.cmap(self.norm(self._values[-1]))
+            patch = mpatches.PathPatch(
+                mpath.Path(xy), facecolor=color,
+                linewidth=0, antialiased=False,
+                transform=self.ax.parent_ax.transAxes, hatch=hatches[-1])
+            self.ax.parent_ax.add_patch(patch)
+        return xyout
+
     def draw_all(self):
         """
         Calculate any free parameters based on the current cmap and norm,
@@ -525,26 +565,30 @@ class ColorbarBase:
         """
         self._config_axis()  # Inline it after deprecation elapses.
         # Set self._boundaries and self._values, including extensions.
+        # self._boundaries are the edges of each square of color, and
+        # self._values are the value to map into the norm to get the
+        # color.
         self._process_values()
         # Set self.vmin and self.vmax to first and last boundary, excluding
         # extensions.
         self.vmin, self.vmax = self._boundaries[self._inside][[0, -1]]
         # Compute the X/Y mesh.
-        X, Y = self._mesh()
-        # Extract bounding polygon (the last entry's value (X[0, 1]) doesn't
-        # matter, it just matches the CLOSEPOLY code).
-        x = np.concatenate([X[[0, 1, -2, -1], 0], X[[-1, -2, 1, 0, 0], 1]])
-        y = np.concatenate([Y[[0, 1, -2, -1], 0], Y[[-1, -2, 1, 0, 0], 1]])
-        xy = np.column_stack([x, y])
-        # Configure axes limits, patch, and outline.
-        xmin, ymin = xy.min(axis=0)
-        xmax, ymax = xy.max(axis=0)
-        self.ax.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
-        self.outline.set_xy(xy)
-        self.patch.set_xy(xy)
+        X, Y, extendlen = self._mesh()
+        xyout = self._do_extends(extendlen)
+        # set the spine outline
+        self.outline.set_xy(xyout)
+
+        self.ax.set_xlim(self.vmin, self.vmax)
+        self.ax.set_ylim(self.vmin, self.vmax)
+
         self.update_ticks()
         if self.filled:
-            self._add_solids(X, Y, self._values[:, np.newaxis])
+            ind = np.arange(len(self._values))
+            if self._extend_lower():
+                ind = ind[1:]
+            if self._extend_upper():
+                ind = ind[:-1]
+            self._add_solids(X, Y, self._values[ind, np.newaxis])
 
     @_api.deprecated("3.3")
     def config_axis(self):
@@ -577,29 +621,22 @@ class ColorbarBase:
         """
         locator = self.locator
         formatter = self.formatter
+        minorlocator = self.minorlocator
         if locator is None:
-            if self.boundaries is None:
+            if (self.boundaries is None and
+                    not isinstance(self.norm, colors.BoundaryNorm)):
+                if locator is None:
+                    locator = self._long_axis().get_major_locator()
+                if minorlocator is None:
+                    minorlocator = self._long_axis().get_minor_locator()
+
                 if isinstance(self.norm, colors.NoNorm):
                     nv = len(self._values)
                     base = 1 + int(nv / 10)
                     locator = ticker.IndexLocator(base=base, offset=0)
-                elif isinstance(self.norm, colors.BoundaryNorm):
-                    b = self.norm.boundaries
-                    locator = ticker.FixedLocator(b, nbins=10)
-                elif isinstance(self.norm, colors.LogNorm):
-                    locator = _ColorbarLogLocator(self)
-                elif isinstance(self.norm, colors.SymLogNorm):
-                    # The subs setting here should be replaced
-                    # by logic in the locator.
-                    locator = ticker.SymmetricalLogLocator(
-                                      subs=np.arange(1, 10),
-                                      linthresh=self.norm.linthresh,
-                                      base=10)
-                else:
-                    if mpl.rcParams['_internal.classic_mode']:
-                        locator = ticker.MaxNLocator()
-                    else:
-                        locator = _ColorbarAutoLocator(self)
+            elif isinstance(self.norm, colors.BoundaryNorm):
+                b = self.norm.boundaries
+                locator = ticker.FixedLocator(b, nbins=10)
             else:
                 b = self._boundaries[self._inside]
                 locator = ticker.FixedLocator(b, nbins=10)
@@ -617,6 +654,7 @@ class ColorbarBase:
 
         self.locator = locator
         self.formatter = formatter
+        self.minorlocator = minorlocator
         _log.debug('locator: %r', locator)
         return locator, formatter
 
@@ -636,14 +674,16 @@ class ColorbarBase:
         the mappable normal gets changed: Colorbar.update_normal)
         """
         self.locator = None
+        self.minorlocator = None
         self.formatter = None
-        if isinstance(self.norm, colors.LogNorm):
-            # *both* axes are made log so that determining the
-            # mid point is easier.
-            self.ax.set_xscale('log')
-            self.ax.set_yscale('log')
-            self.minorticks_on()
-            self.__scale = 'log'
+        if hasattr(self.norm, '_scale'):
+            self.ax.set_xscale(self.norm._scale.name,
+                               **self.norm._scale._kwargs)
+            self.ax.set_yscale(self.norm._scale.name,
+                               **self.norm._scale._kwargs)
+            self.ax.xaxis._scale = self.norm._scale
+            self.ax.yaxis._scale = self.norm._scale
+            self.__scale = self.norm._scale.name
         else:
             self.ax.set_xscale('linear')
             self.ax.set_yscale('linear')
@@ -729,21 +769,13 @@ class ColorbarBase:
         Turn the minor ticks of the colorbar on without extruding
         into the "extend regions".
         """
-        ax = self.ax
-        long_axis = ax.yaxis if self.orientation == 'vertical' else ax.xaxis
-
-        if long_axis.get_scale() == 'log':
-            long_axis.set_minor_locator(_ColorbarLogLocator(self, base=10.,
-                                                            subs='auto'))
-            long_axis.set_minor_formatter(ticker.LogFormatterSciNotation())
-        else:
-            long_axis.set_minor_locator(_ColorbarAutoMinorLocator(self))
+        self.ax.minorticks_on()
+        self._short_axis().set_minor_locator(ticker.NullLocator())
 
     def minorticks_off(self):
         """Turn the minor ticks of the colorbar off."""
-        ax = self.ax
-        long_axis = ax.yaxis if self.orientation == 'vertical' else ax.xaxis
-        long_axis.set_minor_locator(ticker.NullLocator())
+
+        self._long_axis().set_minor_locator(ticker.NullLocator())
 
     def set_label(self, label, *, loc=None, **kwargs):
         """
@@ -792,9 +824,6 @@ class ColorbarBase:
 
     def _add_solids_pcolormesh(self, X, Y, C):
         _log.debug('Setting pcolormesh')
-        if C.shape[0] == Y.shape[0]:
-            # trim the last one to be compatible with old behavior.
-            C = C[:-1]
         self.solids = self.ax.pcolormesh(
             X, Y, C, cmap=self.cmap, norm=self.norm, alpha=self.alpha,
             edgecolors='none', shading='flat')
@@ -922,7 +951,7 @@ class ColorbarBase:
         # Neither boundaries nor values are specified;
         # make reasonable ones based on cmap and norm.
         if isinstance(self.norm, colors.NoNorm):
-            b = self._uniform_y(self.cmap.N + 1) * self.cmap.N - 0.5
+            b, _ = self._uniform_y(self.cmap.N + 1) * self.cmap.N - 0.5
             v = np.zeros(len(b) - 1, dtype=np.int16)
             v[self._inside] = np.arange(self.cmap.N, dtype=np.int16)
             if self._extend_lower():
@@ -959,20 +988,16 @@ class ColorbarBase:
                 self.norm.vmax,
                 expander=0.1)
 
-            b = self.norm.inverse(self._uniform_y(self.cmap.N + 1))
+            N = self.cmap.N + 1
 
-            if isinstance(self.norm, (colors.PowerNorm, colors.LogNorm)):
-                # If using a lognorm or powernorm, ensure extensions don't
-                # go negative
-                if self._extend_lower():
-                    b[0] = 0.9 * b[0]
-                if self._extend_upper():
-                    b[-1] = 1.1 * b[-1]
-            else:
-                if self._extend_lower():
-                    b[0] = b[0] - 1
-                if self._extend_upper():
-                    b[-1] = b[-1] + 1
+            b, _ = self._uniform_y(N)
+            if self._extend_lower():
+                b = np.hstack(([-0.1], b))
+            if self._extend_lower():
+                b = np.hstack((b, [1.1]))
+            b = self.norm.inverse(b)
+            # note that the logic above will return _values at midpoints of
+            # the b values...
         self._process_values(b)
 
     def _get_extension_lengths(self, frac, automin, automax, default=0.05):
@@ -1005,25 +1030,12 @@ class ColorbarBase:
         Return colorbar data coordinates for *N* uniformly
         spaced boundaries, plus ends if required.
         """
-        if self.extend == 'neither':
-            y = np.linspace(0, 1, N)
-        else:
-            automin = automax = 1. / (N - 1.)
-            extendlength = self._get_extension_lengths(self.extendfrac,
-                                                       automin, automax,
-                                                       default=0.05)
-            if self.extend == 'both':
-                y = np.zeros(N + 2, 'd')
-                y[0] = 0. - extendlength[0]
-                y[-1] = 1. + extendlength[1]
-            elif self.extend == 'min':
-                y = np.zeros(N + 1, 'd')
-                y[0] = 0. - extendlength[0]
-            else:
-                y = np.zeros(N + 1, 'd')
-                y[-1] = 1. + extendlength[1]
-            y[self._inside] = np.linspace(0, 1, N)
-        return y
+        automin = automax = 1. / (N - 1.)
+        extendlength = self._get_extension_lengths(self.extendfrac,
+                                                   automin, automax,
+                                                   default=0.05)
+        y = np.linspace(0, 1, N)
+        return y, extendlength
 
     def _proportional_y(self):
         """
@@ -1051,10 +1063,13 @@ class ColorbarBase:
             clen = y[-2] - y[1]
             automin = (y[2] - y[1]) / clen
             automax = (y[-2] - y[-3]) / clen
+
         if self.extend in ('both', 'min', 'max'):
             extendlength = self._get_extension_lengths(self.extendfrac,
                                                        automin, automax,
                                                        default=0.05)
+        else:
+            extendlength = [0, 0]
         if self.extend in ('both', 'min'):
             y[0] = 0. - extendlength[0]
         if self.extend in ('both', 'max'):
@@ -1062,7 +1077,8 @@ class ColorbarBase:
         yi = y[self._inside]
         norm = colors.Normalize(yi[0], yi[-1])
         y[self._inside] = np.ma.filled(norm(yi), np.nan)
-        return y
+        y = y[self._inside]
+        return y, extendlength
 
     def _mesh(self):
         """
@@ -1080,29 +1096,24 @@ class ColorbarBase:
         norm.vmax = self.vmax
         x = np.array([0.0, 1.0])
         if self.spacing == 'uniform':
-            n_boundaries_no_extensions = len(self._boundaries[self._inside])
-            y = self._uniform_y(n_boundaries_no_extensions)
+            y, extendlen = self._uniform_y(len(self._boundaries[self._inside]))
         else:
-            y = self._proportional_y()
-        xmid = np.array([0.5])
+            y, extendlen = self._proportional_y()
         if self.__scale != 'manual':
             y = norm.inverse(y)
             x = norm.inverse(x)
-            xmid = norm.inverse(xmid)
         else:
             # if a norm doesn't have a named scale, or
             # we are not using a norm
             dv = self.vmax - self.vmin
             x = x * dv + self.vmin
             y = y * dv + self.vmin
-            xmid = xmid * dv + self.vmin
         self._y = y
         X, Y = np.meshgrid(x, y)
-        if self._extend_lower() and not self.extendrect:
-            X[0, :] = xmid
-        if self._extend_upper() and not self.extendrect:
-            X[-1, :] = xmid
-        return (X, Y) if self.orientation == 'vertical' else (Y, X)
+        if self.orientation == 'vertical':
+            return (X, Y, extendlen)
+        else:
+            return (Y, X, extendlen)
 
     def _locate(self, x):
         """
@@ -1118,17 +1129,8 @@ class ColorbarBase:
             b = self.norm(self._boundaries, clip=False).filled()
             xn = self.norm(x, clip=False).filled()
 
-        bunique = b
+        bunique = b[self._inside]
         yunique = self._y
-        # trim extra b values at beginning and end if they are
-        # not unique.  These are here for extended colorbars, and are not
-        # wanted for the interpolation.
-        if b[0] == b[1]:
-            bunique = bunique[1:]
-            yunique = yunique[1:]
-        if b[-1] == b[-2]:
-            bunique = bunique[:-1]
-            yunique = yunique[:-1]
 
         z = np.interp(xn, bunique, yunique)
         return z
@@ -1139,7 +1141,8 @@ class ColorbarBase:
 
     def remove(self):
         """Remove this colorbar from the figure."""
-        self.ax.remove()
+        self.ax.inner_ax.remove()
+        self.ax.parent_ax.remove()
 
 
 def _add_disjoint_kwargs(d, **kwargs):
