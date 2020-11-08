@@ -309,7 +309,6 @@ def test_colorbar_minorticks_on_off():
         im.set_clim(vmin=-1.2, vmax=1.2)
         cbar.minorticks_on()
         #fig.canvas.draw()
-        print('here', cbar.ax.yaxis.get_minorticklocs())
         np.testing.assert_almost_equal(
             cbar.ax.yaxis.get_minorticklocs(),
             [-1.1, -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,

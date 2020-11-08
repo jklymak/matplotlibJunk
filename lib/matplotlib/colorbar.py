@@ -393,6 +393,7 @@ class ColorbarBase:
         _api.check_in_list(
             ['uniform', 'proportional'], spacing=spacing)
 
+        # wrap the axes so that it can be positioned as an inset axes:
         ax = ColorbarAxes(ax)
         self.ax = ax
         # Bind some methods to the axes to warn users against using them.
@@ -477,86 +478,18 @@ class ColorbarBase:
         return self.extend in ('both', 'max')
 
     def _long_axis(self):
+        """Return the long axis"""
         if self.orientation == 'vertical':
             return self.ax.yaxis
         else:
             return self.ax.xaxis
 
     def _short_axis(self):
+        """Return the short axis"""
         if self.orientation == 'vertical':
             return self.ax.xaxis
         else:
             return self.ax.yaxis
-
-    def _do_extends(self, extendlen):
-        """
-        Make adjustments for the extend triangles (or rectanges)
-        """
-        # extend lengths are fraction of the *inner* part of colorbar,
-        # not the total colorbar:
-        el = extendlen[0] if self._extend_lower() else 0
-        eu = extendlen[1] if self._extend_upper() else 0
-        tot = eu + el + 1
-        el = el / tot
-        eu = eu / tot
-        width = 1 / tot
-
-        bounds = np.array([0.0, 0.0, 1.0, 1.0])
-        bounds[1] = el
-        bounds[3] = width
-
-        # make the inner axes smaller to make room for the extend rectangle
-        top = bounds[1] + bounds[3]
-        if not self.extendrect:
-            xyout = np.array([[0, bounds[1]], [0.5, 0], [1, bounds[1]],
-                              [1, top], [0.5, 1], [0, top], [0, bounds[1]]])
-        else:
-            xyout = np.array([[0, bounds[1]], [0, 0], [1, 0], [1, bounds[1]],
-                              [1, top], [1, 1], [0, 1], [0, top],
-                              [0, bounds[1]]])
-        if self.orientation == 'horizontal':
-            bounds = bounds[[1, 0, 3, 2]]
-            xyout = xyout[:, ::-1]
-        self.ax._set_inner_bounds(bounds)
-
-        if not self.filled:
-            return xyout
-        # Make extend triangles or rectangles.  These are defined in the
-        # outer parent axes' co-ordinates:
-        mappable = getattr(self, 'mappable', None)
-        if (isinstance(mappable, contour.ContourSet)
-                and any(hatch is not None for hatch in mappable.hatches)):
-            hatches = mappable.hatches
-        else:
-            hatches = [None]
-        if self._extend_lower:
-
-            if not self.extendrect:
-                xy = np.array([[0.5, 0], [1, el], [0, el]])
-            else:
-                xy = np.array([[0, 0], [1., 0], [1, el], [0, el]])
-            if self.orientation == 'horizontal':
-                xy = xy[:, ::-1]
-            color = self.cmap(self.norm(self._values[0]))
-            patch = mpatches.PathPatch(
-                mpath.Path(xy), facecolor=color, linewidth=0,
-                antialiased=False, transform=self.ax.parent_ax.transAxes,
-                hatch=hatches[0])
-            self.ax.parent_ax.add_patch(patch)
-        if self._extend_upper:
-            if not self.extendrect:
-                xy = np.array([[0.5, 1], [1, 1-eu], [0, 1-eu]])
-            else:
-                xy = np.array([[0, 1], [1, 1], [1, 1-eu], [0, 1-eu]])
-            if self.orientation == 'horizontal':
-                xy = xy[:, ::-1]
-            color = self.cmap(self.norm(self._values[-1]))
-            patch = mpatches.PathPatch(
-                mpath.Path(xy), facecolor=color,
-                linewidth=0, antialiased=False,
-                transform=self.ax.parent_ax.transAxes, hatch=hatches[-1])
-            self.ax.parent_ax.add_patch(patch)
-        return xyout
 
     def draw_all(self):
         """
@@ -615,48 +548,45 @@ class ColorbarBase:
         """
         Return the ``locator`` and ``formatter`` of the colorbar.
 
-        If they have not been defined (i.e. are *None*), suitable formatter
-        and locator instances will be created, attached to the respective
-        attributes and returned.
+        If they have not been defined (i.e. are *None*), the formatter and
+        locator are retrieved from the axis, or from the value of the
+        boundaries for a boundary norm.
+
+        Called by update_ticks...
         """
         locator = self.locator
         formatter = self.formatter
         minorlocator = self.minorlocator
-        if locator is None:
-            if (self.boundaries is None and
-                    not isinstance(self.norm, colors.BoundaryNorm)):
-                if locator is None:
-                    locator = self._long_axis().get_major_locator()
-                if minorlocator is None:
-                    minorlocator = self._long_axis().get_minor_locator()
+        if (self.boundaries is None and
+                not isinstance(self.norm, colors.BoundaryNorm)):
+            if locator is None:
+                locator = self._long_axis().get_major_locator()
+            if minorlocator is None:
+                minorlocator = self._long_axis().get_minor_locator()
+            if isinstance(self.norm, colors.NoNorm):
+                # default locator:
+                nv = len(self._values)
+                base = 1 + int(nv / 10)
+                locator = ticker.IndexLocator(base=base, offset=0)
+        elif isinstance(self.norm, colors.BoundaryNorm):
+            b = self.norm.boundaries
+            if locator is None:
+                locator = ticker.FixedLocator(b, nbins=10)
+        else:
+            b = self._boundaries[self._inside]
+            if locator is None:
+                locator = ticker.FixedLocator(b, nbins=10)
 
-                if isinstance(self.norm, colors.NoNorm):
-                    nv = len(self._values)
-                    base = 1 + int(nv / 10)
-                    locator = ticker.IndexLocator(base=base, offset=0)
-            elif isinstance(self.norm, colors.BoundaryNorm):
-                b = self.norm.boundaries
-                locator = ticker.FixedLocator(b, nbins=10)
-            else:
-                b = self._boundaries[self._inside]
-                locator = ticker.FixedLocator(b, nbins=10)
+        if minorlocator is None:
+            minorlocator = ticker.NullLocator()
 
         if formatter is None:
-            if isinstance(self.norm, colors.LogNorm):
-                formatter = ticker.LogFormatterSciNotation()
-            elif isinstance(self.norm, colors.SymLogNorm):
-                formatter = ticker.LogFormatterSciNotation(
-                                        linthresh=self.norm.linthresh)
-            else:
-                formatter = ticker.ScalarFormatter()
-        else:
-            formatter = self.formatter
+            formatter = self._long_axis().get_major_formatter()
 
         self.locator = locator
         self.formatter = formatter
         self.minorlocator = minorlocator
         _log.debug('locator: %r', locator)
-        return locator, formatter
 
     def _use_auto_colorbar_locator(self):
         """
@@ -699,18 +629,22 @@ class ColorbarBase:
         """
         ax = self.ax
         # Get the locator and formatter; defaults to self.locator if not None.
-        locator, formatter = self._get_ticker_locator_formatter()
-        long_axis = ax.yaxis if self.orientation == 'vertical' else ax.xaxis
+        self._get_ticker_locator_formatter()
+
         if self._use_auto_colorbar_locator():
-            _log.debug('Using auto colorbar locator %r on colorbar', locator)
-            long_axis.set_major_locator(locator)
-            long_axis.set_major_formatter(formatter)
+            _log.debug('Using auto colorbar locator %r on colorbar',
+                       self.locator)
+            self._long_axis().set_major_locator(self.locator)
+            self._long_axis().set_minor_locator(self.minorlocator)
+            self._long_axis().set_major_formatter(self.formatter)
         else:
             _log.debug('Using fixed locator on colorbar')
-            ticks, ticklabels, offset_string = self._ticker(locator, formatter)
-            long_axis.set_ticks(ticks)
-            long_axis.set_ticklabels(ticklabels)
-            long_axis.get_major_formatter().set_offset_string(offset_string)
+            ticks, ticklabels, offset_string = self._ticker(self.locator,
+                                                            self.formatter)
+            self._long_axis().set_ticks(ticks)
+            self._long_axis().set_ticklabels(ticklabels)
+            fmt = self._long_axis().get_major_formatter()
+            fmt.set_offset_string(offset_string)
 
     def set_ticks(self, ticks, update_ticks=True):
         """
@@ -766,16 +700,16 @@ class ColorbarBase:
 
     def minorticks_on(self):
         """
-        Turn the minor ticks of the colorbar on without extruding
-        into the "extend regions".
+        Turn the minor ticks of the colorbar.
         """
         self.ax.minorticks_on()
+        self.minorlocator = self._long_axis().get_minor_locator()
         self._short_axis().set_minor_locator(ticker.NullLocator())
 
     def minorticks_off(self):
         """Turn the minor ticks of the colorbar off."""
-
-        self._long_axis().set_minor_locator(ticker.NullLocator())
+        self.minorlocator = ticker.NullLocator()
+        self._long_axis().set_minor_locator(self.minorlocator)
 
     def set_label(self, label, *, loc=None, **kwargs):
         """
@@ -846,6 +780,76 @@ class ColorbarBase:
             self.ax.add_patch(patch)
             patches.append(patch)
         self.solids_patches = patches
+
+    def _do_extends(self, extendlen):
+        """
+        Make adjustments for the extend triangles (or rectanges)
+        """
+        # extend lengths are fraction of the *inner* part of colorbar,
+        # not the total colorbar:
+        el = extendlen[0] if self._extend_lower() else 0
+        eu = extendlen[1] if self._extend_upper() else 0
+        tot = eu + el + 1
+        el = el / tot
+        eu = eu / tot
+        width = 1 / tot
+
+        bounds = np.array([0.0, 0.0, 1.0, 1.0])
+        bounds[1] = el
+        bounds[3] = width
+
+        # make the inner axes smaller to make room for the extend rectangle
+        top = bounds[1] + bounds[3]
+        if not self.extendrect:
+            xyout = np.array([[0, bounds[1]], [0.5, 0], [1, bounds[1]],
+                              [1, top], [0.5, 1], [0, top], [0, bounds[1]]])
+        else:
+            xyout = np.array([[0, bounds[1]], [0, 0], [1, 0], [1, bounds[1]],
+                              [1, top], [1, 1], [0, 1], [0, top],
+                              [0, bounds[1]]])
+        if self.orientation == 'horizontal':
+            bounds = bounds[[1, 0, 3, 2]]
+            xyout = xyout[:, ::-1]
+        self.ax._set_inner_bounds(bounds)
+
+        if not self.filled:
+            return xyout
+        # Make extend triangles or rectangles.  These are defined in the
+        # outer parent axes' co-ordinates:
+        mappable = getattr(self, 'mappable', None)
+        if (isinstance(mappable, contour.ContourSet)
+                and any(hatch is not None for hatch in mappable.hatches)):
+            hatches = mappable.hatches
+        else:
+            hatches = [None]
+        if self._extend_lower:
+
+            if not self.extendrect:
+                xy = np.array([[0.5, 0], [1, el], [0, el]])
+            else:
+                xy = np.array([[0, 0], [1., 0], [1, el], [0, el]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, ::-1]
+            color = self.cmap(self.norm(self._values[0]))
+            patch = mpatches.PathPatch(
+                mpath.Path(xy), facecolor=color, linewidth=0,
+                antialiased=False, transform=self.ax.parent_ax.transAxes,
+                hatch=hatches[0])
+            self.ax.parent_ax.add_patch(patch)
+        if self._extend_upper:
+            if not self.extendrect:
+                xy = np.array([[0.5, 1], [1, 1-eu], [0, 1-eu]])
+            else:
+                xy = np.array([[0, 1], [1, 1], [1, 1-eu], [0, 1-eu]])
+            if self.orientation == 'horizontal':
+                xy = xy[:, ::-1]
+            color = self.cmap(self.norm(self._values[-1]))
+            patch = mpatches.PathPatch(
+                mpath.Path(xy), facecolor=color,
+                linewidth=0, antialiased=False,
+                transform=self.ax.parent_ax.transAxes, hatch=hatches[-1])
+            self.ax.parent_ax.add_patch(patch)
+        return xyout
 
     def add_lines(self, levels, colors, linewidths, erase=True):
         """
