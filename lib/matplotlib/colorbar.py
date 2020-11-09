@@ -593,9 +593,11 @@ class ColorbarBase:
         Return if we should use an adjustable tick locator or a fixed
         one.  (check is used twice so factored out here...)
         """
-        contouring = self.boundaries is not None and self.spacing == 'uniform'
-        return (type(self.norm) in [colors.Normalize, colors.LogNorm] and
-                not contouring)
+        if isinstance(self.norm, colors.BoundaryNorm):
+            return False
+        if (self.boundaries is not None and self.spacing == 'uniform'):
+            return False
+        return True
 
     def _reset_locator_formatter_scale(self):
         """
@@ -626,7 +628,6 @@ class ColorbarBase:
         ax = self.ax
         # Get the locator and formatter; defaults to self.locator if not None.
         self._get_ticker_locator_formatter()
-
         if self._use_auto_colorbar_locator():
             _log.debug('Using auto colorbar locator %r on colorbar',
                        self.locator)
