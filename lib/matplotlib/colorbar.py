@@ -607,12 +607,8 @@ class ColorbarBase:
         self.minorlocator = None
         self.formatter = None
         if hasattr(self.norm, '_scale'):
-            self.ax.set_xscale(self.norm._scale.name,
-                               **self.norm._scale._kwargs)
-            self.ax.set_yscale(self.norm._scale.name,
-                               **self.norm._scale._kwargs)
-            self.ax.xaxis._scale = self.norm._scale
-            self.ax.yaxis._scale = self.norm._scale
+            self.ax.set_xscale(self.norm._scale)
+            self.ax.set_yscale(self.norm._scale.name)
             self.__scale = self.norm._scale.name
         else:
             self.ax.set_xscale('linear')
