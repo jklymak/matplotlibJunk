@@ -266,6 +266,9 @@ class ColorbarAxes(Axes):
         self.inner_ax._axes_locator = _TransformedBoundsLocator(
             bounds, self.parent_ax.transAxes)
 
+    def set_aspect(self, aspect, **kwargs):
+        self.parent_ax.set_aspect(aspect, **kwarg)
+
 
 class _ColorbarSpine(mspines.Spine):
     def __init__(self, axes):
