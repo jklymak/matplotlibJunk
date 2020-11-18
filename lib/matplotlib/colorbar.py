@@ -891,6 +891,7 @@ class ColorbarBase:
             self.lines = []
         self.lines.append(col)
         col.set_color(colors)
+        col.set_clip_on(False)
         self.ax.add_collection(col)
         self.stale = True
 
