@@ -267,7 +267,7 @@ class ColorbarAxes(Axes):
             bounds, self.parent_ax.transAxes)
 
     def set_aspect(self, aspect, **kwargs):
-        self.parent_ax.set_aspect(aspect, **kwarg)
+        self.parent_ax.set_aspect(aspect, **kwargs)
 
 
 class _ColorbarSpine(mspines.Spine):
@@ -783,7 +783,8 @@ class ColorbarBase:
 
     def _do_extends(self, extendlen):
         """
-        Make adjustments for the extend triangles (or rectanges)
+        Make adjustments of the inner axes for the extend triangles (or
+        rectanges) and add them as patches.
         """
         # extend lengths are fraction of the *inner* part of colorbar,
         # not the total colorbar:
@@ -891,6 +892,8 @@ class ColorbarBase:
             self.lines = []
         self.lines.append(col)
         col.set_color(colors)
+        # set clipping to False, which should work well with default
+        # limits.
         col.set_clip_on(False)
         self.ax.add_collection(col)
         self.stale = True
