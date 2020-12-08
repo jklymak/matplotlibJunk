@@ -227,7 +227,7 @@ def _set_ticks_on_axis_warn(*args, **kw):
 class ColorbarAxes(Axes):
     """
     Colorbar Axes are actually two axes, a parent axes that takes care of
-    positioning the axes and an inset_axes that takes care of the drawing,
+    positioning the axes, and an inset_axes that takes care of the drawing,
     labels, ticks, etc. The inset axes is used as a way to properly
     position the triangles (or rectangles) that are used to indicate
     over/under colors.

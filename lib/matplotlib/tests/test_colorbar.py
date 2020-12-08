@@ -709,3 +709,16 @@ def test_anchored_cbar_position_using_specgrid():
     np.testing.assert_allclose(
             [cx1, cx0],
             [x1 * shrink + (1 - shrink) * p0, p0 * (1 - shrink) + x0 * shrink])
+
+
+@image_comparison(['colorbar_change_lim_scale.png'], remove_text=True,
+                  style='mpl20')
+def test_colorbar_change_lim_scale():
+    fig, ax = plt.subplots(1, 2, constrained_layout=True)
+    pc = ax[0].pcolormesh(np.arange(100).reshape(10, 10)+1)
+    cb = fig.colorbar(pc, ax=ax[0], extend='both')
+    cb.ax.set_yscale('log')
+
+    pc = ax[1].pcolormesh(np.arange(100).reshape(10, 10)+1)
+    cb = fig.colorbar(pc, ax=ax[1], extend='both')
+    cb.ax.set_ylim([20, 90])
