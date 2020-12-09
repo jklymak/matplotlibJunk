@@ -733,7 +733,7 @@ def test_boundarynorm_and_colorbarbase():
     # Default behavior
     norm = mcolors.BoundaryNorm(bounds, cmap.N)
     cb1 = mcolorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, extend='both',
-                                 orientation='horizontal')
+                                 orientation='horizontal', spacing='uniform')
     # New behavior
     norm = mcolors.BoundaryNorm(bounds, cmap.N, extend='both')
     cb2 = mcolorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,

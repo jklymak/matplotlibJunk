@@ -912,7 +912,8 @@ class ColorbarBase:
             self.norm.vmax = 1
         self.norm.vmin, self.norm.vmax = mtransforms.nonsingular(
             self.norm.vmin, self.norm.vmax, expander=0.1)
-        b = self.norm.inverse(b)
+        if not isinstance(self.norm, colors.BoundaryNorm):
+            b = self.norm.inverse(b)
 
         self._boundaries = np.asarray(b, dtype=float)
         self._values = 0.5 * (self._boundaries[:-1] + self._boundaries[1:])
@@ -953,11 +954,12 @@ class ColorbarBase:
             return (Y, X, extendlen)
 
     def _forward_boundaries(self, x):
-        b = self.boundaries
-        return np.interp(x, b, np.linspace(0, b[-1], len(b)))
+        b = self._boundaries
+        y = np.interp(x, b, np.linspace(0, b[-1], len(b)), left=-1, right=2)
+        return y
 
     def _inverse_boundaries(self, x):
-        b = self.boundaries
+        b = self._boundaries
         return np.interp(x, np.linspace(0, b[-1], len(b)), b)
 
     def _reset_locator_formatter_scale(self):
@@ -966,15 +968,17 @@ class ColorbarBase:
         need to be re-entered if this gets called (either at init, or when
         the mappable normal gets changed: Colorbar.update_normal)
         """
+        self._process_values()
         self.locator = None
         self.minorlocator = None
         self.formatter = None
+        print('norm', self.norm, self.spacing)
         if hasattr(self.norm, '_scale'):
             self.ax.set_xscale(self.norm._scale)
             self.ax.set_yscale(self.norm._scale.name)
             self.__scale = self.norm._scale.name
         else:
-            if (self.spacing == 'uniform') and (self.boundaries is not None):
+            if (self.spacing == 'uniform') and (self._boundaries is not None):
                 funcs = (self._forward_boundaries, self._inverse_boundaries)
                 self.ax.set_xscale('function', functions=funcs)
                 self.ax.set_yscale('function', functions=funcs)
