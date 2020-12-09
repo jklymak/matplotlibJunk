@@ -955,7 +955,10 @@ class ColorbarBase:
 
     def _forward_boundaries(self, x):
         b = self._boundaries
-        y = np.interp(x, b, np.linspace(0, b[-1], len(b)), left=-1, right=2)
+        y = np.interp(x, b, np.linspace(0, b[-1], len(b)))
+        eps = (b[-1] - b[0]) * 1e-6
+        y[x<b[0]-eps] = -1
+        y[x>b[-1]+eps] = 2
         return y
 
     def _inverse_boundaries(self, x):
@@ -972,24 +975,24 @@ class ColorbarBase:
         self.locator = None
         self.minorlocator = None
         self.formatter = None
-        print('norm', self.norm, self.spacing)
-        if hasattr(self.norm, '_scale'):
+        if ((self.spacing == 'uniform') and
+            ((self.boundaries is not None) or
+              isinstance(self.norm, colors.BoundaryNorm))):
+            funcs = (self._forward_boundaries, self._inverse_boundaries)
+            self.ax.set_xscale('function', functions=funcs)
+            self.ax.set_yscale('function', functions=funcs)
+            self.__scale = 'function'
+        elif hasattr(self.norm, '_scale'):
             self.ax.set_xscale(self.norm._scale)
             self.ax.set_yscale(self.norm._scale.name)
             self.__scale = self.norm._scale.name
         else:
-            if (self.spacing == 'uniform') and (self._boundaries is not None):
-                funcs = (self._forward_boundaries, self._inverse_boundaries)
-                self.ax.set_xscale('function', functions=funcs)
-                self.ax.set_yscale('function', functions=funcs)
-                self.__scale = 'function'
+            self.ax.set_xscale('linear')
+            self.ax.set_yscale('linear')
+            if type(self.norm) is colors.Normalize:
+                self.__scale = 'linear'
             else:
-                self.ax.set_xscale('linear')
-                self.ax.set_yscale('linear')
-                if type(self.norm) is colors.Normalize:
-                    self.__scale = 'linear'
-                else:
-                    self.__scale = 'manual'
+                self.__scale = 'manual'
 
     def _locate(self, x):
         """
