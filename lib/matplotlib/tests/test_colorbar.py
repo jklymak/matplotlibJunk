@@ -431,12 +431,14 @@ def test_colorbar_get_ticks():
     assert userTicks.get_ticks().tolist() == [600, 700, 800]
 
     # testing for getter after calling set_ticks with some ticks out of bounds
-    userTicks.set_ticks([600, 1300, 1400, 1500])
-    assert userTicks.get_ticks().tolist() == [600]
+    # removed #18900: other axes don't trim fixed lists, so colorbars
+    # should not either:
+    # userTicks.set_ticks([600, 1300, 1400, 1500])
+    # assert userTicks.get_ticks().tolist() == [600]
 
     # testing getter when no ticks are assigned
     defTicks = plt.colorbar(orientation='horizontal')
-    assert defTicks.get_ticks().tolist() == levels
+    np.testing.assert_allclose(defTicks.get_ticks().tolist(), levels)
 
 
 def test_colorbar_lognorm_extension():
