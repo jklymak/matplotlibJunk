@@ -982,7 +982,7 @@ class ColorbarBase:
             self.ax.set_xscale('function', functions=funcs)
             self.ax.set_yscale('function', functions=funcs)
             self.__scale = 'function'
-        elif hasattr(self.norm, '_scale'):
+        elif hasattr(self.norm, '_scale') and (self.norm._scale is not None):
             self.ax.set_xscale(self.norm._scale)
             self.ax.set_yscale(self.norm._scale.name)
             self.__scale = self.norm._scale.name
